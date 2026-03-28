@@ -6,3 +6,4 @@
 *.c
 headers/
 *.bat
+test*.*

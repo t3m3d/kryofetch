@@ -1,14 +1,3 @@
-jxt {
-    c "./kfetch_api.h"
-}
-
-import "utils.k"
-import "cpu.k"
-import "os.k"
-import "mem.k"
-import "disk.k"
-import "gpu.k"
-
 func run() {
     kfinit()
     kfcls()
@@ -145,8 +134,4 @@ func run() {
     kp(CYN + "  KryptonFetch" + RST + " by KryptonBytes")
     kp("")
     emit
-}
-
-just run {
-    run()
 }

@@ -3,8 +3,11 @@ jxt {
     func exec(cmd)
     func kfinit()
     func kfcls()
-    func kfmem()
-    func kfdisk()
-    func kfconsize()
-    func kfticks()
+}
+
+import "utils.k"
+import "fetch_test.k"
+
+just run {
+    run()
 }
