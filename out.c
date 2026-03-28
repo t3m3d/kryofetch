@@ -1205,9 +1205,17 @@ static char* kr_fformat(const char* a,const char* prec){char fmt[32],buf[64];snp
 char* get(char*);
 char* get(char*);
 char* get(char*);
+// --- imported: gpu.k ---
+char* initNvapi();
+char* getVramUsageNvapi(char*);
+char* getGpus();
+char* getVramRegistry(char*);
 // --- imported: disk.k ---
 char* getDiskInfo();
 // --- imported: mem.k ---
+char* get(char*);
+// --- imported: os.k ---
+char* get(char*);
 char* get(char*);
 // --- imported: utils.k ---
 char* make(char*, char*, char*);
@@ -1239,6 +1247,71 @@ char* get(char* threads) {
         return kr_str("0");
     }
     return kr_substr(thr, kr_plus(eq, kr_str("1")), kr_len(thr));
+}
+
+char* initNvapi() {
+    return kr_str("0");
+}
+
+char* getVramUsageNvapi(char* gpuIndex) {
+    return kr_str("0,0");
+}
+
+char* getGpus() {
+    char* raw = exec(kr_str("wmic path win32_videocontroller get name /value"));
+    char* result = kr_str("");
+    char* start = kr_str("0");
+    while (kr_truthy(kr_str("1"))) {
+        char* idx = indexOfFrom(raw, kr_str("Name="), start);
+        if (kr_truthy(kr_lt(idx, kr_str("0")))) {
+            break;
+        }
+        char* end = indexOfFrom(raw, kr_str("\n"), idx);
+        if (kr_truthy(kr_lt(end, kr_str("0")))) {
+            end = kr_len(raw);
+        }
+        char* line = kr_substr(raw, idx, end);
+        char* eq = kr_indexof(line, kr_str("="));
+        if (kr_truthy(kr_gte(eq, kr_str("0")))) {
+            char* name = kr_substr(line, kr_plus(eq, kr_str("1")), kr_len(line));
+            if (kr_truthy(kr_eq(result, kr_str("")))) {
+                result = name;
+            } else {
+                result = kr_plus(kr_plus(result, kr_str("\n")), name);
+            }
+        }
+        start = kr_plus(end, kr_str("1"));
+    }
+    return result;
+}
+
+char* getVramRegistry(char* gpuIndex) {
+    char* raw = exec(kr_str("wmic path win32_videocontroller get AdapterRAM /value"));
+    char* start = kr_str("0");
+    char* idxCount = kr_str("0");
+    char* mem = kr_str("0");
+    while (kr_truthy(kr_str("1"))) {
+        char* idx = indexOfFrom(raw, kr_str("AdapterRAM="), start);
+        if (kr_truthy(kr_lt(idx, kr_str("0")))) {
+            break;
+        }
+        char* end = indexOfFrom(raw, kr_str("\n"), idx);
+        if (kr_truthy(kr_lt(end, kr_str("0")))) {
+            end = kr_len(raw);
+        }
+        char* line = kr_substr(raw, idx, end);
+        char* eq = kr_indexof(line, kr_str("="));
+        if (kr_truthy(kr_gte(eq, kr_str("0")))) {
+            char* val = kr_substr(line, kr_plus(eq, kr_str("1")), kr_len(line));
+            if (kr_truthy(kr_eq(idxCount, gpuIndex))) {
+                mem = val;
+                break;
+            }
+            idxCount = kr_plus(idxCount, kr_str("1"));
+        }
+        start = kr_plus(end, kr_str("1"));
+    }
+    return mem;
 }
 
 char* getDiskInfo() {
@@ -1308,6 +1381,52 @@ char* get(char* info) {
         k_free = kr_plus(f, kr_str(""));
     }
     return kr_plus(kr_plus(total, kr_str(",")), k_free);
+}
+
+char* get(char* version) {
+    char* buildRaw = exec(kr_str("wmic os get BuildNumber /value"));
+    char* eq1 = kr_indexof(buildRaw, kr_str("="));
+    char* build = kr_str("0");
+    if (kr_truthy(kr_gte(eq1, kr_str("0")))) {
+        build = kr_substr(buildRaw, kr_plus(eq1, kr_str("1")), kr_len(buildRaw));
+    }
+    char* editionRaw = exec(kr_str("wmic os get OperatingSystemSKU /value"));
+    char* eq2 = kr_indexof(editionRaw, kr_str("="));
+    char* edition = kr_str("Windows");
+    if (kr_truthy(kr_gte(eq2, kr_str("0")))) {
+        edition = kr_substr(editionRaw, kr_plus(eq2, kr_str("1")), kr_len(editionRaw));
+    }
+    char* b = kr_toint(build);
+    char* version = kr_str("Windows");
+    if (kr_truthy(kr_gte(b, kr_str("26100")))) {
+        version = kr_str("Windows 11");
+    } else if (kr_truthy(kr_gte(b, kr_str("22621")))) {
+        version = kr_str("Windows 11");
+    } else if (kr_truthy(kr_gte(b, kr_str("22000")))) {
+        version = kr_str("Windows 11");
+    } else if (kr_truthy(kr_gte(b, kr_str("19041")))) {
+        version = kr_str("Windows 10");
+    } else {
+        version = kr_str("Windows (legacy)");
+    }
+    return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(version, kr_str(" ")), edition), kr_str(" (build ")), build), kr_str(")"));
+}
+
+char* get() {
+    char* ms = GetTickCount64();
+    char* totalSec = kr_div(ms, kr_str("1000"));
+    char* minutes = kr_div(totalSec, kr_str("60"));
+    char* hours = kr_div(minutes, kr_str("60"));
+    char* days = kr_div(hours, kr_str("24"));
+    char* h = kr_mod(hours, kr_str("24"));
+    char* m = kr_mod(minutes, kr_str("60"));
+    if (kr_truthy(kr_gt(days, kr_str("0")))) {
+        return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(days, kr_str(" days, ")), h), kr_str(" hrs, ")), m), kr_str(" mins"));
+    } else if (kr_truthy(kr_gt(hours, kr_str("0")))) {
+        return kr_plus(kr_plus(kr_plus(h, kr_str(" hrs, ")), m), kr_str(" mins"));
+    } else {
+        return kr_plus(m, kr_str(" mins"));
+    }
 }
 
 char* make(char* bar, char* usedGB, char* totalGB) {

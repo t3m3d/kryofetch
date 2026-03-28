@@ -1,78 +1,31 @@
-import "headers/windows.krh"
-import "headers/advapi32.krh"
+// os.k — safe version using WMIC + GetTickCount64
 
 func get_os_version() {
-    let vi = OSVERSIONINFOEXA {}
-    vi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA)
-
-    if !GetVersionExA(&vi) {
-        emit "Windows (version unknown)"
+    // Get build number
+    let buildRaw = exec("wmic os get BuildNumber /value")
+    let eq1 = indexOf(buildRaw, "=")
+    let build = "0"
+    if eq1 >= 0 {
+        build = substring(buildRaw, eq1 + 1, len(buildRaw))
     }
 
-    let build = vi.dwBuildNumber + ""
-
-    let edition = "Unknown Edition"
-    let editionBuf = buffer(128)
-    let type = REG_SZ
-    let dataSize = sizeof(editionBuf)
-
-    let hKey = 0
-    if RegOpenKeyExA(
-        HKEY_LOCAL_MACHINE,
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-        0,
-        KEY_READ,
-        &hKey
-    ) == ERROR_SUCCESS {
-
-        if RegQueryValueExA(
-            hKey,
-            "EditionID",
-            0,
-            &type,
-            (LPBYTE)editionBuf,
-            &dataSize
-        ) == ERROR_SUCCESS {
-            edition = editionBuf
-        }
-
-        RegCloseKey(hKey)
+    // Get edition
+    let editionRaw = exec("wmic os get OperatingSystemSKU /value")
+    let eq2 = indexOf(editionRaw, "=")
+    let edition = "Windows"
+    if eq2 >= 0 {
+        edition = substring(editionRaw, eq2 + 1, len(editionRaw))
     }
 
-    // Map edition names
-    if edition == "Professional"            { edition = "Pro" }
-    else if edition == "Core"               { edition = "Home" }
-    else if edition == "Enterprise"         { edition = "Enterprise" }
-    else if edition == "Education"          { edition = "Education" }
-    else if edition == "ProfessionalWorkstation" { edition = "Pro Workstation" }
-    else if edition == "IoTEnterprise"      { edition = "IoT Enterprise" }
-    else if edition == "ProfessionalN"      { edition = "Pro N" }
-    else if edition == "CoreN"              { edition = "Home N" }
-    else if edition == "CoreSingleLanguage" { edition = "Home Single Language" }
-
-    // Determine Windows version by build number
+    // Map build number to Windows version
     let b = toInt(build)
     let version = "Windows"
 
     if      b >= 26100 { version = "Windows 11" }
-    else if b >= 22631 { version = "Windows 11" }
     else if b >= 22621 { version = "Windows 11" }
     else if b >= 22000 { version = "Windows 11" }
-    else if b >= 19045 { version = "Windows 10" }
-    else if b >= 19044 { version = "Windows 10" }
-    else if b >= 19043 { version = "Windows 10" }
-    else if b >= 19042 { version = "Windows 10" }
     else if b >= 19041 { version = "Windows 10" }
-    else if b >= 18363 { version = "Windows 10" }
-    else if b >= 18362 { version = "Windows 10" }
-    else if b >= 17763 { version = "Windows 10" }
-    else if b >= 17134 { version = "Windows 10" }
-    else if b >= 16299 { version = "Windows 10" }
-    else if b >= 15063 { version = "Windows 10" }
-    else if b >= 14393 { version = "Windows 10" }
-    else if b >= 10586 { version = "Windows 10" }
-    else if b >= 10240 { version = "Windows 10" }
-    else               { version = "Windows (legacy version)" }
+    else               { version = "Windows (legacy)" }
 
     emit version + " " + edition + " (build " + build + ")"
 }
