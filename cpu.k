@@ -1,23 +1,20 @@
-// cpu.k — safe version using WMIC
-
-func get_cpu_name() {
-    let name = exec("wmic cpu get name /value")
-    // WMIC output looks like: "Name=Intel(R) Core(TM) i7-8700K"
-    let eq = indexOf(name, "=")
+func cpu_name() {
+    let raw = exec("wmic cpu get name /value")
+    let eq = indexOf(raw, "=")
     if eq < 0 { emit "Unknown CPU" }
-    emit substring(name, eq + 1, len(name))
+    emit substring(raw, eq + 1, len(raw))
 }
 
-func get_cpu_cores() {
-    let cores = exec("wmic cpu get NumberOfCores /value")
-    let eq = indexOf(cores, "=")
+func cpu_cores() {
+    let raw = exec("wmic cpu get NumberOfCores /value")
+    let eq = indexOf(raw, "=")
     if eq < 0 { emit "0" }
-    emit substring(cores, eq + 1, len(cores))
+    emit substring(raw, eq + 1, len(raw))
 }
 
-func get_cpu_threads() {
-    let thr = exec("wmic cpu get NumberOfLogicalProcessors /value")
-    let eq = indexOf(thr, "=")
+func cpu_threads() {
+    let raw = exec("wmic cpu get NumberOfLogicalProcessors /value")
+    let eq = indexOf(raw, "=")
     if eq < 0 { emit "0" }
-    emit substring(thr, eq + 1, len(thr))
+    emit substring(raw, eq + 1, len(raw))
 }
