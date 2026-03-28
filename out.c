@@ -1202,14 +1202,14 @@ static char* kr_fround(const char* a) {
 
 static char* kr_fformat(const char* a,const char* prec){char fmt[32],buf[64];snprintf(fmt,32,"%%.%sf",prec);snprintf(buf,64,fmt,atof(a));return kr_str(buf);}
 // --- imported: cpu.k ---
-char* get(char*);
-char* get(char*);
-char* get(char*);
+char* cpu();
+char* cpu();
+char* cpu();
 // --- imported: gpu.k ---
-char* initNvapi();
-char* getVramUsageNvapi(char*);
-char* getGpus();
-char* getVramRegistry(char*);
+char* gpu(char*);
+char* gpu(char*);
+char* gpu(char*);
+char* gpu(char*);
 // --- imported: disk.k ---
 char* getDiskInfo();
 // --- imported: mem.k ---
@@ -1222,42 +1222,42 @@ char* make(char*, char*, char*);
 char* print(char*, char*, char*);
 char* get(char*);
 
-char* get(char* name) {
-    char* name = exec(kr_str("wmic cpu get name /value"));
-    char* eq = kr_indexof(name, kr_str("="));
+char* cpu() {
+    char* raw = exec(kr_str("wmic cpu get name /value"));
+    char* eq = kr_indexof(raw, kr_str("="));
     if (kr_truthy(kr_lt(eq, kr_str("0")))) {
         return kr_str("Unknown CPU");
     }
-    return kr_substr(name, kr_plus(eq, kr_str("1")), kr_len(name));
+    return kr_substr(raw, kr_plus(eq, kr_str("1")), kr_len(raw));
 }
 
-char* get(char* cores) {
-    char* cores = exec(kr_str("wmic cpu get NumberOfCores /value"));
-    char* eq = kr_indexof(cores, kr_str("="));
+char* cpu() {
+    char* raw = exec(kr_str("wmic cpu get NumberOfCores /value"));
+    char* eq = kr_indexof(raw, kr_str("="));
     if (kr_truthy(kr_lt(eq, kr_str("0")))) {
         return kr_str("0");
     }
-    return kr_substr(cores, kr_plus(eq, kr_str("1")), kr_len(cores));
+    return kr_substr(raw, kr_plus(eq, kr_str("1")), kr_len(raw));
 }
 
-char* get(char* threads) {
-    char* thr = exec(kr_str("wmic cpu get NumberOfLogicalProcessors /value"));
-    char* eq = kr_indexof(thr, kr_str("="));
+char* cpu() {
+    char* raw = exec(kr_str("wmic cpu get NumberOfLogicalProcessors /value"));
+    char* eq = kr_indexof(raw, kr_str("="));
     if (kr_truthy(kr_lt(eq, kr_str("0")))) {
         return kr_str("0");
     }
-    return kr_substr(thr, kr_plus(eq, kr_str("1")), kr_len(thr));
+    return kr_substr(raw, kr_plus(eq, kr_str("1")), kr_len(raw));
 }
 
-char* initNvapi() {
+char* gpu(char* init) {
     return kr_str("0");
 }
 
-char* getVramUsageNvapi(char* gpuIndex) {
+char* gpu(char* vram, char* idx) {
     return kr_str("0,0");
 }
 
-char* getGpus() {
+char* gpu() {
     char* raw = exec(kr_str("wmic path win32_videocontroller get name /value"));
     char* result = kr_str("");
     char* start = kr_str("0");
@@ -1285,29 +1285,29 @@ char* getGpus() {
     return result;
 }
 
-char* getVramRegistry(char* gpuIndex) {
+char* gpu(char* idx) {
     char* raw = exec(kr_str("wmic path win32_videocontroller get AdapterRAM /value"));
     char* start = kr_str("0");
-    char* idxCount = kr_str("0");
+    char* count = kr_str("0");
     char* mem = kr_str("0");
     while (kr_truthy(kr_str("1"))) {
-        char* idx = indexOfFrom(raw, kr_str("AdapterRAM="), start);
-        if (kr_truthy(kr_lt(idx, kr_str("0")))) {
+        char* pos = indexOfFrom(raw, kr_str("AdapterRAM="), start);
+        if (kr_truthy(kr_lt(pos, kr_str("0")))) {
             break;
         }
-        char* end = indexOfFrom(raw, kr_str("\n"), idx);
+        char* end = indexOfFrom(raw, kr_str("\n"), pos);
         if (kr_truthy(kr_lt(end, kr_str("0")))) {
             end = kr_len(raw);
         }
-        char* line = kr_substr(raw, idx, end);
+        char* line = kr_substr(raw, pos, end);
         char* eq = kr_indexof(line, kr_str("="));
         if (kr_truthy(kr_gte(eq, kr_str("0")))) {
             char* val = kr_substr(line, kr_plus(eq, kr_str("1")), kr_len(line));
-            if (kr_truthy(kr_eq(idxCount, gpuIndex))) {
+            if (kr_truthy(kr_eq(count, idx))) {
                 mem = val;
                 break;
             }
-            idxCount = kr_plus(idxCount, kr_str("1"));
+            count = kr_plus(count, kr_str("1"));
         }
         start = kr_plus(end, kr_str("1"));
     }
