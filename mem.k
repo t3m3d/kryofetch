@@ -1,19 +1,5 @@
-import "headers/windows.krh"
+// mem.k — memory info via C wrapper
 
 func get_memory_info() {
-    let total = "0"
-    let free  = "0"
-
-    let ms = MEMORYSTATUSEX {}
-    ms.dwLength = sizeof(MEMORYSTATUSEX)
-
-    if GlobalMemoryStatusEx(&ms) {
-        let t = ms.ullTotalPhys / (1024 * 1024)
-        let f = ms.ullAvailPhys / (1024 * 1024)
-
-        total = t + ""
-        free  = f + ""
-    }
-
-    emit total + "," + free
+    emit kf_get_memory()
 }

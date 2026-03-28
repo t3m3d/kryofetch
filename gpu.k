@@ -1,79 +1,39 @@
-// gpu.k — safe version using WMIC, no NVAPI/SetupAPI/registry
+// gpu.k — GPU detection via WMIC
 
-// -----------------------------
-// NVAPI stubs
-// -----------------------------
-func gpu_nvapi_init() {
-    emit "0"
-}
-
-func gpu_nvapi_vram(idx) {
-    emit "0,0"
-}
-
-// -----------------------------
-// GPU list
-// -----------------------------
-func gpu_list() {
+func get_gpus() {
     let raw = exec("wmic path win32_videocontroller get name /value")
-
     let result = ""
-    let start = 0
-
-    while true {
-        let idx = indexOfFrom(raw, "Name=", start)
-        if idx < 0 { break }
-
-        let end = indexOfFrom(raw, "\n", idx)
-        if end < 0 { end = len(raw) }
-
-        let line = substring(raw, idx, end)
-        let eq = indexOf(line, "=")
-        if eq >= 0 {
-            let name = substring(line, eq + 1, len(line))
-            if result == "" {
-                result = name
-            } else {
-                result = result + "\n" + name
+    let start = "0"
+    let done = "0"
+    while done == "0" {
+        let pos = indexOfFrom(raw, "Name=", toInt(start))
+        if pos < 0 { done = "1" }
+        if done == "0" {
+            let endpos = indexOfFrom(raw, "\n", toInt(pos))
+            if endpos < 0 { endpos = len(raw) + "" }
+            let line = substring(raw, toInt(pos), toInt(endpos))
+            let eq = indexOf(line, "=")
+            if eq >= 0 {
+                let name = trim(substring(line, toInt(eq) + 1, len(line)))
+                if name != "" {
+                    if result == "" {
+                        result = name
+                    } else {
+                        result = result + "\n" + name
+                    }
+                }
             }
+            start = toInt(endpos) + 1 + ""
         }
-
-        start = end + 1
     }
-
+    if result == "" { emit "Unknown GPU" }
     emit result
 }
 
-// -----------------------------
-// VRAM via WMIC AdapterRAM
-// -----------------------------
-func gpu_vram(idx) {
-    let raw = exec("wmic path win32_videocontroller get AdapterRAM /value")
+func get_vram_usage_nvapi(idx) {
+    emit "0,0"
+}
 
-    let start = 0
-    let count = 0
-    let mem = "0"
-
-    while true {
-        let pos = indexOfFrom(raw, "AdapterRAM=", start)
-        if pos < 0 { break }
-
-        let end = indexOfFrom(raw, "\n", pos)
-        if end < 0 { end = len(raw) }
-
-        let line = substring(raw, pos, end)
-        let eq = indexOf(line, "=")
-        if eq >= 0 {
-            let val = substring(line, eq + 1, len(line))
-            if count == idx {
-                mem = val
-                break
-            }
-            count = count + 1
-        }
-
-        start = end + 1
-    }
-
-    emit mem
+func get_vram_registry(idx) {
+    emit "0"
 }
