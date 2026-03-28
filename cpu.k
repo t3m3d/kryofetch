@@ -1,106 +1,23 @@
-import "headers/windows.krh"
+// cpu.k — safe version using WMIC
 
-func getCpuCoreInfo() {
-    // We'll return "cores,threads" as a single string.
-    let cores = "0"
-    let threads = "0"
-
-    // Low-level buffer dance still happens in C after transpile.
-    let len = "0"
-    GetLogicalProcessorInformationEx(RelationProcessorCore, 0, &len)
-
-    let buffer = malloc(len)
-    if buffer == "0" {
-        emit cores + "," + threads
-    }
-
-    if GetLogicalProcessorInformationEx(RelationProcessorCore, buffer, &len) == "0" {
-        free(buffer)
-        emit cores + "," + threads
-    }
-
-    let ptr = buffer
-    let end = buffer + len
-
-    while ptr < end {
-        let info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)ptr
-
-        if info.Relationship == RelationProcessorCore {
-            cores = toInt(cores) + 1 + ""
-
-            let mask = info.Processor.GroupMask[0].Mask
-            let count = "0"
-
-            while mask != 0 {
-                count = toInt(count) + (mask & 1) + ""
-                mask = mask >> 1
-            }
-
-            threads = toInt(threads) + toInt(count) + ""
-        }
-
-        ptr = ptr + info.Size
-    }
-
-    free(buffer)
-
-    emit cores + "," + threads
+func get_cpu_name() {
+    let name = exec("wmic cpu get name /value")
+    // WMIC output looks like: "Name=Intel(R) Core(TM) i7-8700K"
+    let eq = indexOf(name, "=")
+    if eq < 0 { emit "Unknown CPU" }
+    emit substring(name, eq + 1, len(name))
 }
 
-func getArch() {
-    let si = SYSTEM_INFO {}
-    GetNativeSystemInfo(&si)
-
-    let arch = "Unknown"
-
-    if si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 {
-        arch = "x64"
-    } else if si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL {
-        arch = "x86"
-    } else if si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM {
-        arch = "ARM"
-    } else if si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64 {
-        arch = "ARM64"
-    }
-
-    emit arch
+func get_cpu_cores() {
+    let cores = exec("wmic cpu get NumberOfCores /value")
+    let eq = indexOf(cores, "=")
+    if eq < 0 { emit "0" }
+    emit substring(cores, eq + 1, len(cores))
 }
 
-func getCpuBrand() {
-    let buf = "                                                                                                                                "
-    let size = "256"
-
-    let hKey = 0
-    let status = RegOpenKeyExA(
-        HKEY_LOCAL_MACHINE,
-        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
-        0,
-        KEY_READ,
-        &hKey
-    )
-
-    if status != ERROR_SUCCESS {
-        emit "Unknown CPU"
-    }
-
-    let type = "0"
-    let dataSize = size
-
-    status = RegQueryValueExA(
-        hKey,
-        "ProcessorNameString",
-        0,
-        &type,
-        (LPBYTE)buf,
-        &dataSize
-    )
-
-    RegCloseKey(hKey)
-
-    if status != ERROR_SUCCESS || type != REG_SZ {
-        emit "Unknown CPU"
-    }
-
-    // Krypton strings are null-terminated in C, so just emit buf.
-    emit buf
+func get_cpu_threads() {
+    let thr = exec("wmic cpu get NumberOfLogicalProcessors /value")
+    let eq = indexOf(thr, "=")
+    if eq < 0 { emit "0" }
+    emit substring(thr, eq + 1, len(thr))
 }
