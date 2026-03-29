@@ -85,6 +85,11 @@ func nthline(s, lineIdx) {
     emit ""
 }
 
+// rambar: delegates to kframbar() in kfetch_api.h (C handles UTF-8 block chars)
+func rambar(usedMB, totalMB) {
+    emit kframbar(usedMB, totalMB)
+}
+
 func idxfrom(s, sub, start) {
     let slen = len(s)
     let sublen = len(sub)

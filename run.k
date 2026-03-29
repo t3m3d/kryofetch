@@ -51,6 +51,8 @@ func run() {
     let umb  = toInt(tmb) - toInt(fmb) + ""
     let tgb  = toInt(tmb) / 1024 + ""
     let ugb  = toInt(umb) / 1024 + ""
+    let rpct = toInt(umb) * 100 / toInt(tmb) + ""
+    let rb   = rambar(umb, tmb)
 
     let di   = driveinfo()
     let d1 = nthline(di, "0")
@@ -68,6 +70,13 @@ func run() {
     }
     if g1 == "" { g1 = "None" }
 
+    let vd  = gpuvram()
+    let vn  = linecount(vd)
+    let vr1 = ""
+    let vr2 = ""
+    if toInt(vn) >= 1 { vr1 = nthline(vd, "0") }
+    if toInt(vn) >= 2 { vr2 = nthline(vd, "1") }
+
     let tc   = kfconsize()
     let cols = firstpart(tc, ",")
     let rows = afterpart(tc, ",")
@@ -80,7 +89,7 @@ func run() {
     let lb2  = "CPU"
     let v2   = cpu + " (" + cn + "c / " + tn + "t)"
     let lb3  = "RAM"
-    let v3   = ugb + " GB / " + tgb + " GB"
+    let v3   = ugb + " GB / " + tgb + " GB  " + rpct + "%  " + rb
     let lb4  = "Disk"
     let v4   = d1
     let lb5  = ""
@@ -88,9 +97,9 @@ func run() {
     let lb6  = ""
     let v6   = d3
     let lb7  = "GPU"
-    let v7   = g1
+    let v7   = fmtgpu(g1, vr1)
     let lb8  = "GPU2"
-    let v8   = g2
+    let v8   = fmtgpu(g2, vr2)
     let lb9  = "Term"
     let v9   = cols + "x" + rows
     let lb10 = "Uptime"

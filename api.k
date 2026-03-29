@@ -7,4 +7,7 @@ jxt {
     func kfdisk()
     func kfconsize()
     func kfticks()
+    func kfuptimesec()
+    func kfosedition()
+    func kfvram()
 }

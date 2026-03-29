@@ -1,5 +1,5 @@
 func osver() {
-    let raw = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_OperatingSystem).BuildNumber\"")
+    let raw   = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_OperatingSystem).BuildNumber\"")
     let build = trim(raw)
     if build == "" { build = "0" }
     let b = toInt(build)
@@ -9,12 +9,24 @@ func osver() {
     else if b >= 22000 { v = "Windows 11" }
     else if b >= 19041 { v = "Windows 10" }
     else               { v = "Windows (legacy)" }
+
+    let ed = trim(kfosedition())
+    if ed == "Professional"            { ed = "Pro" }
+    if ed == "Core"                    { ed = "Home" }
+    if ed == "ProfessionalWorkstation" { ed = "Pro Workstation" }
+    if ed == "IoTEnterprise"           { ed = "IoT Enterprise" }
+    if ed == "ProfessionalN"           { ed = "Pro N" }
+    if ed == "CoreN"                   { ed = "Home N" }
+    if ed == "CoreSingleLanguage"      { ed = "Home SL" }
+
+    if ed != "" {
+        emit v + " " + ed + " (build " + build + ")"
+    }
     emit v + " (build " + build + ")"
 }
 
 func uptime() {
-    let ms = kfticks()
-    let tsec = toInt(ms) / 1000
+    let tsec = toInt(kfuptimesec())
     let mins  = tsec / 60
     let hrs   = mins / 60
     let days  = hrs / 24

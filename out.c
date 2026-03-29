@@ -1201,9 +1201,6 @@ static char* kr_fround(const char* a) {
 }
 
 static char* kr_fformat(const char* a,const char* prec){char fmt[32],buf[64];snprintf(fmt,32,"%%.%sf",prec);snprintf(buf,64,fmt,atof(a));return kr_str(buf);}
-static char* kr_mkclosure(const char* fn,const char* env){int fl=strlen(fn),el=strlen(env);char* p=_alloc(fl+el+2);memcpy(p,fn,fl);p[fl]='|';memcpy(p+fl+1,env,el+1);return p;}
-static char* kr_closure_fn(const char* c){const char* p=strchr(c,'|');if(!p)return(char*)c;int n=p-c;char* r2=_alloc(n+1);memcpy(r2,c,n);r2[n]=0;return r2;}
-static char* kr_closure_env(const char* c){const char* p=strchr(c,'|');return p?(char*)(p+1):(char*)_K_EMPTY;}
 #include "./kfetch_api.h"
 // --- imported: utils.k ---
 char* ansi(char*);
@@ -1213,6 +1210,7 @@ char* firstpart(char*, char*);
 char* afterpart(char*, char*);
 char* linecount(char*);
 char* nthline(char*, char*);
+char* rambar(char*, char*);
 char* idxfrom(char*, char*, char*);
 // --- imported: cpu.k ---
 char* cpubrand();
@@ -1229,6 +1227,8 @@ char* raminfo();
 char* driveinfo();
 // --- imported: gpu.k ---
 char* gpunames();
+char* gpuvram();
+char* fmtgpu(char*, char*);
 
 char* ansi(char* s) {
     char* esc = kr_fromcharcode(kr_str("27"));
@@ -1260,7 +1260,7 @@ char* vislen(char* s) {
 }
 
 char* padansi(char* s, char* w) {
-    char* vl = kr_toint(((char*(*)(char*))vislen)(s));
+    char* vl = kr_toint(vislen(s));
     char* pad = kr_sub(kr_toint(w), vl);
     char* result = s;
     char* i = kr_str("0");
@@ -1331,6 +1331,10 @@ char* nthline(char* s, char* lineIdx) {
     return kr_str("");
 }
 
+char* rambar(char* usedMB, char* totalMB) {
+    return kframbar(usedMB, totalMB);
+}
+
 char* idxfrom(char* s, char* sub, char* start) {
     char* slen = kr_len(s);
     char* sublen = kr_len(sub);
@@ -1346,7 +1350,7 @@ char* idxfrom(char* s, char* sub, char* start) {
 }
 
 char* cpubrand() {
-    char* raw = ((char*(*)(char*))exec)(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).Name\""));
+    char* raw = exec(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).Name\""));
     char* r = kr_trim(raw);
     if (kr_truthy(kr_eq(r, kr_str("")))) {
         return kr_str("Unknown CPU");
@@ -1355,8 +1359,8 @@ char* cpubrand() {
 }
 
 char* cpucores() {
-    char* cr = ((char*(*)(char*))exec)(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfCores\""));
-    char* tr = ((char*(*)(char*))exec)(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfLogicalProcessors\""));
+    char* cr = exec(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfCores\""));
+    char* tr = exec(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfLogicalProcessors\""));
     char* cores = kr_trim(cr);
     char* threads = kr_trim(tr);
     if (kr_truthy(kr_eq(cores, kr_str("")))) {
@@ -1369,19 +1373,19 @@ char* cpucores() {
 }
 
 char* sysarch() {
-    return kr_trim(((char*(*)(char*))exec)(kr_str("echo %PROCESSOR_ARCHITECTURE%")));
+    return kr_trim(exec(kr_str("echo %PROCESSOR_ARCHITECTURE%")));
 }
 
 char* sysuser() {
-    return kr_trim(((char*(*)(char*))exec)(kr_str("echo %USERNAME%")));
+    return kr_trim(exec(kr_str("echo %USERNAME%")));
 }
 
 char* syshost() {
-    return kr_trim(((char*(*)(char*))exec)(kr_str("echo %COMPUTERNAME%")));
+    return kr_trim(exec(kr_str("echo %COMPUTERNAME%")));
 }
 
 char* osver() {
-    char* raw = ((char*(*)(char*))exec)(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_OperatingSystem).BuildNumber\""));
+    char* raw = exec(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_OperatingSystem).BuildNumber\""));
     char* build = kr_trim(raw);
     if (kr_truthy(kr_eq(build, kr_str("")))) {
         build = kr_str("0");
@@ -1399,12 +1403,36 @@ char* osver() {
     } else {
         v = kr_str("Windows (legacy)");
     }
+    char* ed = kr_trim(kfosedition());
+    if (kr_truthy(kr_eq(ed, kr_str("Professional")))) {
+        ed = kr_str("Pro");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("Core")))) {
+        ed = kr_str("Home");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("ProfessionalWorkstation")))) {
+        ed = kr_str("Pro Workstation");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("IoTEnterprise")))) {
+        ed = kr_str("IoT Enterprise");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("ProfessionalN")))) {
+        ed = kr_str("Pro N");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("CoreN")))) {
+        ed = kr_str("Home N");
+    }
+    if (kr_truthy(kr_eq(ed, kr_str("CoreSingleLanguage")))) {
+        ed = kr_str("Home SL");
+    }
+    if (kr_truthy(kr_neq(ed, kr_str("")))) {
+        return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(v, kr_str(" ")), ed), kr_str(" (build ")), build), kr_str(")"));
+    }
     return kr_plus(kr_plus(kr_plus(v, kr_str(" (build ")), build), kr_str(")"));
 }
 
 char* uptime() {
-    char* ms = ((char*(*)(void))kfticks)();
-    char* tsec = kr_div(kr_toint(ms), kr_str("1000"));
+    char* tsec = kr_toint(kfuptimesec());
     char* mins = kr_div(tsec, kr_str("60"));
     char* hrs = kr_div(mins, kr_str("60"));
     char* days = kr_div(hrs, kr_str("24"));
@@ -1420,15 +1448,15 @@ char* uptime() {
 }
 
 char* raminfo() {
-    return ((char*(*)(void))kfmem)();
+    return kfmem();
 }
 
 char* driveinfo() {
-    return ((char*(*)(void))kfdisk)();
+    return kfdisk();
 }
 
 char* gpunames() {
-    char* raw = ((char*(*)(char*))exec)(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_VideoController).Name\""));
+    char* raw = exec(kr_str("powershell -NoProfile -Command \"(Get-WmiObject Win32_VideoController).Name\""));
     char* result = kr_trim(raw);
     if (kr_truthy(kr_eq(result, kr_str("")))) {
         return kr_str("Unknown GPU");
@@ -1436,68 +1464,101 @@ char* gpunames() {
     return result;
 }
 
+char* gpuvram() {
+    return kr_trim(kfvram());
+}
+
+char* fmtgpu(char* name, char* vramLine) {
+    if (kr_truthy(kr_eq(name, kr_str("")))) {
+        return kr_str("");
+    }
+    if (kr_truthy(kr_eq(vramLine, kr_str("")))) {
+        return name;
+    }
+    char* tb = firstpart(vramLine, kr_str(":"));
+    if (kr_truthy(kr_eq(kr_toint(tb), kr_str("0")))) {
+        return name;
+    }
+    char* n = kr_toint(tb);
+    char* gb = kr_div(n, kr_str("1024"));
+    char* t = kr_sub(kr_div(kr_mul(n, kr_str("10")), kr_str("1024")), kr_mul(gb, kr_str("10")));
+    return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(name, kr_str(" (")), gb), kr_str(".")), t), kr_str(" GB VRAM)"));
+}
+
 char* run();
 
 char* run() {
-    ((char*(*)(void))kfinit)();
-    ((char*(*)(void))kfcls)();
+    kfinit();
+    kfcls();
     char* E = kr_fromcharcode(kr_str("27"));
     char* GRN = kr_plus(E, kr_str("[32;1m"));
     char* CYN = kr_plus(E, kr_str("[36;1m"));
     char* RST = kr_plus(E, kr_str("[0m"));
     char* LW = kr_str("40");
-    char* l0 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m        ,.=:!!t3Z3z.,\\x1b[0m"));
-    char* l1 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m       :tt:::tt333EE3\\x1b[0m"));
-    char* l2 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m       Et:::ztt33EEEL\\x1b[36m @Ee.,      ..,\\x1b[0m"));
-    char* l3 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m      ;tt:::tt333EE7\\x1b[36m ;EEEEEEttttt33#\\x1b[0m"));
-    char* l4 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m     :Et:::zt333EEQ\\x1b[36m  SEEEEEttttt33QL\\x1b[0m"));
-    char* l5 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m     it::::tt333EEF\\x1b[36m @EEEEttttt33F\\x1b[0m"));
-    char* l6 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m    ;3=*^   \"*4EEV\\x1b[36m :EEEEttttt33@.\\x1b[0m"));
-    char* l7 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m    ,.=::::!t=.,\\x1b[34m  @EEEEtttz33QF\\x1b[0m"));
-    char* l8 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m   ;::::::::zt33)\\x1b[34m   \"4EEEtttji\\x1b[0m"));
-    char* l9 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m  :t::::::::tt33.\\x1b[34m :Z3z..    \\x1b[0m"));
-    char* l10 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m  i::::::::zt33F\\x1b[34m AEEEtttt::::ztF\\x1b[0m"));
-    char* l11 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m ;:::::::::t33V\\x1b[34m ;EEEttttt::::t3\\x1b[0m"));
-    char* l12 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m E::::::::zt33L\\x1b[34m @EEEtttt::::z3F\\x1b[0m"));
-    char* l13 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m{3=*^   \"*4E3)\\x1b[34m ;EEEtttt:::::tZ\\x1b[0m"));
-    char* l14 = ((char*(*)(char*))ansi)(kr_str("\\x1b[36m            \\x1b[34m :EEEEtttt::::z7\\x1b[0m"));
-    char* l15 = ((char*(*)(char*))ansi)(kr_str("\\x1b[34m                 \"VEzjt:;;z>*\\x1b[0m"));
-    char* usr = ((char*(*)(void))sysuser)();
-    char* host = ((char*(*)(void))syshost)();
-    char* arch = ((char*(*)(void))sysarch)();
-    char* os = ((char*(*)(void))osver)();
-    char* cpu = ((char*(*)(void))cpubrand)();
-    char* ci = ((char*(*)(void))cpucores)();
-    char* cn = ((char*(*)(char*,char*))firstpart)(ci, kr_str(","));
-    char* tn = ((char*(*)(char*,char*))afterpart)(ci, kr_str(","));
-    char* mi = ((char*(*)(void))raminfo)();
-    char* tmb = ((char*(*)(char*,char*))firstpart)(mi, kr_str(","));
-    char* fmb = ((char*(*)(char*,char*))afterpart)(mi, kr_str(","));
+    char* l0 = ansi(kr_str("[34m        ,.=:!!t3Z3z.,[0m"));
+    char* l1 = ansi(kr_str("[34m       :tt:::tt333EE3[0m"));
+    char* l2 = ansi(kr_str("[34m       Et:::ztt33EEEL[36m @Ee.,      ..,[0m"));
+    char* l3 = ansi(kr_str("[34m      ;tt:::tt333EE7[36m ;EEEEEEttttt33#[0m"));
+    char* l4 = ansi(kr_str("[34m     :Et:::zt333EEQ[36m  SEEEEEttttt33QL[0m"));
+    char* l5 = ansi(kr_str("[34m     it::::tt333EEF[36m @EEEEttttt33F[0m"));
+    char* l6 = ansi(kr_str("[34m    ;3=*^   \"*4EEV[36m :EEEEttttt33@.[0m"));
+    char* l7 = ansi(kr_str("[36m    ,.=::::!t=.,[34m  @EEEEtttz33QF[0m"));
+    char* l8 = ansi(kr_str("[36m   ;::::::::zt33)[34m   \"4EEEtttji[0m"));
+    char* l9 = ansi(kr_str("[36m  :t::::::::tt33.[34m :Z3z..    [0m"));
+    char* l10 = ansi(kr_str("[36m  i::::::::zt33F[34m AEEEtttt::::ztF[0m"));
+    char* l11 = ansi(kr_str("[36m ;:::::::::t33V[34m ;EEEttttt::::t3[0m"));
+    char* l12 = ansi(kr_str("[36m E::::::::zt33L[34m @EEEtttt::::z3F[0m"));
+    char* l13 = ansi(kr_str("[36m{3=*^   \"*4E3)[34m ;EEEtttt:::::tZ[0m"));
+    char* l14 = ansi(kr_str("[36m            [34m :EEEEtttt::::z7[0m"));
+    char* l15 = ansi(kr_str("[34m                 \"VEzjt:;;z>*[0m"));
+    char* usr = sysuser();
+    char* host = syshost();
+    char* arch = sysarch();
+    char* os = osver();
+    char* cpu = cpubrand();
+    char* ci = cpucores();
+    char* cn = firstpart(ci, kr_str(","));
+    char* tn = afterpart(ci, kr_str(","));
+    char* mi = raminfo();
+    char* tmb = firstpart(mi, kr_str(","));
+    char* fmb = afterpart(mi, kr_str(","));
     char* umb = kr_plus(kr_sub(kr_toint(tmb), kr_toint(fmb)), kr_str(""));
     char* tgb = kr_plus(kr_div(kr_toint(tmb), kr_str("1024")), kr_str(""));
     char* ugb = kr_plus(kr_div(kr_toint(umb), kr_str("1024")), kr_str(""));
-    char* di = ((char*(*)(void))driveinfo)();
-    char* d1 = ((char*(*)(char*,char*))nthline)(di, kr_str("0"));
-    char* d2 = ((char*(*)(char*,char*))nthline)(di, kr_str("1"));
-    char* d3 = ((char*(*)(char*,char*))nthline)(di, kr_str("2"));
-    char* gp = ((char*(*)(void))gpunames)();
-    char* ng = ((char*(*)(char*))linecount)(gp);
+    char* rpct = kr_plus(kr_div(kr_mul(kr_toint(umb), kr_str("100")), kr_toint(tmb)), kr_str(""));
+    char* rb = rambar(umb, tmb);
+    char* di = driveinfo();
+    char* d1 = nthline(di, kr_str("0"));
+    char* d2 = nthline(di, kr_str("1"));
+    char* d3 = nthline(di, kr_str("2"));
+    char* gp = gpunames();
+    char* ng = linecount(gp);
     char* g1 = kr_str("");
     char* g2 = kr_str("");
     if (kr_truthy(kr_eq(ng, kr_str("1")))) {
         g1 = gp;
     }
     if (kr_truthy(kr_gte(kr_toint(ng), kr_str("2")))) {
-        g1 = ((char*(*)(char*,char*))nthline)(gp, kr_str("0"));
-        g2 = ((char*(*)(char*,char*))nthline)(gp, kr_str("1"));
+        g1 = nthline(gp, kr_str("0"));
+        g2 = nthline(gp, kr_str("1"));
     }
     if (kr_truthy(kr_eq(g1, kr_str("")))) {
         g1 = kr_str("None");
     }
-    char* tc = ((char*(*)(void))kfconsize)();
-    char* cols = ((char*(*)(char*,char*))firstpart)(tc, kr_str(","));
-    char* rows = ((char*(*)(char*,char*))afterpart)(tc, kr_str(","));
-    char* up = ((char*(*)(void))uptime)();
+    char* vd = gpuvram();
+    char* vn = linecount(vd);
+    char* vr1 = kr_str("");
+    char* vr2 = kr_str("");
+    if (kr_truthy(kr_gte(kr_toint(vn), kr_str("1")))) {
+        vr1 = nthline(vd, kr_str("0"));
+    }
+    if (kr_truthy(kr_gte(kr_toint(vn), kr_str("2")))) {
+        vr2 = nthline(vd, kr_str("1"));
+    }
+    char* tc = kfconsize();
+    char* cols = firstpart(tc, kr_str(","));
+    char* rows = afterpart(tc, kr_str(","));
+    char* up = uptime();
     char* lb0 = kr_str("User");
     char* v0 = kr_plus(kr_plus(usr, kr_str("@")), host);
     char* lb1 = kr_str("OS");
@@ -1505,7 +1566,7 @@ char* run() {
     char* lb2 = kr_str("CPU");
     char* v2 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(cpu, kr_str(" (")), cn), kr_str("c / ")), tn), kr_str("t)"));
     char* lb3 = kr_str("RAM");
-    char* v3 = kr_plus(kr_plus(kr_plus(ugb, kr_str(" GB / ")), tgb), kr_str(" GB"));
+    char* v3 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(ugb, kr_str(" GB / ")), tgb), kr_str(" GB  ")), rpct), kr_str("%  ")), rb);
     char* lb4 = kr_str("Disk");
     char* v4 = d1;
     char* lb5 = kr_str("");
@@ -1513,9 +1574,9 @@ char* run() {
     char* lb6 = kr_str("");
     char* v6 = d3;
     char* lb7 = kr_str("GPU");
-    char* v7 = g1;
+    char* v7 = fmtgpu(g1, vr1);
     char* lb8 = kr_str("GPU2");
-    char* v8 = g2;
+    char* v8 = fmtgpu(g2, vr2);
     char* lb9 = kr_str("Term");
     char* v9 = kr_plus(kr_plus(cols, kr_str("x")), rows);
     char* lb10 = kr_str("Uptime");
@@ -1625,7 +1686,7 @@ char* run() {
                 info = kr_plus(kr_str("       "), v);
             }
         }
-        kr_print(kr_plus(kr_plus(((char*(*)(char*,char*))padansi)(logo, kr_toint(LW)), kr_str("  ")), info));
+        kr_print(kr_plus(kr_plus(padansi(logo, kr_toint(LW)), kr_str("  ")), info));
         idx = kr_plus(kr_plus(kr_toint(idx), kr_str("1")), kr_str(""));
     }
     kr_print(kr_str(""));
@@ -1635,13 +1696,13 @@ char* run() {
     kr_str("");
     run;
     kr_str("");
-    ((char*(*)(void))run)();
+    run();
 }
 
 int main(int argc, char** argv) {
     _argc = argc; _argv = argv;
     srand((unsigned)time(NULL));
-    ((char*(*)(void))run)();
+    run();
     return 0;
 }
 
