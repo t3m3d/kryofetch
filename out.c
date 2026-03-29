@@ -1,3 +1,7 @@
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,8 +108,22 @@ static int kr_truthy(const char* s) {
     return 1;
 }
 
+static HANDLE _con_handle = NULL;
+static HANDLE _get_con() {
+    if (!_con_handle) {
+        _con_handle = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        DWORD mode = 0;
+        GetConsoleMode(_con_handle, &mode);
+        SetConsoleMode(_con_handle, mode | 0x0004);
+    }
+    return _con_handle;
+}
 static char* kr_print(const char* s) {
-    printf("%s\n", s);
+    HANDLE h = _get_con();
+    DWORD written;
+    WriteConsoleA(h, s, (DWORD)strlen(s), &written, NULL);
+    WriteConsoleA(h, "\n", 1, &written, NULL);
     return _K_EMPTY;
 }
 
@@ -1169,7 +1187,7 @@ static char* kr_listfilter(const char* lst, const char* val) {
 }
 
 #include <math.h>
-static char* kr_tofloat(const char* s) {
+static const char* kr_tofloat(const char* s) {
     return s;
 }
 
@@ -1489,28 +1507,29 @@ char* run();
 
 char* run() {
     kfinit();
-    kfcls();
+    /* Ensure VT processing is active */
+    { HANDLE _h = GetStdHandle(STD_OUTPUT_HANDLE); DWORD _m = 0; GetConsoleMode(_h, &_m); SetConsoleMode(_h, _m | 0x0004); }
     char* E = kr_fromcharcode(kr_str("27"));
     char* GRN = kr_plus(E, kr_str("[32;1m"));
     char* CYN = kr_plus(E, kr_str("[36;1m"));
     char* RST = kr_plus(E, kr_str("[0m"));
     char* LW = kr_str("40");
-    char* l0 = ansi(kr_str("[34m        ,.=:!!t3Z3z.,[0m"));
-    char* l1 = ansi(kr_str("[34m       :tt:::tt333EE3[0m"));
-    char* l2 = ansi(kr_str("[34m       Et:::ztt33EEEL[36m @Ee.,      ..,[0m"));
-    char* l3 = ansi(kr_str("[34m      ;tt:::tt333EE7[36m ;EEEEEEttttt33#[0m"));
-    char* l4 = ansi(kr_str("[34m     :Et:::zt333EEQ[36m  SEEEEEttttt33QL[0m"));
-    char* l5 = ansi(kr_str("[34m     it::::tt333EEF[36m @EEEEttttt33F[0m"));
-    char* l6 = ansi(kr_str("[34m    ;3=*^   \"*4EEV[36m :EEEEttttt33@.[0m"));
-    char* l7 = ansi(kr_str("[36m    ,.=::::!t=.,[34m  @EEEEtttz33QF[0m"));
-    char* l8 = ansi(kr_str("[36m   ;::::::::zt33)[34m   \"4EEEtttji[0m"));
-    char* l9 = ansi(kr_str("[36m  :t::::::::tt33.[34m :Z3z..    [0m"));
-    char* l10 = ansi(kr_str("[36m  i::::::::zt33F[34m AEEEtttt::::ztF[0m"));
-    char* l11 = ansi(kr_str("[36m ;:::::::::t33V[34m ;EEEttttt::::t3[0m"));
-    char* l12 = ansi(kr_str("[36m E::::::::zt33L[34m @EEEtttt::::z3F[0m"));
-    char* l13 = ansi(kr_str("[36m{3=*^   \"*4E3)[34m ;EEEtttt:::::tZ[0m"));
-    char* l14 = ansi(kr_str("[36m            [34m :EEEEtttt::::z7[0m"));
-    char* l15 = ansi(kr_str("[34m                 \"VEzjt:;;z>*[0m"));
+    char* l0 = ansi(kr_str("[34m        ,.=:!!t3Z3z.,[0m"));
+    char* l1 = ansi(kr_str("[34m       :tt:::tt333EE3[0m"));
+    char* l2 = ansi(kr_str("[34m       Et:::ztt33EEEL[36m @Ee.,      ..,[0m"));
+    char* l3 = ansi(kr_str("[34m      ;tt:::tt333EE7[36m ;EEEEEEttttt33#[0m"));
+    char* l4 = ansi(kr_str("[34m     :Et:::zt333EEQ[36m  SEEEEEttttt33QL[0m"));
+    char* l5 = ansi(kr_str("[34m     it::::tt333EEF[36m @EEEEttttt33F[0m"));
+    char* l6 = ansi(kr_str("[34m    ;3=*^   \"*4EEV[36m :EEEEttttt33@.[0m"));
+    char* l7 = ansi(kr_str("[36m    ,.=::::!t=.,[34m  @EEEEtttz33QF[0m"));
+    char* l8 = ansi(kr_str("[36m   ;::::::::zt33)[34m   \"4EEEtttji[0m"));
+    char* l9 = ansi(kr_str("[36m  :t::::::::tt33.[34m :Z3z..    [0m"));
+    char* l10 = ansi(kr_str("[36m  i::::::::zt33F[34m AEEEtttt::::ztF[0m"));
+    char* l11 = ansi(kr_str("[36m ;:::::::::t33V[34m ;EEEttttt::::t3[0m"));
+    char* l12 = ansi(kr_str("[36m E::::::::zt33L[34m @EEEtttt::::z3F[0m"));
+    char* l13 = ansi(kr_str("[36m{3=*^   \"*4E3)[34m ;EEEtttt:::::tZ[0m"));
+    char* l14 = ansi(kr_str("[36m            [34m :EEEEtttt::::z7[0m"));
+    char* l15 = ansi(kr_str("[34m                 \"VEzjt:;;z>*[0m"));
     char* usr = sysuser();
     char* host = syshost();
     char* arch = sysarch();
