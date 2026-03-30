@@ -182,7 +182,7 @@ func run() {
         let info = ""
         if lb != "" {
             let lbc    = lb + ":"
-            let padlen = 9 - len(lbc)
+            let padlen = 7 - len(lbc)
             let pad    = ""
             let pi     = "0"
             while toInt(pi) < padlen {
@@ -191,7 +191,7 @@ func run() {
             }
             info = GRN + lbc + RST + pad + v
         } else {
-            if v != "" { info = "         " + v }
+            if v != "" { info = "       " + v }
         }
 
         kp(padansi(logo, toInt(LW)) + "  " + info)
