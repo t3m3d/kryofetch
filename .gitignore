@@ -2,3 +2,4 @@
 !kcc.exe
 out.c
 *_err.txt
+kfetch_api.h
