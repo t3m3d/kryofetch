@@ -2,7 +2,8 @@
 
 A Windows system information fetch tool written in [Krypton](https://github.com/KryptonBytes/krypton) — a self-hosting language that compiles to C.
 
-<img width="1002" height="450" alt="image" src="https://github.com/user-attachments/assets/f34a439b-cdbb-420e-bc79-052dc3cd429d" />
+<img width="1175" height="459" alt="image" src="https://github.com/user-attachments/assets/f846d056-2c88-460a-a651-fd3c4a9b3ef0" />
+
 
 ## Features
 
