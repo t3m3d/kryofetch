@@ -1,7 +1,6 @@
 *.exe
 !kcc.exe
 *.c
-*test*.*
+*_err.txt
 kcc_err.txt
-*.o
-*.obj
+headers/
