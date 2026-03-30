@@ -1,3 +1,5 @@
 *.exe
+!kcc.exe
 *.c
 *test*.*
+kcc_err.txt
