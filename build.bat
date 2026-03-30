@@ -12,7 +12,7 @@ if errorlevel 1 (
 )
 
 echo [2/2] Compiling C to executable...
-%GCC% out.c -o kryofetch.exe -lm -w -lsetupapi -ladvapi32
+%GCC% out.c -o kryofetch.exe -lm -w -lsetupapi -ladvapi32 -lpdh
 if errorlevel 1 (
     echo ERROR: C compilation failed.
     exit /b 1

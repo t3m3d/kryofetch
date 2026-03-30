@@ -2,5 +2,3 @@
 !kcc.exe
 *.c
 *_err.txt
-kcc_err.txt
-headers/

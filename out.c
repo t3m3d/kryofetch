@@ -1,7 +1,3 @@
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
-#endif
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,22 +104,8 @@ static int kr_truthy(const char* s) {
     return 1;
 }
 
-static HANDLE _con_handle = NULL;
-static HANDLE _get_con() {
-    if (!_con_handle) {
-        _con_handle = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE,
-            FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-        DWORD mode = 0;
-        GetConsoleMode(_con_handle, &mode);
-        SetConsoleMode(_con_handle, mode | 0x0004);
-    }
-    return _con_handle;
-}
 static char* kr_print(const char* s) {
-    HANDLE h = _get_con();
-    DWORD written;
-    WriteConsoleA(h, s, (DWORD)strlen(s), &written, NULL);
-    WriteConsoleA(h, "\n", 1, &written, NULL);
+    printf("%s\n", s);
     return _K_EMPTY;
 }
 
@@ -1187,7 +1169,7 @@ static char* kr_listfilter(const char* lst, const char* val) {
 }
 
 #include <math.h>
-static const char* kr_tofloat(const char* s) {
+static char* kr_tofloat(const char* s) {
     return s;
 }
 
@@ -1229,6 +1211,7 @@ char* afterpart(char*, char*);
 char* linecount(char*);
 char* nthline(char*, char*);
 char* rambar(char*, char*);
+char* colorpalette();
 char* idxfrom(char*, char*, char*);
 // --- imported: cpu.k ---
 char* cpubrand();
@@ -1351,6 +1334,24 @@ char* nthline(char* s, char* lineIdx) {
 
 char* rambar(char* usedMB, char* totalMB) {
     return kframbar(usedMB, totalMB);
+}
+
+char* colorpalette() {
+    char* E = kr_fromcharcode(kr_str("27"));
+    char* RST = kr_plus(E, kr_str("[0m"));
+    char* blk = kr_str("   ");
+    char* r1 = kr_str("");
+    char* r2 = kr_str("");
+    char* i = kr_str("0");
+    while (kr_truthy(kr_lt(kr_toint(i), kr_str("8")))) {
+        char* c1 = kr_plus(kr_plus(kr_toint(i), kr_str("40")), kr_str(""));
+        char* c2 = kr_plus(kr_plus(kr_toint(i), kr_str("100")), kr_str(""));
+        r1 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(r1, E), kr_str("[")), c1), kr_str("m")), blk);
+        r2 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(r2, E), kr_str("[")), c2), kr_str("m")), blk);
+        i = kr_plus(kr_plus(kr_toint(i), kr_str("1")), kr_str(""));
+    }
+    kr_print(kr_plus(kr_plus(kr_str("  "), r1), RST));
+    kr_print(kr_plus(kr_plus(kr_str("  "), r2), RST));
 }
 
 char* idxfrom(char* s, char* sub, char* start) {
@@ -1494,42 +1495,52 @@ char* fmtgpu(char* name, char* vramLine) {
         return name;
     }
     char* tb = firstpart(vramLine, kr_str(":"));
+    char* ub = afterpart(vramLine, kr_str(":"));
     if (kr_truthy(kr_eq(kr_toint(tb), kr_str("0")))) {
         return name;
     }
     char* n = kr_toint(tb);
     char* gb = kr_div(n, kr_str("1024"));
     char* t = kr_sub(kr_div(kr_mul(n, kr_str("10")), kr_str("1024")), kr_mul(gb, kr_str("10")));
+    if (kr_truthy(kr_gt(kr_toint(ub), kr_str("0")))) {
+        char* un = kr_toint(ub);
+        char* ugb = kr_div(un, kr_str("1024"));
+        char* ut = kr_sub(kr_div(kr_mul(un, kr_str("10")), kr_str("1024")), kr_mul(ugb, kr_str("10")));
+        char* pct = kr_div(kr_mul(un, kr_str("100")), n);
+        char* bar = kframbar(ub, tb);
+        return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(name, kr_str("  ")), ugb), kr_str(".")), ut), kr_str(" GB / ")), gb), kr_str(".")), t), kr_str(" GB  ")), pct), kr_str("%  ")), bar);
+    }
     return kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(name, kr_str(" (")), gb), kr_str(".")), t), kr_str(" GB VRAM)"));
 }
 
 char* run();
 
 char* run() {
+    kfcls();
     kfinit();
-    /* Ensure VT processing is active */
-    { HANDLE _h = GetStdHandle(STD_OUTPUT_HANDLE); DWORD _m = 0; GetConsoleMode(_h, &_m); SetConsoleMode(_h, _m | 0x0004); }
     char* E = kr_fromcharcode(kr_str("27"));
     char* GRN = kr_plus(E, kr_str("[32;1m"));
     char* CYN = kr_plus(E, kr_str("[36;1m"));
     char* RST = kr_plus(E, kr_str("[0m"));
+    char* BLU = kr_plus(E, kr_str("[34m"));
+    char* CY = kr_plus(E, kr_str("[36m"));
     char* LW = kr_str("40");
-    char* l0 = ansi(kr_str("[34m        ,.=:!!t3Z3z.,[0m"));
-    char* l1 = ansi(kr_str("[34m       :tt:::tt333EE3[0m"));
-    char* l2 = ansi(kr_str("[34m       Et:::ztt33EEEL[36m @Ee.,      ..,[0m"));
-    char* l3 = ansi(kr_str("[34m      ;tt:::tt333EE7[36m ;EEEEEEttttt33#[0m"));
-    char* l4 = ansi(kr_str("[34m     :Et:::zt333EEQ[36m  SEEEEEttttt33QL[0m"));
-    char* l5 = ansi(kr_str("[34m     it::::tt333EEF[36m @EEEEttttt33F[0m"));
-    char* l6 = ansi(kr_str("[34m    ;3=*^   \"*4EEV[36m :EEEEttttt33@.[0m"));
-    char* l7 = ansi(kr_str("[36m    ,.=::::!t=.,[34m  @EEEEtttz33QF[0m"));
-    char* l8 = ansi(kr_str("[36m   ;::::::::zt33)[34m   \"4EEEtttji[0m"));
-    char* l9 = ansi(kr_str("[36m  :t::::::::tt33.[34m :Z3z..    [0m"));
-    char* l10 = ansi(kr_str("[36m  i::::::::zt33F[34m AEEEtttt::::ztF[0m"));
-    char* l11 = ansi(kr_str("[36m ;:::::::::t33V[34m ;EEEttttt::::t3[0m"));
-    char* l12 = ansi(kr_str("[36m E::::::::zt33L[34m @EEEtttt::::z3F[0m"));
-    char* l13 = ansi(kr_str("[36m{3=*^   \"*4E3)[34m ;EEEtttt:::::tZ[0m"));
-    char* l14 = ansi(kr_str("[36m            [34m :EEEEtttt::::z7[0m"));
-    char* l15 = ansi(kr_str("[34m                 \"VEzjt:;;z>*[0m"));
+    char* l0 = kr_plus(kr_plus(BLU, kr_str("        ,.=:!!t3Z3z.,")), RST);
+    char* l1 = kr_plus(kr_plus(BLU, kr_str("       :tt:::tt333EE3")), RST);
+    char* l2 = kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("       Et:::ztt33EEEL")), CY), kr_str(" @Ee.,      ..,")), RST);
+    char* l3 = kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("      ;tt:::tt333EE7")), CY), kr_str(" ;EEEEEEttttt33#")), RST);
+    char* l4 = kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("     :Et:::zt333EEQ")), CY), kr_str("  SEEEEEttttt33QL")), RST);
+    char* l5 = kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("     it::::tt333EEF")), CY), kr_str(" @EEEEttttt33F")), RST);
+    char* l6 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("    ;3=*^   ")), kr_str("\"")), kr_str("*4EEV")), CY), kr_str(" :EEEEttttt33@.")), RST);
+    char* l7 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("    ,.=::::!t=.,")), BLU), kr_str("  @EEEEtttz33QF")), RST);
+    char* l8 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("   ;::::::::zt33)")), BLU), kr_str("   ")), kr_str("\"")), kr_str("4EEEtttji")), RST);
+    char* l9 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("  :t::::::::tt33.")), BLU), kr_str(" :Z3z..    ")), RST);
+    char* l10 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("  i::::::::zt33F")), BLU), kr_str(" AEEEtttt::::ztF")), RST);
+    char* l11 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str(" ;:::::::::t33V")), BLU), kr_str(" ;EEEttttt::::t3")), RST);
+    char* l12 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str(" E::::::::zt33L")), BLU), kr_str(" @EEEtttt::::z3F")), RST);
+    char* l13 = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("{3=*^   ")), kr_str("\"")), kr_str("*4E3)")), BLU), kr_str(" ;EEEtttt:::::tZ")), RST);
+    char* l14 = kr_plus(kr_plus(kr_plus(kr_plus(CY, kr_str("            ")), BLU), kr_str(" :EEEEtttt::::z7")), RST);
+    char* l15 = kr_plus(kr_plus(kr_plus(kr_plus(BLU, kr_str("                 ")), kr_str("\"")), kr_str("VEzjt:;;z>*")), RST);
     char* usr = sysuser();
     char* host = syshost();
     char* arch = sysarch();
@@ -1578,6 +1589,11 @@ char* run() {
     char* cols = firstpart(tc, kr_str(","));
     char* rows = afterpart(tc, kr_str(","));
     char* up = uptime();
+    char* sh = kfshell();
+    char* tnm = kfterminal();
+    char* res = kfresolution();
+    char* thm = kftheme();
+    char* bat = kfbattery();
     char* lb0 = kr_str("User");
     char* v0 = kr_plus(kr_plus(usr, kr_str("@")), host);
     char* lb1 = kr_str("OS");
@@ -1594,12 +1610,46 @@ char* run() {
     char* v6 = d3;
     char* lb7 = kr_str("GPU");
     char* v7 = fmtgpu(g1, vr1);
-    char* lb8 = kr_str("GPU2");
-    char* v8 = fmtgpu(g2, vr2);
-    char* lb9 = kr_str("Term");
-    char* v9 = kr_plus(kr_plus(cols, kr_str("x")), rows);
-    char* lb10 = kr_str("Uptime");
-    char* v10 = up;
+    char* lb8 = kr_str("");
+    char* v8 = kr_str("");
+    if (kr_truthy(kr_neq(g2, kr_str("")))) {
+        lb8 = kr_str("GPU2");
+        v8 = fmtgpu(g2, vr2);
+    }
+    char* lb9 = kr_str("Shell");
+    char* v9 = sh;
+    char* lb10 = kr_str("");
+    char* v10 = kr_str("");
+    char* termv = kr_str("");
+    if (kr_truthy(kr_neq(tnm, kr_str("")))) {
+        termv = tnm;
+    }
+    if (kr_truthy(kr_neq(cols, kr_str("0")))) {
+        if (kr_truthy(kr_neq(termv, kr_str("")))) {
+            termv = kr_plus(kr_plus(kr_plus(kr_plus(termv, kr_str(" ")), cols), kr_str("x")), rows);
+        }
+        if (kr_truthy(kr_eq(termv, kr_str("")))) {
+            termv = kr_plus(kr_plus(cols, kr_str("x")), rows);
+        }
+    }
+    if (kr_truthy(kr_neq(termv, kr_str("")))) {
+        lb10 = kr_str("Term");
+        v10 = termv;
+    }
+    char* lb11 = kr_str("Res");
+    char* v11 = res;
+    char* lb12 = kr_str("Uptime");
+    char* v12 = up;
+    char* lb13 = kr_str("Pkgs");
+    char* v13 = kfpkgs();
+    char* lb14 = kr_str("Theme");
+    char* v14 = thm;
+    char* lb15 = kr_str("");
+    char* v15 = kr_str("");
+    if (kr_truthy(kr_neq(bat, kr_str("")))) {
+        lb15 = kr_str("Battery");
+        v15 = bat;
+    }
     char* idx = kr_str("0");
     while (kr_truthy(kr_lt(kr_toint(idx), kr_str("16")))) {
         char* logo = kr_str("");
@@ -1697,6 +1747,26 @@ char* run() {
             lb = lb10;
             v = v10;
         }
+        if (kr_truthy(kr_eq(idx, kr_str("11")))) {
+            lb = lb11;
+            v = v11;
+        }
+        if (kr_truthy(kr_eq(idx, kr_str("12")))) {
+            lb = lb12;
+            v = v12;
+        }
+        if (kr_truthy(kr_eq(idx, kr_str("13")))) {
+            lb = lb13;
+            v = v13;
+        }
+        if (kr_truthy(kr_eq(idx, kr_str("14")))) {
+            lb = lb14;
+            v = v14;
+        }
+        if (kr_truthy(kr_eq(idx, kr_str("15")))) {
+            lb = lb15;
+            v = v15;
+        }
         char* info = kr_str("");
         if (kr_truthy(kr_neq(lb, kr_str("")))) {
             info = kr_plus(kr_plus(kr_plus(kr_plus(kr_plus(GRN, lb), kr_str(":")), RST), kr_str(" ")), v);
@@ -1710,6 +1780,8 @@ char* run() {
     }
     kr_print(kr_str(""));
     kr_print(kr_plus(kr_plus(kr_plus(CYN, kr_str("  KryptonFetch")), RST), kr_str(" by KryptonBytes")));
+    kr_print(kr_str(""));
+    colorpalette();
     kr_print(kr_str(""));
     return kr_str("");
     kr_str("");

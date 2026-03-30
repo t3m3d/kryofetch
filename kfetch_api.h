@@ -4,6 +4,8 @@
 #define _WIN32_WINNT 0x0600
 #endif
 #include <windows.h>
+#include <tlhelp32.h>
+#include <pdh.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -133,77 +135,123 @@ char* kfosedition() {
     return _kf_edition_buf;
 }
 
-/* ── NVAPI thin-layer for GPU VRAM ───────────────────────────────────── */
-#define KF_NVAPI_OK 0
-typedef int          KfNvStatus;
-typedef unsigned int KfNvU32;
+/*
+ * kfvram – GPU VRAM info via DXGI (accurate 64-bit DedicatedVideoMemory,
+ * works for NVIDIA/AMD/Intel on all GPU generations including Blackwell).
+ * Format per line: "totalMB:0"  (newline-separated, up to 2 GPUs)
+ * Falls back to registry scan if DXGI is unavailable.
+ */
+
+/* Minimal DXGI adapter desc — matches IDXGIAdapter::GetDesc ABI exactly */
 typedef struct {
-    KfNvU32 version;
-    KfNvU32 dedicatedVideoMemory;           /* total  VRAM, KB */
-    KfNvU32 availableDedicatedVideoMemory;  /* free   VRAM, KB */
-    KfNvU32 systemVideoMemory;
-    KfNvU32 sharedSystemMemory;
-} KfNvMemInfo;
-#define KF_NV_MEM_VER (sizeof(KfNvMemInfo) | (1 << 16))
+    WCHAR  Description[128];
+    UINT   VendorId, DeviceId, SubSysId, Revision;
+    SIZE_T DedicatedVideoMemory, DedicatedSystemMemory, SharedSystemMemory;
+    LUID   AdapterLuid;
+} KfDxgiAdapterDesc;
 
-typedef KfNvStatus (__cdecl *KfNvQI_t)(unsigned int);
-typedef KfNvStatus (__cdecl *KfNvInit_t)(void);
-typedef KfNvStatus (__cdecl *KfNvEnum_t)(void**, KfNvU32*);
-typedef KfNvStatus (__cdecl *KfNvMem_t)(void*, KfNvMemInfo*);
+/* kf_pdh_gpu_used_mb – system-wide dedicated VRAM usage via PDH performance
+ * counters (same source as Task Manager). Returns MB, or 0 on failure.     */
+static unsigned long long kf_pdh_gpu_used_mb(void) {
+    PDH_HQUERY   hQuery   = NULL;
+    PDH_HCOUNTER hCounter = NULL;
+    unsigned long long usedBytes = 0;
 
-static KfNvQI_t   _kfNvQI   = NULL;
-static KfNvInit_t _kfNvInit = NULL;
-static KfNvEnum_t _kfNvEnum = NULL;
-static KfNvMem_t  _kfNvMem  = NULL;
-static int        _kfNvState = -1;
+    if (PdhOpenQueryA(NULL, 0, &hQuery) != ERROR_SUCCESS) return 0;
+    /* "GPU Adapter Memory\Dedicated Usage" – bytes of dedicated VRAM in use */
+    if (PdhAddEnglishCounterA(hQuery,
+            "\\GPU Adapter Memory(*)\\Dedicated Usage",
+            0, &hCounter) != ERROR_SUCCESS) {
+        PdhCloseQuery(hQuery); return 0;
+    }
+    PdhCollectQueryData(hQuery);
 
-static int kf_nv_init(void) {
-    if (_kfNvState >= 0) return _kfNvState;
-    HMODULE h = LoadLibraryA("nvapi64.dll");
-    if (!h) { _kfNvState = 0; return 0; }
-    _kfNvQI = (KfNvQI_t)GetProcAddress(h, "nvapi_QueryInterface");
-    if (!_kfNvQI) { _kfNvState = 0; return 0; }
-    _kfNvInit = (KfNvInit_t)(uintptr_t)_kfNvQI(0x0150E828);
-    _kfNvEnum = (KfNvEnum_t)(uintptr_t)_kfNvQI(0xE5AC921F);
-    _kfNvMem  = (KfNvMem_t) (uintptr_t)_kfNvQI(0x0703F2E2);
-    if (!_kfNvInit || !_kfNvEnum || !_kfNvMem) { _kfNvState = 0; return 0; }
-    _kfNvState = (_kfNvInit() == KF_NVAPI_OK) ? 1 : 0;
-    return _kfNvState;
+    DWORD bufSz = 0, itemCnt = 0;
+    PdhGetFormattedCounterArrayA(hCounter, PDH_FMT_LARGE, &bufSz, &itemCnt, NULL);
+    if (bufSz > 0) {
+        PDH_FMT_COUNTERVALUE_ITEM_A *items =
+            (PDH_FMT_COUNTERVALUE_ITEM_A*)malloc(bufSz);
+        if (items) {
+            if (PdhGetFormattedCounterArrayA(hCounter, PDH_FMT_LARGE,
+                    &bufSz, &itemCnt, items) == ERROR_SUCCESS) {
+                DWORD j;
+                for (j = 0; j < itemCnt; j++) {
+                    if (items[j].FmtValue.CStatus == 0 ||
+                            items[j].FmtValue.CStatus == 0x00000200L)
+                        usedBytes += (unsigned long long)items[j].FmtValue.largeValue;
+                }
+            }
+            free(items);
+        }
+    }
+    PdhCloseQuery(hQuery);
+    return usedBytes / (1024ULL * 1024ULL);
 }
 
-/*
- * kfvram – GPU VRAM info, one entry per GPU, newline-separated.
- * Format per line: "totalMB:usedMB"  (usedMB=0 means usage unavailable)
- *
- * Tries NVAPI first (NVIDIA only, gives real used/free).
- * Falls back to registry scan (total only, works for AMD/Intel too).
- */
 static char _kf_vram_buf[256];
 char* kfvram() {
     _kf_vram_buf[0] = '\0';
 
-    /* ── NVAPI path ── */
-    if (kf_nv_init()) {
-        void    *handles[16] = {0};
-        KfNvU32  count = 0;
-        if (_kfNvEnum(handles, &count) == KF_NVAPI_OK && count > 0) {
-            KfNvU32 i;
-            for (i = 0; i < count && i < 2; i++) {
-                KfNvMemInfo info;
-                memset(&info, 0, sizeof(info));
-                info.version = KF_NV_MEM_VER;
-                if (_kfNvMem(handles[i], &info) == KF_NVAPI_OK) {
-                    unsigned long long tot  = (unsigned long long)info.dedicatedVideoMemory / 1024ULL;
-                    unsigned long long free_ = (unsigned long long)info.availableDedicatedVideoMemory / 1024ULL;
-                    unsigned long long used = (tot > free_) ? tot - free_ : 0;
-                    char entry[64];
-                    snprintf(entry, sizeof(entry), "%llu:%llu", tot, used);
-                    if (_kf_vram_buf[0] != '\0') strcat(_kf_vram_buf, "\n");
-                    strcat(_kf_vram_buf, entry);
+    /* ── DXGI path ──
+     * IDXGIFactory  vtable slots: [0-2]=IUnknown [3-6]=IDXGIObject
+     *                             [7]=EnumAdapters
+     * IDXGIAdapter  vtable slots: [7]=EnumOutputs [8]=GetDesc [9]=CheckInterfaceSupport
+     * IDXGIAdapter3 vtable slots: [10]=GetDesc1 [11]=GetDesc2
+     *                             [12-13]=HW protection [14]=QueryVideoMemoryInfo */
+    typedef HRESULT (WINAPI *PFN_CreateDXGIFactory)(const void*, void**);
+    static const GUID KF_IID_IDXGIFactory = {
+        0x7b7166ec, 0x21c7, 0x44ae,
+        {0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69}
+    };
+
+    /* Query system-wide dedicated VRAM usage via PDH (works for all vendors) */
+    unsigned long long pdhUsedMB = kf_pdh_gpu_used_mb();
+
+    HMODULE hDxgi = LoadLibraryA("dxgi.dll");
+    if (hDxgi) {
+        PFN_CreateDXGIFactory pCreate =
+            (PFN_CreateDXGIFactory)GetProcAddress(hDxgi, "CreateDXGIFactory");
+        if (pCreate) {
+            void *pFactory = NULL;
+            if (SUCCEEDED(pCreate(&KF_IID_IDXGIFactory, &pFactory)) && pFactory) {
+                typedef HRESULT (__stdcall *EnumAdapters_t)(void*, UINT, void**);
+                typedef HRESULT (__stdcall *GetDesc_t)(void*, KfDxgiAdapterDesc*);
+                typedef ULONG   (__stdcall *Release_t)(void*);
+
+                void **fvt   = *(void***)pFactory;
+                EnumAdapters_t pEnum = (EnumAdapters_t)fvt[7];
+                Release_t      pFRel = (Release_t)fvt[2];
+
+                int cnt = 0;
+                for (UINT i = 0; cnt < 2; i++) {
+                    void *pAdapter = NULL;
+                    if (FAILED(pEnum(pFactory, i, &pAdapter)) || !pAdapter) break;
+                    void **avt = *(void***)pAdapter;
+                    GetDesc_t pGetDesc = (GetDesc_t)avt[8];
+                    Release_t pARel    = (Release_t)avt[2];
+
+                    KfDxgiAdapterDesc desc;
+                    memset(&desc, 0, sizeof(desc));
+                    if (SUCCEEDED(pGetDesc(pAdapter, &desc)) &&
+                            desc.DedicatedVideoMemory > 0) {
+                        unsigned long long totalMB =
+                            desc.DedicatedVideoMemory / (1024ULL * 1024ULL);
+                        /* Attach PDH usage to first GPU only; clamp to total */
+                        unsigned long long usedMB =
+                            (cnt == 0 && pdhUsedMB <= totalMB) ? pdhUsedMB : 0;
+                        char entry[64];
+                        snprintf(entry, sizeof(entry), "%llu:%llu", totalMB, usedMB);
+                        if (_kf_vram_buf[0]) strcat(_kf_vram_buf, "\n");
+                        strcat(_kf_vram_buf, entry);
+                        cnt++;
+                    }
+                    pARel(pAdapter);
                 }
+                pFRel(pFactory);
+                if (_kf_vram_buf[0]) { FreeLibrary(hDxgi); return _kf_vram_buf; }
             }
-            if (_kf_vram_buf[0] != '\0') return _kf_vram_buf;
         }
+        FreeLibrary(hDxgi);
     }
 
     /* ── Registry fallback ── */
@@ -211,16 +259,14 @@ char* kfvram() {
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
             "SYSTEM\\CurrentControlSet\\Control\\Video",
             0, KEY_READ, &hKey) != ERROR_SUCCESS) return _kf_vram_buf;
-
     static const char *vkeys[] = {
+        "HardwareInformation.qwMemorySize",
         "HardwareInformation.MemorySize",
-        "HardwareInformation.MemorySizeLegacy",
-        "HardwareInformation.qwMemorySize"
+        "HardwareInformation.MemorySizeLegacy"
     };
-
-    char sub[256]; DWORD subLen = sizeof(sub), ridx = 0, cnt = 0;
+    char sub[256]; DWORD subLen = sizeof(sub), ridx = 0, cnt2 = 0;
     while (RegEnumKeyExA(hKey, ridx, sub, &subLen,
-            NULL, NULL, NULL, NULL) == ERROR_SUCCESS && cnt < 2) {
+            NULL, NULL, NULL, NULL) == ERROR_SUCCESS && cnt2 < 2) {
         char path[512];
         snprintf(path, sizeof(path),
             "SYSTEM\\CurrentControlSet\\Control\\Video\\%s\\0000", sub);
@@ -235,9 +281,9 @@ char* kfvram() {
                     unsigned long long totalMB = mem / (1024ULL * 1024ULL);
                     char entry[64];
                     snprintf(entry, sizeof(entry), "%llu:0", totalMB);
-                    if (_kf_vram_buf[0] != '\0') strcat(_kf_vram_buf, "\n");
+                    if (_kf_vram_buf[0]) strcat(_kf_vram_buf, "\n");
                     strcat(_kf_vram_buf, entry);
-                    cnt++; break;
+                    cnt2++; break;
                 }
             }
             RegCloseKey(hSub);
@@ -246,6 +292,188 @@ char* kfvram() {
     }
     RegCloseKey(hKey);
     return _kf_vram_buf;
+}
+
+/* kfpkgs – count installed packages from winget (registry), scoop, and choco.
+ * Returns a string like "142 (winget), 23 (scoop), 8 (choco)"
+ * Only includes managers that are actually present on the system.
+ */
+static int kf_count_regkeys(HKEY root, const char *path) {
+    HKEY hKey;
+    if (RegOpenKeyExA(root, path, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return 0;
+    DWORD count = 0;
+    RegQueryInfoKeyA(hKey, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    RegCloseKey(hKey);
+    return (int)count;
+}
+
+static int kf_count_subdirs(const char *path) {
+    char pattern[MAX_PATH];
+    snprintf(pattern, sizeof(pattern), "%s\\*", path);
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return -1;
+    int count = 0;
+    do {
+        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            strcmp(fd.cFileName, ".") && strcmp(fd.cFileName, ".."))
+            count++;
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+    return count;
+}
+
+static char _kf_pkgs_buf[256];
+char* kfpkgs() {
+    _kf_pkgs_buf[0] = '\0';
+    int first = 1;
+    char tmp[64];
+
+    /* winget: sum registry uninstall keys across HKLM (64+32-bit) and HKCU */
+    int wpkgs =
+        kf_count_regkeys(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall") +
+        kf_count_regkeys(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall") +
+        kf_count_regkeys(HKEY_CURRENT_USER,
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+    if (wpkgs > 0) {
+        snprintf(tmp, sizeof(tmp), "%d (winget)", wpkgs);
+        strcat(_kf_pkgs_buf, tmp);
+        first = 0;
+    }
+
+    /* scoop: count dirs in %USERPROFILE%\scoop\apps, subtract 1 for scoop itself */
+    char scoop_path[MAX_PATH];
+    DWORD sz = GetEnvironmentVariableA("USERPROFILE", scoop_path, sizeof(scoop_path));
+    if (sz > 0 && sz < sizeof(scoop_path)) {
+        strncat(scoop_path, "\\scoop\\apps", sizeof(scoop_path) - strlen(scoop_path) - 1);
+        int sc = kf_count_subdirs(scoop_path);
+        if (sc > 1) {
+            sc--;
+            snprintf(tmp, sizeof(tmp), "%s%d (scoop)", first ? "" : ", ", sc);
+            strcat(_kf_pkgs_buf, tmp);
+            first = 0;
+        }
+    }
+
+    /* choco: count dirs in %ChocolateyInstall%\lib */
+    char choco_path[MAX_PATH];
+    sz = GetEnvironmentVariableA("ChocolateyInstall", choco_path, sizeof(choco_path));
+    if (sz > 0 && sz < sizeof(choco_path)) {
+        strncat(choco_path, "\\lib", sizeof(choco_path) - strlen(choco_path) - 1);
+        int cc = kf_count_subdirs(choco_path);
+        if (cc > 0) {
+            snprintf(tmp, sizeof(tmp), "%s%d (choco)", first ? "" : ", ", cc);
+            strcat(_kf_pkgs_buf, tmp);
+        }
+    }
+
+    return _kf_pkgs_buf;
+}
+
+/* kfshell – detect current shell by walking up the process tree */
+static char _kf_shell_buf[64];
+char* kfshell() {
+    _kf_shell_buf[0] = '\0';
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE) return _kf_shell_buf;
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(pe);
+    DWORD myPid = GetCurrentProcessId(), parentPid = 0;
+    if (Process32First(hSnap, &pe)) {
+        do {
+            if (pe.th32ProcessID == myPid) { parentPid = pe.th32ParentProcessID; break; }
+        } while (Process32Next(hSnap, &pe));
+    }
+    if (parentPid) {
+        pe.dwSize = sizeof(pe);
+        if (Process32First(hSnap, &pe)) {
+            do {
+                if (pe.th32ProcessID == parentPid) {
+                    char *n = pe.szExeFile;
+                    if      (_stricmp(n, "pwsh.exe")       == 0) strcpy(_kf_shell_buf, "PowerShell");
+                    else if (_stricmp(n, "powershell.exe") == 0) strcpy(_kf_shell_buf, "Windows PowerShell");
+                    else if (_stricmp(n, "cmd.exe")        == 0) strcpy(_kf_shell_buf, "cmd");
+                    else if (_stricmp(n, "bash.exe")       == 0) strcpy(_kf_shell_buf, "bash");
+                    else if (_stricmp(n, "zsh.exe")        == 0) strcpy(_kf_shell_buf, "zsh");
+                    else if (_stricmp(n, "fish.exe")       == 0) strcpy(_kf_shell_buf, "fish");
+                    else if (_stricmp(n, "nu.exe")         == 0) strcpy(_kf_shell_buf, "nushell");
+                    else if (_stricmp(n, "sh.exe")         == 0) strcpy(_kf_shell_buf, "sh");
+                    else {
+                        strncpy(_kf_shell_buf, n, sizeof(_kf_shell_buf) - 1);
+                        char *dot = strrchr(_kf_shell_buf, '.');
+                        if (dot && _stricmp(dot, ".exe") == 0) *dot = '\0';
+                    }
+                    break;
+                }
+            } while (Process32Next(hSnap, &pe));
+        }
+    }
+    CloseHandle(hSnap);
+    return _kf_shell_buf;
+}
+
+/* kfterminal – detect terminal emulator from environment variables */
+static char _kf_terminal_buf[64];
+char* kfterminal() {
+    _kf_terminal_buf[0] = '\0';
+    char tmp[128];
+    if (GetEnvironmentVariableA("WT_SESSION",       tmp, sizeof(tmp)) > 0) { strcpy(_kf_terminal_buf, "Windows Terminal"); return _kf_terminal_buf; }
+    if (GetEnvironmentVariableA("ConEmuPID",        tmp, sizeof(tmp)) > 0) { strcpy(_kf_terminal_buf, "ConEmu");           return _kf_terminal_buf; }
+    if (GetEnvironmentVariableA("ALACRITTY_SOCKET", tmp, sizeof(tmp)) > 0 ||
+        GetEnvironmentVariableA("ALACRITTY_LOG",    tmp, sizeof(tmp)) > 0) { strcpy(_kf_terminal_buf, "Alacritty");        return _kf_terminal_buf; }
+    if (GetEnvironmentVariableA("TERM_PROGRAM", _kf_terminal_buf, sizeof(_kf_terminal_buf)) > 0) return _kf_terminal_buf;
+    return _kf_terminal_buf;
+}
+
+/* kfresolution – primary display resolution */
+static char _kf_res_buf[32];
+char* kfresolution() {
+    int w = GetSystemMetrics(SM_CXSCREEN);
+    int h = GetSystemMetrics(SM_CYSCREEN);
+    snprintf(_kf_res_buf, sizeof(_kf_res_buf), "%dx%d", w, h);
+    return _kf_res_buf;
+}
+
+/* kftheme – Windows light/dark mode and accent color hex */
+static char _kf_theme_buf[48];
+char* kftheme() {
+    _kf_theme_buf[0] = '\0';
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            0, KEY_READ, &hKey) != ERROR_SUCCESS) return _kf_theme_buf;
+    DWORD light = 1, accent = 0, sz = sizeof(DWORD), type = REG_DWORD;
+    RegQueryValueExA(hKey, "AppsUseLightTheme", NULL, &type, (LPBYTE)&light,  &sz);
+    sz = sizeof(DWORD);
+    RegQueryValueExA(hKey, "AccentColor",       NULL, &type, (LPBYTE)&accent, &sz);
+    RegCloseKey(hKey);
+    /* AccentColor in registry is AABBGGRR → convert to RRGGBB */
+    int r = (accent)       & 0xFF;
+    int g = (accent >>  8) & 0xFF;
+    int b = (accent >> 16) & 0xFF;
+    snprintf(_kf_theme_buf, sizeof(_kf_theme_buf), "%s (#%02X%02X%02X)",
+             light ? "Light" : "Dark", r, g, b);
+    return _kf_theme_buf;
+}
+
+/* kfbattery – battery percentage and charge status; returns "" if no battery */
+static char _kf_battery_buf[48];
+char* kfbattery() {
+    _kf_battery_buf[0] = '\0';
+    SYSTEM_POWER_STATUS sps;
+    if (!GetSystemPowerStatus(&sps))   return _kf_battery_buf;
+    if (sps.BatteryFlag == 128)        return _kf_battery_buf; /* no battery */
+    if (sps.BatteryLifePercent == 255) return _kf_battery_buf; /* unknown    */
+    const char *status = "";
+    if (sps.ACLineStatus == 1) {
+        if (sps.BatteryFlag & 8) status = " (charging)";
+        else                     status = " (plugged in)";
+    }
+    snprintf(_kf_battery_buf, sizeof(_kf_battery_buf), "%d%%%s",
+             sps.BatteryLifePercent, status);
+    return _kf_battery_buf;
 }
 
 /* kframbar – 20-char visual RAM usage bar, same style as kfdisk()

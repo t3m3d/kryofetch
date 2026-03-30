@@ -10,31 +10,33 @@ import "disk.k"
 import "gpu.k"
 
 func run() {
-    kfinit()
     kfcls()
+    kfinit()
 
     let E     = fromCharCode(27)
     let GRN   = E + "[32;1m"
     let CYN   = E + "[36;1m"
     let RST   = E + "[0m"
+    let BLU   = E + "[34m"
+    let CY    = E + "[36m"
     let LW    = "40"
 
-    let l0  = ansi("\x1b[34m        ,.=:!!t3Z3z.,\x1b[0m")
-    let l1  = ansi("\x1b[34m       :tt:::tt333EE3\x1b[0m")
-    let l2  = ansi("\x1b[34m       Et:::ztt33EEEL\x1b[36m @Ee.,      ..,\x1b[0m")
-    let l3  = ansi("\x1b[34m      ;tt:::tt333EE7\x1b[36m ;EEEEEEttttt33#\x1b[0m")
-    let l4  = ansi("\x1b[34m     :Et:::zt333EEQ\x1b[36m  SEEEEEttttt33QL\x1b[0m")
-    let l5  = ansi("\x1b[34m     it::::tt333EEF\x1b[36m @EEEEttttt33F\x1b[0m")
-    let l6  = ansi("\x1b[34m    ;3=*^   \"*4EEV\x1b[36m :EEEEttttt33@.\x1b[0m")
-    let l7  = ansi("\x1b[36m    ,.=::::!t=.,\x1b[34m  @EEEEtttz33QF\x1b[0m")
-    let l8  = ansi("\x1b[36m   ;::::::::zt33)\x1b[34m   \"4EEEtttji\x1b[0m")
-    let l9  = ansi("\x1b[36m  :t::::::::tt33.\x1b[34m :Z3z..    \x1b[0m")
-    let l10 = ansi("\x1b[36m  i::::::::zt33F\x1b[34m AEEEtttt::::ztF\x1b[0m")
-    let l11 = ansi("\x1b[36m ;:::::::::t33V\x1b[34m ;EEEttttt::::t3\x1b[0m")
-    let l12 = ansi("\x1b[36m E::::::::zt33L\x1b[34m @EEEtttt::::z3F\x1b[0m")
-    let l13 = ansi("\x1b[36m{3=*^   \"*4E3)\x1b[34m ;EEEtttt:::::tZ\x1b[0m")
-    let l14 = ansi("\x1b[36m            \x1b[34m :EEEEtttt::::z7\x1b[0m")
-    let l15 = ansi("\x1b[34m                 \"VEzjt:;;z>*\x1b[0m")
+    let l0  = BLU + "        ,.=:!!t3Z3z.," + RST
+    let l1  = BLU + "       :tt:::tt333EE3" + RST
+    let l2  = BLU + "       Et:::ztt33EEEL" + CY + " @Ee.,      ..," + RST
+    let l3  = BLU + "      ;tt:::tt333EE7" + CY + " ;EEEEEEttttt33#" + RST
+    let l4  = BLU + "     :Et:::zt333EEQ" + CY + "  SEEEEEttttt33QL" + RST
+    let l5  = BLU + "     it::::tt333EEF" + CY + " @EEEEttttt33F" + RST
+    let l6  = BLU + "    ;3=*^   " + "\"" + "*4EEV" + CY + " :EEEEttttt33@." + RST
+    let l7  = CY + "    ,.=::::!t=.," + BLU + "  @EEEEtttz33QF" + RST
+    let l8  = CY + "   ;::::::::zt33)" + BLU + "   " + "\"" + "4EEEtttji" + RST
+    let l9  = CY + "  :t::::::::tt33." + BLU + " :Z3z..    " + RST
+    let l10 = CY + "  i::::::::zt33F" + BLU + " AEEEtttt::::ztF" + RST
+    let l11 = CY + " ;:::::::::t33V" + BLU + " ;EEEttttt::::t3" + RST
+    let l12 = CY + " E::::::::zt33L" + BLU + " @EEEtttt::::z3F" + RST
+    let l13 = CY + "{3=*^   " + "\"" + "*4E3)" + BLU + " ;EEEtttt:::::tZ" + RST
+    let l14 = CY + "            " + BLU + " :EEEEtttt::::z7" + RST
+    let l15 = BLU + "                 " + "\"" + "VEzjt:;;z>*" + RST
 
     let usr  = sysuser()
     let host = syshost()
@@ -81,6 +83,11 @@ func run() {
     let cols = firstpart(tc, ",")
     let rows = afterpart(tc, ",")
     let up   = uptime()
+    let sh   = kfshell()
+    let tnm  = kfterminal()
+    let res  = kfresolution()
+    let thm  = kftheme()
+    let bat  = kfbattery()
 
     let lb0  = "User"
     let v0   = usr + "@" + host
@@ -98,12 +105,40 @@ func run() {
     let v6   = d3
     let lb7  = "GPU"
     let v7   = fmtgpu(g1, vr1)
-    let lb8  = "GPU2"
-    let v8   = fmtgpu(g2, vr2)
-    let lb9  = "Term"
-    let v9   = cols + "x" + rows
-    let lb10 = "Uptime"
-    let v10  = up
+    let lb8  = ""
+    let v8   = ""
+    if g2 != "" {
+        lb8 = "GPU2"
+        v8  = fmtgpu(g2, vr2)
+    }
+    let lb9  = "Shell"
+    let v9   = sh
+    let lb10 = ""
+    let v10  = ""
+    let termv = ""
+    if tnm != "" { termv = tnm }
+    if cols != "0" {
+        if termv != "" { termv = termv + " " + cols + "x" + rows }
+        if termv == "" { termv = cols + "x" + rows }
+    }
+    if termv != "" {
+        lb10 = "Term"
+        v10  = termv
+    }
+    let lb11 = "Res"
+    let v11  = res
+    let lb12 = "Uptime"
+    let v12  = up
+    let lb13 = "Pkgs"
+    let v13  = kfpkgs()
+    let lb14 = "Theme"
+    let v14  = thm
+    let lb15 = ""
+    let v15  = ""
+    if bat != "" {
+        lb15 = "Battery"
+        v15  = bat
+    }
 
     let idx = "0"
     while toInt(idx) < 16 {
@@ -138,6 +173,11 @@ func run() {
         if idx == "8"  { lb = lb8;  v = v8  }
         if idx == "9"  { lb = lb9;  v = v9  }
         if idx == "10" { lb = lb10; v = v10 }
+        if idx == "11" { lb = lb11; v = v11 }
+        if idx == "12" { lb = lb12; v = v12 }
+        if idx == "13" { lb = lb13; v = v13 }
+        if idx == "14" { lb = lb14; v = v14 }
+        if idx == "15" { lb = lb15; v = v15 }
 
         let info = ""
         if lb != "" {
@@ -152,6 +192,8 @@ func run() {
 
     kp("")
     kp(CYN + "  KryptonFetch" + RST + " by KryptonBytes")
+    kp("")
+    colorpalette()
     kp("")
     emit
 }

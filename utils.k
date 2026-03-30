@@ -90,6 +90,25 @@ func rambar(usedMB, totalMB) {
     emit kframbar(usedMB, totalMB)
 }
 
+// colorpalette: prints two rows of 8 ANSI color blocks (normal + bright)
+func colorpalette() {
+    let E   = fromCharCode(27)
+    let RST = E + "[0m"
+    let blk = "   "
+    let r1  = ""
+    let r2  = ""
+    let i   = "0"
+    while toInt(i) < 8 {
+        let c1 = toInt(i) + 40 + ""
+        let c2 = toInt(i) + 100 + ""
+        r1 = r1 + E + "[" + c1 + "m" + blk
+        r2 = r2 + E + "[" + c2 + "m" + blk
+        i = toInt(i) + 1 + ""
+    }
+    kp("  " + r1 + RST)
+    kp("  " + r2 + RST)
+}
+
 func idxfrom(s, sub, start) {
     let slen = len(s)
     let sublen = len(sub)
