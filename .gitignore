@@ -3,3 +3,5 @@
 *.c
 *test*.*
 kcc_err.txt
+*.o
+*.obj
