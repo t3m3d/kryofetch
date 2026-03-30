@@ -1,6 +1,6 @@
 # kryofetch
 
-A Windows system information fetch tool written in [Krypton](https://github.com/KryptonBytes/krypton) — a self-hosting language that compiles to C.
+A Windows system information fetch tool written in [Krypton](https://github.com/t3m3d/krypton) — a self-hosting language that compiles to C.
 
 <img width="1179" height="466" alt="image" src="https://github.com/user-attachments/assets/74ba8cd1-28d2-47cf-b442-1fb88fd0ed80" />
 
