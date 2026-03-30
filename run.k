@@ -96,7 +96,7 @@ func run() {
     let lb2  = "CPU"
     let v2   = cpu + " (" + cn + "c / " + tn + "t)"
     let lb3  = "RAM"
-    let v3   = ugb + " GB / " + tgb + " GB  " + rpct + "%  " + rb
+    let v3   = rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%"
     let lb4  = "Disk"
     let v4   = d1
     let lb5  = ""
@@ -181,9 +181,17 @@ func run() {
 
         let info = ""
         if lb != "" {
-            info = GRN + lb + ":" + RST + " " + v
+            let lbc    = lb + ":"
+            let padlen = 9 - len(lbc)
+            let pad    = ""
+            let pi     = "0"
+            while toInt(pi) < padlen {
+                pad = pad + " "
+                pi  = toInt(pi) + 1 + ""
+            }
+            info = GRN + lbc + RST + pad + v
         } else {
-            if v != "" { info = "       " + v }
+            if v != "" { info = "         " + v }
         }
 
         kp(padansi(logo, toInt(LW)) + "  " + info)

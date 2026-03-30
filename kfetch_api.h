@@ -79,8 +79,8 @@ char* kfdisk() {
         for (int i = 0; i < usedB;  i++) strcat(bar, "\xe2\x96\x92");
         for (int i = 0; i < freeB2; i++) strcat(bar, "\xe2\x96\x88");
         char line[512];
-        snprintf(line, sizeof(line), "%s %lluGB/%lluGB %d%% [%s]\n",
-                 root, usedGB, totalGB, pct, bar);
+        snprintf(line, sizeof(line), "[%s]  %s %lluGB/%lluGB %d%%\n",
+                 bar, root, usedGB, totalGB, pct);
         strncat(_kf_disk_buf, line, sizeof(_kf_disk_buf) - strlen(_kf_disk_buf) - 1);
     }
     int len = (int)strlen(_kf_disk_buf);

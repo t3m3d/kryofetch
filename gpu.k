@@ -25,7 +25,7 @@ func fmtgpu(name, vramLine) {
         let ut  = un * 10 / 1024 - ugb * 10
         let pct = un * 100 / n
         let bar = kframbar(ub, tb)
-        emit name + "  " + ugb + "." + ut + " GB / " + gb + "." + t + " GB  " + pct + "%  " + bar
+        emit bar + "  " + name + "  " + ugb + "." + ut + " GB / " + gb + "." + t + " GB  " + pct + "%"
     }
     emit name + " (" + gb + "." + t + " GB VRAM)"
 }
