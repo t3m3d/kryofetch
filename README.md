@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 # KryptonFetch
 
 A Windows system information fetch tool written in [Krypton](https://github.com/KryptonBytes/krypton) — a self-hosting language that compiles to C.
 
 <img width="968" height="387" alt="image" src="https://github.com/user-attachments/assets/3e9aab43-f3ad-4744-8c51-a019d65a4884" />
+=======
+# kryofetch
+A terminal fetch program something like neofetch, fastfetch, but going to be a new one and is written in krypton-lang.
+Lots of work still to be done.
+<img width="1002" height="450" alt="image" src="https://github.com/user-attachments/assets/f34a439b-cdbb-420e-bc79-052dc3cd429d" />
+
+
+>>>>>>> 42c7e572be07e273cc99c770f72786e109506bd4
 
 ## Features
 
