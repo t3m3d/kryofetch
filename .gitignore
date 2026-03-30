@@ -1,4 +1,4 @@
 *.exe
 !kcc.exe
-*.c
+out.c
 *_err.txt
