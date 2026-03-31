@@ -95,14 +95,7 @@ char* kfconsize() {
     return _kf_con_buf;
 }
 
-// kfuptimesec: uptime in seconds
-static char _kf_upsec_buf[32];
-char* kfuptimesec() {
-    unsigned long long secs = GetTickCount64() / 1000ULL;
-    if (secs > 2147483647ULL) secs = 2147483647ULL;
-    snprintf(_kf_upsec_buf, sizeof(_kf_upsec_buf), "%llu", secs);
-    return _kf_upsec_buf;
-}
+
 
 // kfvram: newline-separated "totalMB:usedMB" per GPU
 typedef struct {
@@ -270,17 +263,4 @@ char* kfpkgs() {
     return _kf_pkgs_buf;
 }
 
-// kframbar: UTF-8 block char RAM bar
-static char _kf_rambar_buf[128];
-char* kframbar(char* usedMB,char* totalMB) {
-    unsigned long long used=(unsigned long long)atoll(usedMB);
-    unsigned long long total=(unsigned long long)atoll(totalMB);
-    _kf_rambar_buf[0]='\0';
-    if (total==0) { strcpy(_kf_rambar_buf,"[                    ]"); return _kf_rambar_buf; }
-    int pct=(int)(used*100/total), filled=pct*20/100, empty=20-filled;
-    strcat(_kf_rambar_buf,"[");
-    for (int i=0;i<filled;i++) strcat(_kf_rambar_buf,"\xe2\x96\x92");
-    for (int i=0;i<empty; i++) strcat(_kf_rambar_buf,"\xe2\x96\x88");
-    strcat(_kf_rambar_buf,"]");
-    return _kf_rambar_buf;
-}
+

@@ -85,9 +85,20 @@ func nthline(s, lineIdx) {
     emit ""
 }
 
-// rambar: delegates to kframbar() in kfetch_api.h (C handles UTF-8 block chars)
+// rambar: pure Krypton UTF-8 block char bar
 func rambar(usedMB, totalMB) {
-    emit kframbar(usedMB, totalMB)
+    let used  = toInt(usedMB)
+    let total = toInt(totalMB)
+    if total == 0 { emit "[                    ]" }
+    let pct    = used * 100 / total
+    let filled = pct * 20 / 100
+    let empty  = 20 - filled
+    let bar    = "["
+    let i = 0
+    while i < filled { bar = bar + "▒"  i += 1 }
+    i = 0
+    while i < empty  { bar = bar + "█"  i += 1 }
+    emit bar + "]"
 }
 
 // colorpalette: prints two rows of 8 ANSI color blocks (normal + bright)

@@ -25,7 +25,8 @@ func osver() {
 }
 
 func uptime() {
-    let tsec = toInt(kfuptimesec())
+    let raw  = trim(exec("powershell -NoProfile -Command \"(New-TimeSpan (gcim Win32_OperatingSystem).LastBootUpTime).TotalSeconds\""))
+    let tsec = toInt(raw)
     let mins  = tsec / 60
     let hrs   = mins / 60
     let days  = hrs / 24
