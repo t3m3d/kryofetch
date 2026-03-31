@@ -85,6 +85,43 @@ char* kfconsize() {
     return _kf_con_buf;
 }
 
+
+// kfshell: detect shell from process tree
+static char _kf_shell_buf[64];
+char* kfshell() {
+    _kf_shell_buf[0]='\0';
+    HANDLE hSnap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+    if (hSnap==INVALID_HANDLE_VALUE) return _kf_shell_buf;
+    PROCESSENTRY32 pe; pe.dwSize=sizeof(pe);
+    DWORD myPid=GetCurrentProcessId(), parentPid=0;
+    if (Process32First(hSnap,&pe)) do {
+        if (pe.th32ProcessID==myPid) { parentPid=pe.th32ParentProcessID; break; }
+    } while (Process32Next(hSnap,&pe));
+    if (parentPid) {
+        pe.dwSize=sizeof(pe);
+        if (Process32First(hSnap,&pe)) do {
+            if (pe.th32ProcessID==parentPid) {
+                char *n=pe.szExeFile;
+                if      (!_stricmp(n,"pwsh.exe"))       strcpy(_kf_shell_buf,"PowerShell");
+                else if (!_stricmp(n,"powershell.exe")) strcpy(_kf_shell_buf,"Windows PowerShell");
+                else if (!_stricmp(n,"cmd.exe"))        strcpy(_kf_shell_buf,"cmd");
+                else if (!_stricmp(n,"bash.exe"))       strcpy(_kf_shell_buf,"bash");
+                else if (!_stricmp(n,"zsh.exe"))        strcpy(_kf_shell_buf,"zsh");
+                else if (!_stricmp(n,"fish.exe"))       strcpy(_kf_shell_buf,"fish");
+                else if (!_stricmp(n,"nu.exe"))         strcpy(_kf_shell_buf,"nushell");
+                else {
+                    strncpy(_kf_shell_buf,n,sizeof(_kf_shell_buf)-1);
+                    char *dot=strrchr(_kf_shell_buf,'.');
+                    if (dot&&!_stricmp(dot,".exe")) *dot='\0';
+                }
+                break;
+            }
+        } while (Process32Next(hSnap,&pe));
+    }
+    CloseHandle(hSnap);
+    return _kf_shell_buf;
+}
+
 // kfvram: newline-separated "totalMB:usedMB" per GPU
 typedef struct {
     WCHAR  Description[128];

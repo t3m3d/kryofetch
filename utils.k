@@ -132,20 +132,7 @@ func idxfrom(s, sub, start) {
     emit "-1"
 }
 
-func kfshell() {
-    // Walk process tree looking for a known shell (up to 3 levels)
-    let raw = trim(exec("powershell -NoProfile -Command \"$id=$PID; $shell=''; for($i=0;$i-lt3;$i++){$id=(Get-WmiObject Win32_Process -Filter ('ProcessId='+$id)).ParentProcessId; $n=(Get-Process -Id $id -EA SilentlyContinue).Name; if($n -match 'pwsh|powershell|bash|zsh|fish|nu|cmd'){$shell=$n;break}}; $shell\""))
-    let name = trim(raw)
-    if name == "pwsh"       { emit "PowerShell" }
-    if name == "powershell" { emit "Windows PowerShell" }
-    if name == "cmd"        { emit "cmd" }
-    if name == "bash"       { emit "bash" }
-    if name == "zsh"        { emit "zsh" }
-    if name == "fish"       { emit "fish" }
-    if name == "nu"         { emit "nushell" }
-    if name != ""           { emit name }
-    emit ""
-}
+
 
 func kfpkgs() {
     // Count winget packages via registry
