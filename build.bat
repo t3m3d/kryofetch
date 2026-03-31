@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set KCC=%~dp0kcc.exe
+set KCC=%~dp0kcc_v111.exe
 set GCC=gcc
 
 echo [1/2] Compiling Krypton to C...

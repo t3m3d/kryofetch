@@ -3,30 +3,77 @@
 
 jxt {
     c "windows.h"
+    t "tlhelp32.h"
 
-    // System info
+    // ── Extern structs ─────────────────────────────────────────
+    struct MEMORYSTATUSEX {
+        field dwLength        DWORD
+        field dwMemoryLoad    DWORD
+        field ullTotalPhys    ULONGLONG
+        field ullAvailPhys    ULONGLONG
+        field ullTotalPageFile ULONGLONG
+        field ullAvailPageFile ULONGLONG
+        field ullTotalVirtual  ULONGLONG
+        field ullAvailVirtual  ULONGLONG
+    }
+
+    struct CONSOLE_SCREEN_BUFFER_INFO {
+        field dwSizeX         WORD  "dwSize.X"
+        field dwSizeY         WORD  "dwSize.Y"
+        field dwCursorX       WORD  "dwCursorPosition.X"
+        field dwCursorY       WORD  "dwCursorPosition.Y"
+        field wAttributes     WORD
+        field srWindowLeft    WORD  "srWindow.Left"
+        field srWindowTop     WORD  "srWindow.Top"
+        field srWindowRight   WORD  "srWindow.Right"
+        field srWindowBottom  WORD  "srWindow.Bottom"
+        field dwMaxX          WORD  "dwMaximumWindowSize.X"
+        field dwMaxY          WORD  "dwMaximumWindowSize.Y"
+    }
+
+    struct SYSTEM_INFO {
+        field wProcessorArchitecture WORD
+        field wReserved              WORD
+        field dwPageSize             DWORD
+        field dwNumberOfProcessors   DWORD
+        field dwProcessorType        DWORD
+    }
+
+    struct ULARGE_INTEGER {
+        field QuadPart ULONGLONG
+    }
+
+    struct PROCESSENTRY32 {
+        field dwSize              DWORD
+        field th32ProcessID       DWORD
+        field th32ParentProcessID DWORD
+        field szExeFile           CHAR_ARRAY
+    }
+
+    // ── System info ────────────────────────────────────────────
     func GetTickCount64()
     func GetUserNameA(buf, size)
     func GetComputerNameA(buf, size)
     func GetNativeSystemInfo(info)
     func GetLogicalProcessorInformationEx(rel, buf, size)
-    func GetLogicalDrives()
     func GetDiskFreeSpaceExA(root, free, total, totalFree)
     func GlobalMemoryStatusEx(ms)
     func GetConsoleScreenBufferInfo(handle, info)
-    func GetStdHandle(id)
     func SetConsoleOutputCP(cp)
     func GetConsoleOutputCP()
+    func GetSystemMetrics(index)
 
-    // Registry
+    // ── Registry ───────────────────────────────────────────────
     func RegOpenKeyExA(hive, path, opts, access, out)
     func RegQueryValueExA(key, name, reserved, type, data, size)
     func RegCloseKey(key)
+    func RegEnumKeyExA(key, idx, name, size, reserved, cls, clsSize, lastWrite)
 
-    // Console
+    // ── Console ────────────────────────────────────────────────
     func SetConsoleTextAttribute(handle, attr)
 
-    // Process
+    // ── Process ───────────────────────────────────────────────
     func GetEnvironmentVariableA(name, buf, size)
     func ExitProcess(code)
+    func CloseHandle(handle)
 }

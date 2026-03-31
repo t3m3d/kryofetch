@@ -1,5 +1,15 @@
 jxt {
     c "./kfetch_api.h"
+
+    func kfcls()
+    func kfinit()
+    func kfvram()
+    func kfstdout()
+    func kfmypid()
+    func kfdrivesbits()
+    func kfsnapprocess()
+    func kfp32first(snap, entry)
+    func kfp32next(snap, entry)
 }
 
 import "utils.k"
