@@ -131,3 +131,44 @@ func idxfrom(s, sub, start) {
     }
     emit "-1"
 }
+
+func kfshell() {
+    // Walk process tree looking for a known shell (up to 3 levels)
+    let raw = trim(exec("powershell -NoProfile -Command \"$id=$PID; $shell=''; for($i=0;$i-lt3;$i++){$id=(Get-WmiObject Win32_Process -Filter ('ProcessId='+$id)).ParentProcessId; $n=(Get-Process -Id $id -EA SilentlyContinue).Name; if($n -match 'pwsh|powershell|bash|zsh|fish|nu|cmd'){$shell=$n;break}}; $shell\""))
+    let name = trim(raw)
+    if name == "pwsh"       { emit "PowerShell" }
+    if name == "powershell" { emit "Windows PowerShell" }
+    if name == "cmd"        { emit "cmd" }
+    if name == "bash"       { emit "bash" }
+    if name == "zsh"        { emit "zsh" }
+    if name == "fish"       { emit "fish" }
+    if name == "nu"         { emit "nushell" }
+    if name != ""           { emit name }
+    emit ""
+}
+
+func kfpkgs() {
+    // Count winget packages via registry
+    let winget = trim(exec("powershell -NoProfile -Command \"(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue).Count\""))
+    // Count scoop apps
+    let scoopPath = environ("USERPROFILE") + "\\scoop\\apps"
+    let scoop = trim(exec("powershell -NoProfile -Command \"if(Test-Path '" + scoopPath + "'){((Get-ChildItem '" + scoopPath + "' -Directory).Count - 1)}else{0}\""))
+    // Count choco packages
+    let chocoBase = environ("ChocolateyInstall")
+    let choco = ""
+    if chocoBase != "" {
+        choco = trim(exec("powershell -NoProfile -Command \"if(Test-Path '" + chocoBase + "\\lib'){(Get-ChildItem '" + chocoBase + "\\lib' -Directory).Count}else{0}\""))
+    }
+    let result = ""
+    if toInt(winget) > 0 { result = winget + " (winget)" }
+    if toInt(scoop) > 0 {
+        if result != "" { result = result + ", " }
+        result = result + scoop + " (scoop)"
+    }
+    if toInt(choco) > 0 {
+        if result != "" { result = result + ", " }
+        result = result + choco + " (choco)"
+    }
+    emit result
+}
+

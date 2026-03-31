@@ -27,21 +27,11 @@ char* exec(char* cmd) {
     return _kf_exec_buf;
 }
 
-// kfinit: enable UTF-8 and ANSI escape processing
-char* kfinit() {
-    SetConsoleOutputCP(65001);
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD mode = 0;
-    GetConsoleMode(h, &mode);
-    SetConsoleMode(h, mode | 0x0004);
-    return "";
-}
-
-// kfcls: clear screen
-char* kfcls() { system("cls"); return ""; }
-
 // kfmem: returns "totalMB,freeMB"
 static char _kf_mem_buf[64];
+char* kfcls()   { system("cls"); return ""; }
+char* kfinit()  { SetConsoleOutputCP(65001); HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE); DWORD m=0; GetConsoleMode(h,&m); SetConsoleMode(h,m|0x0004); return ""; }
+
 char* kfmem() {
     MEMORYSTATUSEX ms;
     ZeroMemory(&ms, sizeof(ms));
@@ -94,8 +84,6 @@ char* kfconsize() {
     } else { strcpy(_kf_con_buf, "0,0"); }
     return _kf_con_buf;
 }
-
-
 
 // kfvram: newline-separated "totalMB:usedMB" per GPU
 typedef struct {
@@ -189,78 +177,3 @@ char* kfvram() {
     RegCloseKey(hK);
     return _kf_vram_buf;
 }
-
-// kfshell: detect shell from process tree
-static char _kf_shell_buf[64];
-char* kfshell() {
-    _kf_shell_buf[0]='\0';
-    HANDLE hSnap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-    if (hSnap==INVALID_HANDLE_VALUE) return _kf_shell_buf;
-    PROCESSENTRY32 pe; pe.dwSize=sizeof(pe);
-    DWORD myPid=GetCurrentProcessId(), parentPid=0;
-    if (Process32First(hSnap,&pe)) do {
-        if (pe.th32ProcessID==myPid) { parentPid=pe.th32ParentProcessID; break; }
-    } while (Process32Next(hSnap,&pe));
-    if (parentPid) {
-        pe.dwSize=sizeof(pe);
-        if (Process32First(hSnap,&pe)) do {
-            if (pe.th32ProcessID==parentPid) {
-                char *n=pe.szExeFile;
-                if      (!_stricmp(n,"pwsh.exe"))       strcpy(_kf_shell_buf,"PowerShell");
-                else if (!_stricmp(n,"powershell.exe")) strcpy(_kf_shell_buf,"Windows PowerShell");
-                else if (!_stricmp(n,"cmd.exe"))        strcpy(_kf_shell_buf,"cmd");
-                else if (!_stricmp(n,"bash.exe"))       strcpy(_kf_shell_buf,"bash");
-                else if (!_stricmp(n,"zsh.exe"))        strcpy(_kf_shell_buf,"zsh");
-                else if (!_stricmp(n,"fish.exe"))       strcpy(_kf_shell_buf,"fish");
-                else if (!_stricmp(n,"nu.exe"))         strcpy(_kf_shell_buf,"nushell");
-                else {
-                    strncpy(_kf_shell_buf,n,sizeof(_kf_shell_buf)-1);
-                    char *dot=strrchr(_kf_shell_buf,'.');
-                    if (dot&&!_stricmp(dot,".exe")) *dot='\0';
-                }
-                break;
-            }
-        } while (Process32Next(hSnap,&pe));
-    }
-    CloseHandle(hSnap);
-    return _kf_shell_buf;
-}
-
-// kfpkgs: count installed packages (winget/scoop/choco)
-static int kf_count_regkeys(HKEY root,const char *path) {
-    HKEY hK; if (RegOpenKeyExA(root,path,0,KEY_READ,&hK)!=ERROR_SUCCESS) return 0;
-    DWORD count=0; RegQueryInfoKeyA(hK,NULL,NULL,NULL,&count,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-    RegCloseKey(hK); return (int)count;
-}
-static int kf_count_subdirs(const char *path) {
-    char pat[MAX_PATH]; snprintf(pat,sizeof(pat),"%s\\*",path);
-    WIN32_FIND_DATAA fd; HANDLE h=FindFirstFileA(pat,&fd);
-    if (h==INVALID_HANDLE_VALUE) return -1;
-    int count=0;
-    do { if ((fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)&&strcmp(fd.cFileName,".")&&strcmp(fd.cFileName,"..")) count++; }
-    while (FindNextFileA(h,&fd));
-    FindClose(h); return count;
-}
-static char _kf_pkgs_buf[256];
-char* kfpkgs() {
-    _kf_pkgs_buf[0]='\0'; int first=1; char tmp[64];
-    int wp = kf_count_regkeys(HKEY_LOCAL_MACHINE,"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
-           + kf_count_regkeys(HKEY_LOCAL_MACHINE,"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
-           + kf_count_regkeys(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
-    if (wp>0) { snprintf(tmp,sizeof(tmp),"%d (winget)",wp); strcat(_kf_pkgs_buf,tmp); first=0; }
-    char sp[MAX_PATH]; DWORD sz=GetEnvironmentVariableA("USERPROFILE",sp,sizeof(sp));
-    if (sz>0&&sz<sizeof(sp)) {
-        strncat(sp,"\\scoop\\apps",sizeof(sp)-strlen(sp)-1);
-        int sc=kf_count_subdirs(sp);
-        if (sc>1) { sc--; snprintf(tmp,sizeof(tmp),"%s%d (scoop)",first?"":",",(int)sc); strcat(_kf_pkgs_buf,tmp); first=0; }
-    }
-    char cp[MAX_PATH]; sz=GetEnvironmentVariableA("ChocolateyInstall",cp,sizeof(cp));
-    if (sz>0&&sz<sizeof(cp)) {
-        strncat(cp,"\\lib",sizeof(cp)-strlen(cp)-1);
-        int cc=kf_count_subdirs(cp);
-        if (cc>0) { snprintf(tmp,sizeof(tmp),"%s%d (choco)",first?"":",",(int)cc); strcat(_kf_pkgs_buf,tmp); }
-    }
-    return _kf_pkgs_buf;
-}
-
-
