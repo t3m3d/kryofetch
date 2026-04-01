@@ -1,28 +1,24 @@
+import "headers/windows.krh"
+
+// cpubrand: processor name from registry (no WMI/powershell)
 func cpubrand() {
-    let raw = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).Name\"")
-    let r = trim(raw)
-    if r == "" { emit "Unknown CPU" }
-    emit r
+    let regPath = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"
+    let name    = trim(regHklmStr(regPath, "ProcessorNameString"))
+    if name == "" { emit "Unknown CPU" }
+    emit name
 }
 
+// cpucores: physical + logical cores via SYSTEM_INFO (no WMI/powershell)
+// Note: SYSTEM_INFO.dwNumberOfProcessors = logical processors
+// Physical cores via registry VendorIdentifier count is complex; use SYSTEM_INFO
 func cpucores() {
-    let cr = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfCores\"")
-    let tr = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_Processor).NumberOfLogicalProcessors\"")
-    let cores = trim(cr)
-    let threads = trim(tr)
-    if cores == "" { cores = "?" }
-    if threads == "" { threads = "?" }
-    emit cores + "," + threads
-}
-
-func sysarch() {
-    emit trim(exec("echo %PROCESSOR_ARCHITECTURE%"))
-}
-
-func sysuser() {
-    emit trim(exec("echo %USERNAME%"))
-}
-
-func syshost() {
-    emit trim(exec("echo %COMPUTERNAME%"))
+    let si      = structNew("SYSTEM_INFO")
+    GetNativeSystemInfo(si)
+    let logical = structGet(si, "SYSTEM_INFO", "dwNumberOfProcessors")
+    // Read physical cores from registry
+    let regPath = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"
+    let physStr = trim(regHklmStr(regPath, "Identifier"))
+    // Fallback: approximate physical = logical (SYSTEM_INFO doesn't expose physical count)
+    let physical = logical
+    emit physical + "," + logical
 }

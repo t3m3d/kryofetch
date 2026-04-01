@@ -159,3 +159,70 @@ func kfpkgs() {
     emit result
 }
 
+// ── Pure-Krypton registry helpers ──────────────────────────────────────────
+// Use bufNew/bufStr/bufGetDword/handleOut/handleGet/toHandle + windows.krh
+
+// regHklmStr: read REG_SZ value from HKEY_LOCAL_MACHINE
+func regHklmStr(path, name) {
+    let HKLM     = toHandle("2147483650")
+    let kread = toHandle("131097")
+    let hkey = handleOut()
+    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "" }
+    let buf = bufNew("1024")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "1024")
+    RegQueryValueExA(hk, name, toHandle("0"), toHandle("0"), buf, sz)
+    RegCloseKey(hk)
+    emit bufStr(buf)
+}
+
+// regHkcuStr: read REG_SZ value from HKEY_CURRENT_USER
+func regHkcuStr(path, name) {
+    let HKCU     = toHandle("2147483649")
+    let kread = toHandle("131097")
+    let hkey = handleOut()
+    RegOpenKeyExA(HKCU, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "" }
+    let buf = bufNew("1024")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "1024")
+    RegQueryValueExA(hk, name, toHandle("0"), toHandle("0"), buf, sz)
+    RegCloseKey(hk)
+    emit bufStr(buf)
+}
+
+// regHklmDword: read REG_DWORD value from HKEY_LOCAL_MACHINE
+func regHklmDword(path, name) {
+    let HKLM     = toHandle("2147483650")
+    let kread = toHandle("131097")
+    let hkey = handleOut()
+    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "0" }
+    let buf = bufNew("4")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "4")
+    RegQueryValueExA(hk, name, toHandle("0"), toHandle("0"), buf, sz)
+    RegCloseKey(hk)
+    emit bufGetDword(buf)
+}
+
+// regHkcuDword: read REG_DWORD value from HKEY_CURRENT_USER
+func regHkcuDword(path, name) {
+    let HKCU     = toHandle("2147483649")
+    let kread = toHandle("131097")
+    let hkey = handleOut()
+    RegOpenKeyExA(HKCU, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "0" }
+    let buf = bufNew("4")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "4")
+    RegQueryValueExA(hk, name, toHandle("0"), toHandle("0"), buf, sz)
+    RegCloseKey(hk)
+    emit bufGetDword(buf)
+}
+

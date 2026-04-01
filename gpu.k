@@ -1,6 +1,30 @@
+// gpunames: enumerate GPU names from registry (no WMI/powershell)
 func gpunames() {
-    let raw = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_VideoController).Name\"")
-    let result = trim(raw)
+    let regBase = "SYSTEM\\CurrentControlSet\\Control\\Video"
+    let HKLM     = toHandle("2147483650")
+    let kread = toHandle("131097")
+    let hkBase = handleOut()
+    RegOpenKeyExA(HKLM, regBase, toHandle("0"), kread, hkBase)
+    let hb = handleGet(hkBase)
+    if handleValid(hb) == "0" { emit "Unknown GPU" }
+    let result  = ""
+    let subBuf  = bufNew("256")
+    let subSz   = bufNew("4")
+    let idx = "0"
+    while toInt(idx) < 16 {
+        bufSetDword(subSz, "256")
+        let enumRet = RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if toInt(enumRet) != 0 { break }
+        let sub = bufStr(subBuf)
+        let devPath = regBase + "\\" + sub + "\\0000"
+        let gpuName = trim(regHklmStr(devPath, "DriverDesc"))
+        if gpuName != "" {
+            if result != "" { result = result + "\n" }
+            result = result + gpuName
+        }
+        idx = toInt(idx) + 1 + ""
+    }
+    RegCloseKey(hb)
     if result == "" { emit "Unknown GPU" }
     emit result
 }

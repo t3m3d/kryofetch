@@ -1,17 +1,17 @@
+import "headers/windows.krh"
+
+// osver: Windows build + edition from registry (no powershell)
 func osver() {
-    let raw   = exec("powershell -NoProfile -Command \"(Get-WmiObject Win32_OperatingSystem).BuildNumber\"")
-    let build = trim(raw)
-    if build == "" { build = "0" }
+    let regPath = "SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    let build   = trim(regHklmStr(regPath, "CurrentBuildNumber"))
+    let ed      = trim(regHklmStr(regPath, "EditionID"))
+    if build == "" { emit "Windows" }
     let b = toInt(build)
     let v = "Windows"
-    if      b >= 26100 { v = "Windows 11" }
-    else if b >= 22621 { v = "Windows 11" }
+    if b >= 26100 { v = "Windows 11" }
     else if b >= 22000 { v = "Windows 11" }
     else if b >= 19041 { v = "Windows 10" }
-    else               { v = "Windows (legacy)" }
-
-    // Edition from registry via powershell
-    let ed = trim(exec("powershell -NoProfile -Command \"(Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion').EditionID\""))
+    else { v = "Windows (legacy)" }
     if ed == "Professional"            { ed = "Pro" }
     if ed == "Core"                    { ed = "Home" }
     if ed == "ProfessionalWorkstation" { ed = "Pro Workstation" }
@@ -19,33 +19,33 @@ func osver() {
     if ed == "ProfessionalN"           { ed = "Pro N" }
     if ed == "CoreN"                   { ed = "Home N" }
     if ed == "CoreSingleLanguage"      { ed = "Home SL" }
-
     if ed != "" { emit v + " " + ed + " (build " + build + ")" }
     emit v + " (build " + build + ")"
 }
 
+// uptime: GetTickCount64 (UINT64 via -> annotation) -> human readable
 func uptime() {
-    let raw  = trim(exec("powershell -NoProfile -Command \"(New-TimeSpan (gcim Win32_OperatingSystem).LastBootUpTime).TotalSeconds\""))
-    let tsec = toInt(raw)
-    let mins  = tsec / 60
-    let hrs   = mins / 60
-    let days  = hrs / 24
-    let h = hrs - (days * 24)
-    let m = mins - (hrs * 60)
+    let ms   = GetTickCount64()
+    let tsec = div64(ms, "1000")
+    let mins = toInt(tsec) / 60
+    let hrs  = mins / 60
+    let days = hrs / 24
+    let h    = hrs - (days * 24)
+    let m    = mins - (hrs * 60)
     if days > 0 { emit days + " days, " + h + " hrs, " + m + " min" }
     else if hrs > 0 { emit h + " hrs, " + m + " min" }
     else { emit m + " min" }
 }
 
+// kfresolution: GetSystemMetrics (INT via -> annotation) for screen size
 func kfresolution() {
-    let raw = trim(exec("powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds | Select-Object -ExpandProperty Width; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds | Select-Object -ExpandProperty Height\""))
-    // output is two lines: width\nheight
-    let w = nthline(raw, "0")
-    let h = nthline(raw, "1")
-    if w == "" { emit "unknown" }
+    let w = GetSystemMetrics("0")
+    let h = GetSystemMetrics("1")
+    if w == "0" { emit "unknown" }
     emit w + "x" + h
 }
 
+// kfterminal: detect terminal emulator from environment variables
 func kfterminal() {
     let wt = environ("WT_SESSION")
     if wt != "" { emit "Windows Terminal" }
@@ -58,19 +58,63 @@ func kfterminal() {
     emit ""
 }
 
+// kftheme: read dark/light mode + accent color from registry (no powershell)
 func kftheme() {
-    let raw = trim(exec("powershell -NoProfile -Command \"$p='HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize'; $l=(Get-ItemProperty $p).AppsUseLightTheme; $a=(Get-ItemProperty $p).AccentColor; $r=$a -band 0xFF; $g=($a -shr 8) -band 0xFF; $b=($a -shr 16) -band 0xFF; if($l){'Light'}else{'Dark'}; '#{0:X2}{1:X2}{2:X2}' -f $r,$g,$b\""))
-    let mode  = nthline(raw, "0")
-    let color = nthline(raw, "1")
-    if mode == "" { emit "" }
-    if color != "" { emit mode + " (" + color + ")" }
-    emit mode
+    let regPath = "Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    let light  = regHkcuDword(regPath, "AppsUseLightTheme")
+    let accent = toInt(regHkcuDword(regPath, "AccentColor"))
+    let mode   = "Dark"
+    if light != "0" { mode = "Light" }
+    let r = accent - (accent / 256) * 256
+    let g = accent / 256 - (accent / 65536) * 256
+    let b = accent / 65536 - (accent / 16777216) * 256
+    let hr = hex(r)
+    let hg = hex(g)
+    let hb = hex(b)
+    if len(hr) < 2 { hr = "0" + hr }
+    if len(hg) < 2 { hg = "0" + hg }
+    if len(hb) < 2 { hb = "0" + hb }
+    emit mode + " (#" + toUpper(hr) + toUpper(hg) + toUpper(hb) + ")"
 }
 
+// kfbattery: GetSystemPowerStatus via SYSTEM_POWER_STATUS struct (no WMI)
 func kfbattery() {
-    let raw = trim(exec("powershell -NoProfile -Command \"$b=Get-WmiObject Win32_Battery; if($b){$b.EstimatedChargeRemaining}\""))
-    if raw == "" { emit "" }
-    let status = trim(exec("powershell -NoProfile -Command \"$b=Get-WmiObject Win32_Battery; if($b){if($b.BatteryStatus -eq 2){'charging'}else{'discharging'}}\""))
-    if status != "" { emit raw + "% (" + status + ")" }
-    emit raw + "%"
+    let sps = structNew("SYSTEM_POWER_STATUS")
+    GetSystemPowerStatus(sps)
+    let pct = toInt(structGet(sps, "SYSTEM_POWER_STATUS", "BatteryLifePercent"))
+    let ac  = structGet(sps, "SYSTEM_POWER_STATUS", "ACLineStatus")
+    if pct == 255 { emit "" }
+    let status = "discharging"
+    if ac == "1" { status = "charging" }
+    emit pct + "% (" + status + ")"
+}
+
+// sysuser: GetUserNameA via bufNew/bufSetDword/bufStr (no shell)
+func sysuser() {
+    let buf = bufNew("256")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "256")
+    GetUserNameA(buf, sz)
+    emit bufStr(buf)
+}
+
+// syshost: GetComputerNameA via bufNew/bufSetDword/bufStr (no shell)
+func syshost() {
+    let buf = bufNew("256")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "256")
+    GetComputerNameA(buf, sz)
+    emit bufStr(buf)
+}
+
+// sysarch: GetNativeSystemInfo -> wProcessorArchitecture (no shell)
+func sysarch() {
+    let si   = structNew("SYSTEM_INFO")
+    GetNativeSystemInfo(si)
+    let arch = structGet(si, "SYSTEM_INFO", "wProcessorArchitecture")
+    if arch == "9"  { emit "x86_64" }
+    if arch == "5"  { emit "ARM" }
+    if arch == "12" { emit "ARM64" }
+    if arch == "6"  { emit "IA64" }
+    emit "x86"
 }
