@@ -226,3 +226,19 @@ func regHkcuDword(path, name) {
     emit bufGetDword(buf)
 }
 
+// regHklmQword: read REG_QWORD value from HKEY_LOCAL_MACHINE
+func regHklmQword(path, name) {
+    let HKLM  = toHandle("2147483650")
+    let kread = toHandle("131097")
+    let hkey  = handleOut()
+    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "0" }
+    let buf = bufNew("8")
+    let sz  = bufNew("4")
+    bufSetDword(sz, "8")
+    RegQueryValueExA(hk, name, toHandle("0"), toHandle("0"), buf, sz)
+    RegCloseKey(hk)
+    emit bufGetQword(buf)
+}
+

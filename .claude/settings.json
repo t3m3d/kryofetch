@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -la ~/Documents/GitHub/kryofetch/test_mini*)"
+      "Bash(ls -la ~/Documents/GitHub/kryofetch/test_mini*)",
+      "Read(//c/Users/brian/Documents/GitHub/krypton/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\brian\\Documents\\GitHub\\krypton\\kompiler"
     ]
   }
 }

@@ -29,8 +29,46 @@ func gpunames() {
     emit result
 }
 
+// kfvramreg: registry fallback for VRAM when DXGI is unavailable
+func kfvramreg() {
+    let regBase = "SYSTEM\\CurrentControlSet\\Control\\Video"
+    let HKLM    = toHandle("2147483650")
+    let kread   = toHandle("131097")
+    let hkBase  = handleOut()
+    RegOpenKeyExA(HKLM, regBase, toHandle("0"), kread, hkBase)
+    let hb = handleGet(hkBase)
+    if handleValid(hb) == "0" { emit "" }
+    let result = ""
+    let cnt    = "0"
+    let subBuf = bufNew("256")
+    let subSz  = bufNew("4")
+    let idx    = "0"
+    while toInt(idx) < 16 {
+        if toInt(cnt) >= 2 { break }
+        bufSetDword(subSz, "256")
+        let enumRet = RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if toInt(enumRet) != 0 { break }
+        let sub     = bufStr(subBuf)
+        let devPath = regBase + "\\" + sub + "\\0000"
+        let mem     = regHklmQword(devPath, "HardwareInformation.qwMemorySize")
+        if mem == "0" { mem = regHklmDword(devPath, "HardwareInformation.MemorySize") }
+        if mem == "0" { mem = regHklmDword(devPath, "HardwareInformation.MemorySizeLegacy") }
+        if mem != "0" {
+            let mb = div64(mem, "1048576")
+            if result != "" { result = result + "\n" }
+            result = result + mb + ":0"
+            cnt = toInt(cnt) + 1 + ""
+        }
+        idx = toInt(idx) + 1 + ""
+    }
+    RegCloseKey(hb)
+    emit result
+}
+
 func gpuvram() {
-    emit trim(kfvram())
+    let v = trim(kfvram())
+    if v != "" { emit v }
+    emit kfvramreg()
 }
 
 // fmtgpu: formats GPU name + VRAM stats like disk lines (used/total pct% [bar])

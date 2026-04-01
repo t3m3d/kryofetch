@@ -9,9 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// kfcls: clear screen in the current process console (system() needed; exec() spawns a child)
-char* kfcls() { system("cls"); return ""; }
-
 // kfvram: newline-separated "totalMB:usedMB" per GPU (DXGI COM + PDH — not expressible in Krypton)
 typedef struct {
     WCHAR  Description[128];
@@ -80,27 +77,5 @@ char* kfvram() {
         }
         FreeLibrary(hD);
     }
-    // Registry fallback
-    HKEY hK;
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,"SYSTEM\\CurrentControlSet\\Control\\Video",0,KEY_READ,&hK)!=ERROR_SUCCESS) return _kf_vram_buf;
-    static const char *vk[]={"HardwareInformation.qwMemorySize","HardwareInformation.MemorySize","HardwareInformation.MemorySizeLegacy"};
-    char sub[256]; DWORD sl=sizeof(sub),ri=0,cnt2=0;
-    while (RegEnumKeyExA(hK,ri,sub,&sl,NULL,NULL,NULL,NULL)==ERROR_SUCCESS&&cnt2<2) {
-        char path[512]; snprintf(path,sizeof(path),"SYSTEM\\CurrentControlSet\\Control\\Video\\%s\\0000",sub);
-        HKEY hS;
-        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,path,0,KEY_READ,&hS)==ERROR_SUCCESS) {
-            for (int k=0;k<3;k++) {
-                unsigned long long mem=0; DWORD msz=sizeof(mem);
-                if (RegQueryValueExA(hS,vk[k],NULL,NULL,(LPBYTE)&mem,&msz)==ERROR_SUCCESS&&mem>0) {
-                    char e[64]; snprintf(e,sizeof(e),"%llu:0",mem/(1024ULL*1024ULL));
-                    if (_kf_vram_buf[0]) strcat(_kf_vram_buf,"\n");
-                    strcat(_kf_vram_buf,e); cnt2++; break;
-                }
-            }
-            RegCloseKey(hS);
-        }
-        sl=sizeof(sub); ri++;
-    }
-    RegCloseKey(hK);
     return _kf_vram_buf;
 }
