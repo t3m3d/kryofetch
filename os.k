@@ -38,9 +38,10 @@ func uptime() {
 }
 
 // kfresolution: GetSystemMetrics (INT via -> annotation) for screen size
+// SM_CXSCREEN=0, SM_CYSCREEN=1; use toHandle to pass integer as pointer-sized int
 func kfresolution() {
-    let w = GetSystemMetrics("0")
-    let h = GetSystemMetrics("1")
+    let w = GetSystemMetrics(toHandle("0"))
+    let h = GetSystemMetrics(toHandle("1"))
     if w == "0" { emit "unknown" }
     emit w + "x" + h
 }

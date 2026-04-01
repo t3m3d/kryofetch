@@ -4,54 +4,15 @@
 #define _WIN32_WINNT 0x0600
 #endif
 #include <windows.h>
-#include <tlhelp32.h>
 #include <pdh.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 
-// Console clear + init (integer args can't come from Krypton directly)
-char* kfcls()  { system("cls"); return ""; }
-char* kfinit() {
-    SetConsoleOutputCP(65001);
-    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD m = 0;
-    GetConsoleMode(h, &m);
-    SetConsoleMode(h, m | 0x0004);
-    return "";
-}
+// kfcls: clear screen in the current process console (system() needed; exec() spawns a child)
+char* kfcls() { system("cls"); return ""; }
 
-// Returns stdout HANDLE as char* (GetStdHandle takes integer STD_OUTPUT_HANDLE = -11)
-char* kfstdout() { return (char*)GetStdHandle(STD_OUTPUT_HANDLE); }
-
-// Returns GetLogicalDrives() bitmask as decimal string
-static char _kf_drives_buf[12];
-char* kfdrivesbits() {
-    snprintf(_kf_drives_buf, sizeof(_kf_drives_buf), "%u", (unsigned)GetLogicalDrives());
-    return _kf_drives_buf;
-}
-
-// Returns current process PID as decimal string
-static char _kf_pid_buf[12];
-char* kfmypid() {
-    snprintf(_kf_pid_buf, sizeof(_kf_pid_buf), "%u", (unsigned)GetCurrentProcessId());
-    return _kf_pid_buf;
-}
-
-// Snapshot of all processes (TH32CS_SNAPPROCESS=2)
-char* kfsnapprocess() { return (char*)CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0); }
-
-// Process32First/Next returning "1"/"0" (Process32* return BOOL, not usable as char*)
-char* kfp32first(char* snap, char* entry) {
-    ((PROCESSENTRY32*)entry)->dwSize = sizeof(PROCESSENTRY32);
-    return Process32First((HANDLE)snap, (PROCESSENTRY32*)entry) ? "1" : "0";
-}
-char* kfp32next(char* snap, char* entry) {
-    return Process32Next((HANDLE)snap, (PROCESSENTRY32*)entry) ? "1" : "0";
-}
-
-// kfvram: newline-separated "totalMB:usedMB" per GPU (DXGI COM + PDH — stays in C)
+// kfvram: newline-separated "totalMB:usedMB" per GPU (DXGI COM + PDH — not expressible in Krypton)
 typedef struct {
     WCHAR  Description[128];
     UINT   VendorId, DeviceId, SubSysId, Revision;

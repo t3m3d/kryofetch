@@ -4,10 +4,25 @@ jxt {
     c "./kfetch_api.h"
 
     func kfcls()
-    func kfinit()
     func kfvram()
-    func kfstdout()
+}
 
+// STD_OUTPUT_HANDLE = (DWORD)-11 = 4294967285 unsigned
+func kfstdout() {
+    emit GetStdHandle(toHandle("4294967285"))
+}
+
+// kfinit: enable UTF-8 output and VT100 escape processing
+func kfinit() {
+    SetConsoleOutputCP(toHandle("65001"))
+    let h       = kfstdout()
+    let modeBuf = bufNew("4")
+    bufSetDword(modeBuf, "0")
+    GetConsoleMode(h, modeBuf)
+    let m    = toInt(bufGetDword(modeBuf))
+    let newm = bitOr(m + "", "4")
+    SetConsoleMode(h, toHandle(newm))
+    emit ""
 }
 
 // kfconsize: console window columns,rows via CONSOLE_SCREEN_BUFFER_INFO
