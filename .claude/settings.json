@@ -2,10 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(ls -la ~/Documents/GitHub/kryofetch/test_mini*)",
-      "Read(//c/Users/brian/Documents/GitHub/krypton/**)"
+      "Read(//c/Users/brian/Documents/GitHub/krypton/**)",
+      "Bash(ls ~/Documents/GitHub/krypton/versions/kcc_v1*.exe)",
+      "Bash(cmd /c build_v113.bat)",
+      "Bash(cmd /c \"cd C:\\\\Users\\\\brian\\\\Documents\\\\GitHub\\\\krypton && build_v113.bat\")",
+      "Bash(gcc compile_out.c -o versions/kcc_v113.exe -lm -w)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\brian\\Documents\\GitHub\\krypton\\kompiler"
+      "c:\\Users\\brian\\Documents\\GitHub\\krypton\\kompiler",
+      "C:\\Users\\brian\\Documents\\GitHub\\krypton\\versions"
     ]
   }
 }
