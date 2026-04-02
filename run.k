@@ -1,11 +1,5 @@
 import "headers/windows.krh"
 
-jxt {
-    c "./kfetch_api.h"
-
-    func kfvram()
-}
-
 func kfcls() {
     let E = fromCharCode(27)
     kp(E + "[2J" + E + "[H")
