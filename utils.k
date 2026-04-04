@@ -1,3 +1,5 @@
+import "headers/fileio.krh"
+
 func ansi(s) {
     let esc = fromCharCode(27)
     emit replace(s, "\\x1b", esc)
@@ -134,18 +136,74 @@ func idxfrom(s, sub, start) {
 
 
 
-func kfpkgs() {
-    // Count winget packages via registry
-    let winget = trim(exec("powershell -NoProfile -Command \"(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue).Count\""))
-    // Count scoop apps
-    let scoopPath = environ("USERPROFILE") + "\\scoop\\apps"
-    let scoop = trim(exec("powershell -NoProfile -Command \"if(Test-Path '" + scoopPath + "'){((Get-ChildItem '" + scoopPath + "' -Directory).Count - 1)}else{0}\""))
-    // Count choco packages
-    let chocoBase = environ("ChocolateyInstall")
-    let choco = ""
-    if chocoBase != "" {
-        choco = trim(exec("powershell -NoProfile -Command \"if(Test-Path '" + chocoBase + "\\lib'){(Get-ChildItem '" + chocoBase + "\\lib' -Directory).Count}else{0}\""))
+// countRegSubkeys: count subkeys under a given hive + path
+func countRegSubkeys(hive, path) {
+    let kread = toHandle("131097")
+    let hkey  = handleOut()
+    RegOpenKeyExA(hive, path, toHandle("0"), kread, hkey)
+    let hk = handleGet(hkey)
+    if handleValid(hk) == "0" { emit "0" }
+    let buf = bufNew("256")
+    let sz  = bufNew("4")
+    let cnt = "0"
+    let idx = "0"
+    while toInt(idx) < 65536 {
+        bufSetDword(sz, "256")
+        let r = RegEnumKeyExA(hk, toHandle(idx), buf, sz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if toInt(r) != 0 { break }
+        cnt = toInt(cnt) + 1 + ""
+        idx = toInt(idx) + 1 + ""
     }
+    RegCloseKey(hk)
+    emit cnt
+}
+
+// countDirs: count subdirectories in path (excludes . and ..)
+func countDirs(path) {
+    let attrs = GetFileAttributesA(path)
+    if attrs == "-1" { emit "0" }
+    if bitAnd(attrs, "16") == "0" { emit "0" }
+    let fd  = structNew("WIN32_FIND_DATAA")
+    let h   = FindFirstFileA(path + "\\*", fd)
+    if handleValid(h) == "0" { emit "0" }
+    let cnt = "0"
+    let go  = "1"
+    while go == "1" {
+        let fa   = structGet(fd, "WIN32_FIND_DATAA", "dwFileAttributes")
+        let name = structGet(fd, "WIN32_FIND_DATAA", "cFileName")
+        if bitAnd(fa, "16") != "0" {
+            if name != "." {
+                if name != ".." {
+                    cnt = toInt(cnt) + 1 + ""
+                }
+            }
+        }
+        let nxt = FindNextFileA(h, fd)
+        if nxt == "0" { go = "0" }
+    }
+    FindClose(h)
+    emit cnt
+}
+
+func kfpkgs() {
+    let HKLM = toHandle("2147483650")
+    let HKCU = toHandle("2147483649")
+    let p1 = countRegSubkeys(HKLM, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
+    let p2 = countRegSubkeys(HKLM, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
+    let p3 = countRegSubkeys(HKCU, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
+    let winget = toInt(p1) + toInt(p2) + toInt(p3) + ""
+
+    let scoopPath = environ("USERPROFILE") + "\\scoop\\apps"
+    let scoopRaw  = countDirs(scoopPath)
+    let scoop     = toInt(scoopRaw) - 1 + ""
+    if toInt(scoop) < 0 { scoop = "0" }
+
+    let chocoBase = environ("ChocolateyInstall")
+    let choco = "0"
+    if chocoBase != "" {
+        choco = countDirs(chocoBase + "\\lib")
+    }
+
     let result = ""
     if toInt(winget) > 0 { result = winget + " (winget)" }
     if toInt(scoop) > 0 {

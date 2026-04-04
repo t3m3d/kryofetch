@@ -1,4 +1,5 @@
 import "headers/windows.krh"
+import "headers/fileio.krh"
 
 func kfcls() {
     let E = fromCharCode(27)

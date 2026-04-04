@@ -1,21 +1,20 @@
 @echo off
 setlocal
 
-set KCC=%~dp0kcc.exe
-set GCC=gcc
-
-echo [1/2] Compiling Krypton to C...
-%KCC% run.k > out.c
+echo [1/2] Krypton to C...
+bash ../krypton/kcc.sh run.k > kryofetch_tmp.c
 if errorlevel 1 (
     echo ERROR: Krypton compilation failed.
     exit /b 1
 )
 
-echo [2/2] Compiling C to executable...
-%GCC% out.c -o kryofetch.exe -lm -w -lsetupapi -ladvapi32 -lpdh
+echo [2/2] C to exe...
+gcc kryofetch_tmp.c -o kryofetch.exe -lsetupapi -ladvapi32 -lpdh -lm -w
 if errorlevel 1 (
-    echo ERROR: C compilation failed.
+    echo ERROR: gcc failed.
+    del /Q kryofetch_tmp.c 2>nul
     exit /b 1
 )
+del /Q kryofetch_tmp.c
 
 echo Done! Run kryofetch.exe to see output.
