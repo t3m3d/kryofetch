@@ -1,4 +1,4 @@
-import "headers/windows.krh"
+import "windows.krh"
 
 // osver: Windows build + edition from registry (no powershell)
 func osver() {

@@ -1,4 +1,4 @@
-import "headers/windows.krh"
+import "windows.krh"
 
 // cpubrand: processor name from registry (no WMI/powershell)
 func cpubrand() {

@@ -5,3 +5,7 @@ out.c
 *_err.txt
 kfetch_api.h
 .claude/settings.json
+kcc.sh
+build.bat
+kryofetch.exe
+.output/

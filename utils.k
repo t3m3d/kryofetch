@@ -1,4 +1,4 @@
-import "headers/fileio.krh"
+import "fileio.krh"
 
 func ansi(s) {
     let esc = fromCharCode(27)

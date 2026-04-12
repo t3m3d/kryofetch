@@ -2,9 +2,10 @@
 setlocal
 
 echo [1/2] Krypton to C...
-bash ../krypton/kcc.sh run.k > kryofetch_tmp.c
+..\krypton\kcc.exe --headers ..\krypton\headers run.k > kryofetch_tmp.c
 if errorlevel 1 (
     echo ERROR: Krypton compilation failed.
+    del /Q kryofetch_tmp.c 2>nul
     exit /b 1
 )
 
