@@ -87,7 +87,6 @@ func nthline(s, lineIdx) {
     emit ""
 }
 
-// rambar: pure Krypton UTF-8 block char bar
 func rambar(usedMB, totalMB) {
     let used  = toInt(usedMB)
     let total = toInt(totalMB)
@@ -103,7 +102,6 @@ func rambar(usedMB, totalMB) {
     emit bar + "]"
 }
 
-// colorpalette: prints two rows of 8 ANSI color blocks (normal + bright)
 func colorpalette() {
     let E   = fromCharCode(27)
     let RST = E + "[0m"
@@ -134,9 +132,6 @@ func idxfrom(s, sub, start) {
     emit "-1"
 }
 
-
-
-// countRegSubkeys: count subkeys under a given hive + path
 func countRegSubkeys(hive, path) {
     let kread = toHandle("131097")
     let hkey  = handleOut()
@@ -158,7 +153,6 @@ func countRegSubkeys(hive, path) {
     emit cnt
 }
 
-// countDirs: count subdirectories in path (excludes . and ..)
 func countDirs(path) {
     let attrs = handleInt(GetFileAttributesA(path))
     if attrs == "-1" { emit "0" }
@@ -220,10 +214,8 @@ func kfpkgs() {
     emit result
 }
 
-// ── Pure-Krypton registry helpers ──────────────────────────────────────────
+// ── Krypton registry helpers ──────────────────────────────────────────
 // Use bufNew/bufStr/bufGetDword/handleOut/handleGet/toHandle + windows.krh
-
-// regHklmStr: read REG_SZ value from HKEY_LOCAL_MACHINE
 func regHklmStr(path, name) {
     let HKLM     = toHandle("2147483650")
     let kread = toHandle("131097")
@@ -239,7 +231,6 @@ func regHklmStr(path, name) {
     emit bufStr(buf)
 }
 
-// regHkcuStr: read REG_SZ value from HKEY_CURRENT_USER
 func regHkcuStr(path, name) {
     let HKCU     = toHandle("2147483649")
     let kread = toHandle("131097")
@@ -255,7 +246,6 @@ func regHkcuStr(path, name) {
     emit bufStr(buf)
 }
 
-// regHklmDword: read REG_DWORD value from HKEY_LOCAL_MACHINE
 func regHklmDword(path, name) {
     let HKLM     = toHandle("2147483650")
     let kread = toHandle("131097")
@@ -271,7 +261,6 @@ func regHklmDword(path, name) {
     emit bufGetDword(buf)
 }
 
-// regHkcuDword: read REG_DWORD value from HKEY_CURRENT_USER
 func regHkcuDword(path, name) {
     let HKCU     = toHandle("2147483649")
     let kread = toHandle("131097")
@@ -287,7 +276,6 @@ func regHkcuDword(path, name) {
     emit bufGetDword(buf)
 }
 
-// regHklmQword: read REG_QWORD value from HKEY_LOCAL_MACHINE
 func regHklmQword(path, name) {
     let HKLM  = toHandle("2147483650")
     let kread = toHandle("131097")
