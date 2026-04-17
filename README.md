@@ -1,8 +1,8 @@
 # kryofetch
 
-A Windows system information fetch tool written in [Krypton](https://github.com/t3m3d/krypton) — a self-hosting language that compiles to C.
+A Windows system information fetch tool written in [Krypton](https://github.com/t3m3d/krypton) — a self-hosting language that compiles to machine code.
 
-<img width="1137" height="477" alt="image" src="https://github.com/user-attachments/assets/af8135bd-8ef1-4c52-8bfb-8b7c7815fdef" />
+<img width="1207" height="426" alt="image" src="https://github.com/user-attachments/assets/673da10d-dc15-4ae5-857f-e4bca77eca2a" />
 
 ## Features
 
@@ -23,20 +23,11 @@ A Windows system information fetch tool written in [Krypton](https://github.com/
 
 ## Build
 
-Requires [GCC for Windows](https://winlibs.com/) (MinGW). `kcc.exe` is bundled — no separate Krypton install needed.
-
-```bat
-kcc.exe run.k > out.c
-gcc out.c -o kryofetch.exe -lm -w -lsetupapi -ladvapi32 -lpdh
-```
+Requires [KCC for Windows](https://github.com/t3m3d/krypton).
 
 Or just run `build.bat`.
 
 ## Requirements
 
 - Windows 10 / 11
-- GCC (MinGW / winlibs)
-
-## Language
-
-Written in [Krypton](https://github.com/KryptonBytes/krypton) — a self-hosting language that compiles to C via `kcc`. The bundled `kcc.exe` is all you need to recompile from source. Native Win32 helpers live in `kfetch_api.h` and are included inline at compile time.
+- KCC - Krypton-Lang compiler.
