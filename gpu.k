@@ -29,7 +29,6 @@ func gpunames() {
     emit result
 }
 
-// kfvramreg: registry fallback for VRAM when DXGI is unavailable
 func kfvramreg() {
     let regBase = "SYSTEM\\CurrentControlSet\\Control\\Video"
     let HKLM    = toHandle("2147483650")
@@ -65,7 +64,6 @@ func kfvramreg() {
     emit result
 }
 
-// kfpdhgpu: GPU dedicated memory usage in MB via PDH counters
 func kfpdhgpu() {
     let hQ  = handleOut()
     let ret = handleInt(PdhOpenQueryA(toHandle("0"), toHandle("0"), hQ))
@@ -74,7 +72,6 @@ func kfpdhgpu() {
     let hC   = handleOut()
     let ret2 = handleInt(PdhAddEnglishCounterA(q, "\\GPU Adapter Memory(*)\\Dedicated Usage", toHandle("0"), hC))
     if toInt(ret2) != 0 {
-        // Fallback: some GPUs (e.g. newer NVIDIA) use GPU Local Adapter Memory
         ret2 = handleInt(PdhAddEnglishCounterA(q, "\\GPU Local Adapter Memory(*)\\Local Usage", toHandle("0"), hC))
     }
     if toInt(ret2) != 0 {
@@ -88,13 +85,10 @@ func kfpdhgpu() {
     let cntBuf = bufNew("4")
     bufSetDword(szBuf, "0")
     bufSetDword(cntBuf, "0")
-    // Try PDH_FMT_LARGE (0x400=1024) first; fall back to PDH_FMT_DOUBLE (0x200=512)
-    // PDH_FMT_COUNTERVALUE_ITEM_A: offset 0=szName(8), 8=CStatus(4), 12=pad(4), 16=value(8), sizeof=24
     PdhGetFormattedCounterArrayA(c, toHandle("1024"), szBuf, cntBuf, toHandle("0"))
     let sz  = bufGetDword(szBuf)
     let cnt = bufGetDword(cntBuf)
     if toInt(sz) == 0 {
-        // retry with PDH_FMT_DOUBLE
         bufSetDword(szBuf, "0")
         bufSetDword(cntBuf, "0")
         PdhGetFormattedCounterArrayA(c, toHandle("512"), szBuf, cntBuf, toHandle("0"))
@@ -109,7 +103,6 @@ func kfpdhgpu() {
     let fmt   = "1024"
     if toInt(cnt) == 0 { fmt = "512" }
     PdhGetFormattedCounterArrayA(c, toHandle(fmt), szBuf, cntBuf, items)
-    // Accept any CStatus that isn't an error: error codes >= 0x80000000 parse negative
     let used = "0"
     let i = "0"
     while toInt(i) < toInt(cnt) {
@@ -127,10 +120,7 @@ func kfpdhgpu() {
     emit used
 }
 
-// kfdxgivram: enumerate GPU total VRAM via DXGI COM vtable (pure Krypton)
 func kfdxgivram() {
-    // IID_IDXGIFactory: {7b7166ec-21c7-44ae-b21a-c9ae321ae369}
-    // Stored as 4 LE DWORDs: Data1, Data2|Data3, Data4[0-3], Data4[4-7]
     let guid = bufNew("16")
     bufSetDwordAt(guid, "0",  "2071029484")   // 0x7B7166EC
     bufSetDwordAt(guid, "4",  "1152262599")   // 0x44AE21C7
@@ -158,7 +148,6 @@ func kfdxgivram() {
         emit ""
     }
 
-    // vtable slot 7 = EnumAdapters, slot 2 = Release
     let fv  = ptrDeref(pF)
     let pE  = ptrIndex(fv, "7")
     let pFR = ptrIndex(fv, "2")
@@ -173,15 +162,10 @@ func kfdxgivram() {
         let pA = handleGet(pAOut)
         if handleValid(pA) == "0" { break }
 
-        // vtable slot 8 = GetDesc, slot 2 = Release
         let av  = ptrDeref(pA)
         let pG  = ptrIndex(av, "8")
         let pAR = ptrIndex(av, "2")
 
-        // DXGI_ADAPTER_DESC layout (64-bit):
-        //   offset   0: Description WCHAR[128] (256 bytes)
-        //   offset 256: VendorId/DeviceId/SubSysId/Revision (16 bytes)
-        //   offset 272: DedicatedVideoMemory SIZE_T (8 bytes)
         let desc = bufNew("304")
         callPtr(pG, pA, desc)
         let vram = bufGetQwordAt(desc, "272")
@@ -199,13 +183,11 @@ func kfdxgivram() {
     emit result
 }
 
-// kfdxgibudget: returns used VRAM in MB using DXGI 1.4 QueryVideoMemoryInfo CurrentUsage
 func kfdxgibudget() {
     let hD = LoadLibraryA("dxgi.dll")
     if handleValid(hD) == "0" { emit "0" }
     let pC = GetProcAddress(hD, "CreateDXGIFactory1")
     if handleValid(pC) == "0" { FreeLibrary(hD)  emit "0" }
-    // IID_IDXGIFactory1 = {770AAE78-F26F-4DBA-A829-253C83D1B387}
     let g1 = bufNew("16")
     bufSetDwordAt(g1, "0",  "1997188728")
     bufSetDwordAt(g1, "4",  "1304097391")
@@ -216,11 +198,9 @@ func kfdxgibudget() {
     if toInt(handleInt(hr1)) < 0 { FreeLibrary(hD)  emit "0" }
     let pF = handleGet(pFOut)
     if handleValid(pF) == "0" { FreeLibrary(hD)  emit "0" }
-    // EnumAdapters1 = vtable slot 12, Release = slot 2
     let fv  = ptrDeref(pF)
     let pE1 = ptrIndex(fv, "12")
     let pFR = ptrIndex(fv, "2")
-    // IID_IDXGIAdapter3 = {645967A4-1392-4310-A798-8053CE3E93FD}
     let g3 = bufNew("16")
     bufSetDwordAt(g3, "0",  "1683580836")
     bufSetDwordAt(g3, "4",  "1125127058")
@@ -240,11 +220,9 @@ func kfdxgibudget() {
             if toInt(handleInt(hr3)) >= 0 {
                 let pA3 = handleGet(pA3Out)
                 if handleValid(pA3) != "0" {
-                    // QueryVideoMemoryInfo = vtable slot 14
                     let av3 = ptrDeref(pA3)
                     let pQV  = ptrIndex(av3, "14")
                     let pA3R = ptrIndex(av3, "2")
-                    // DXGI_QUERY_VIDEO_MEMORY_INFO: Budget(8), CurrentUsage(8), AvailForReserv(8), Reservation(8)
                     let info = bufNew("32")
                     callPtr(pQV, pA3, toHandle("0"), toHandle("0"), info)
                     let usageMB = div64(bufGetQwordAt(info, "8"), "1048576")
@@ -280,7 +258,6 @@ func gpuvram() {
     emit kfvramreg()
 }
 
-// fmtgpu: formats GPU name + VRAM stats like disk lines (used/total pct% [bar])
 func fmtgpu(name, vramLine) {
     if name == "" { emit "" }
     if vramLine == "" { emit name }
