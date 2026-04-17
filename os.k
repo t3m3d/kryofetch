@@ -25,7 +25,7 @@ func osver() {
 
 // uptime: GetTickCount64 (UINT64 via -> annotation) -> human readable
 func uptime() {
-    let ms   = GetTickCount64()
+    let ms   = handleInt(GetTickCount64())
     let tsec = div64(ms, "1000")
     let mins = toInt(tsec) / 60
     let hrs  = mins / 60
@@ -40,8 +40,8 @@ func uptime() {
 // kfresolution: GetSystemMetrics (INT via -> annotation) for screen size
 // SM_CXSCREEN=0, SM_CYSCREEN=1; use toHandle to pass integer as pointer-sized int
 func kfresolution() {
-    let w = GetSystemMetrics(toHandle("0"))
-    let h = GetSystemMetrics(toHandle("1"))
+    let w = handleInt(GetSystemMetrics(toHandle("0")))
+    let h = handleInt(GetSystemMetrics(toHandle("1")))
     if w == "0" { emit "unknown" }
     emit w + "x" + h
 }

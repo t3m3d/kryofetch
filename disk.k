@@ -1,7 +1,7 @@
 import "windows.krh"
 
 func driveinfo() {
-    let drives = GetLogicalDrives()
+    let drives = handleInt(GetLogicalDrives())
     let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     let totalB  = structNew("ULARGE_INTEGER")
     let totalFB = structNew("ULARGE_INTEGER")
@@ -12,7 +12,7 @@ func driveinfo() {
         if bitAnd(drives, bit) != "0" {
             let letter = substring(letters, toInt(i), toInt(i) + 1)
             let root   = letter + ":\\"
-            GetDiskFreeSpaceExA(root, null, totalB, totalFB)
+            GetDiskFreeSpaceExA(root, toHandle("0"), totalB, totalFB)
             let totalGB = div64(structGet(totalB, "ULARGE_INTEGER", "QuadPart"), "1073741824")
             let freeGB  = div64(structGet(totalFB, "ULARGE_INTEGER", "QuadPart"), "1073741824")
             if toInt(totalGB) > 0 {

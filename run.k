@@ -42,36 +42,36 @@ func kfconsize() {
 
 // kfshell: walk parent process tree to identify the calling shell
 func kfshell() {
-    let mypid  = GetCurrentProcessId()
+    let mypid  = handleInt(GetCurrentProcessId())
     let snap   = CreateToolhelp32Snapshot(toHandle("2"), toHandle("0"))
     let entry  = structNew("PROCESSENTRY32")
     structSet(entry, "PROCESSENTRY32", "dwSize", "304")
     let ppid   = ""
     let result = ""
     // first pass: find our parent PID
-    let ok = Process32First(snap, entry)
+    let ok = handleInt(Process32First(snap, entry))
     while ok != "0" {
         let pid = structGet(entry, "PROCESSENTRY32", "th32ProcessID")
         if pid == mypid {
             ppid = structGet(entry, "PROCESSENTRY32", "th32ParentProcessID")
         }
-        ok = Process32Next(snap, entry)
+        ok = handleInt(Process32Next(snap, entry))
     }
     // second pass: find parent exe name
     structSet(entry, "PROCESSENTRY32", "dwSize", "304")
-    ok = Process32First(snap, entry)
+    ok = handleInt(Process32First(snap, entry))
     while ok != "0" {
         let pid = structGet(entry, "PROCESSENTRY32", "th32ProcessID")
         if pid == ppid {
             result = structGet(entry, "PROCESSENTRY32", "szExeFile")
         }
-        ok = Process32Next(snap, entry)
+        ok = handleInt(Process32Next(snap, entry))
     }
     CloseHandle(snap)
     if result == "" { emit "cmd" }
     let low = toLower(result)
     if contains(low, "powershell") { emit "PowerShell" }
-    if contains(low, "pwsh")       { emit "PowerShell Core" }
+    if contains(low, "pwsh")       { emit "PowerShell" }
     if contains(low, "bash")       { emit "bash" }
     if contains(low, "zsh")        { emit "zsh" }
     if contains(low, "nu")         { emit "nushell" }
@@ -276,7 +276,7 @@ func run() {
     }
 
     kp("")
-    kp(CYN + "  KryptonFetch" + RST + " by KryptonBytes")
+    kp(CYN + "  KryoFetch" + RST + " by KryptonBytes")
     kp("")
     colorpalette()
     kp("")

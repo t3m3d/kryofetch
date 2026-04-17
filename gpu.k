@@ -13,7 +13,7 @@ func gpunames() {
     let idx = "0"
     while toInt(idx) < 16 {
         bufSetDword(subSz, "256")
-        let enumRet = RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        let enumRet = handleInt(RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
         if toInt(enumRet) != 0 { break }
         let sub = bufStr(subBuf)
         let devPath = regBase + "\\" + sub + "\\0000"
@@ -46,7 +46,7 @@ func kfvramreg() {
     while toInt(idx) < 16 {
         if toInt(cnt) >= 2 { break }
         bufSetDword(subSz, "256")
-        let enumRet = RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        let enumRet = handleInt(RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
         if toInt(enumRet) != 0 { break }
         let sub     = bufStr(subBuf)
         let devPath = regBase + "\\" + sub + "\\0000"
@@ -68,45 +68,55 @@ func kfvramreg() {
 // kfpdhgpu: GPU dedicated memory usage in MB via PDH counters
 func kfpdhgpu() {
     let hQ  = handleOut()
-    let ret = PdhOpenQueryA(toHandle("0"), toHandle("0"), hQ)
+    let ret = handleInt(PdhOpenQueryA(toHandle("0"), toHandle("0"), hQ))
     if toInt(ret) != 0 { emit "0" }
     let q   = handleGet(hQ)
-    let hC  = handleOut()
-    let ret2 = PdhAddEnglishCounterA(q, "\\GPU Adapter Memory(*)\\Dedicated Usage", toHandle("0"), hC)
+    let hC   = handleOut()
+    let ret2 = handleInt(PdhAddEnglishCounterA(q, "\\GPU Adapter Memory(*)\\Dedicated Usage", toHandle("0"), hC))
+    if toInt(ret2) != 0 {
+        // Fallback: some GPUs (e.g. newer NVIDIA) use GPU Local Adapter Memory
+        ret2 = handleInt(PdhAddEnglishCounterA(q, "\\GPU Local Adapter Memory(*)\\Local Usage", toHandle("0"), hC))
+    }
     if toInt(ret2) != 0 {
         PdhCloseQuery(q)
         emit "0"
     }
     let c = handleGet(hC)
     PdhCollectQueryData(q)
+    PdhCollectQueryData(q)
     let szBuf  = bufNew("4")
     let cntBuf = bufNew("4")
     bufSetDword(szBuf, "0")
     bufSetDword(cntBuf, "0")
-    // PDH_FMT_LARGE = 0x400 = 1024; first call with null items gets required buffer size
+    // Try PDH_FMT_LARGE (0x400=1024) first; fall back to PDH_FMT_DOUBLE (0x200=512)
+    // PDH_FMT_COUNTERVALUE_ITEM_A: offset 0=szName(8), 8=CStatus(4), 12=pad(4), 16=value(8), sizeof=24
     PdhGetFormattedCounterArrayA(c, toHandle("1024"), szBuf, cntBuf, toHandle("0"))
     let sz  = bufGetDword(szBuf)
     let cnt = bufGetDword(cntBuf)
+    if toInt(sz) == 0 {
+        // retry with PDH_FMT_DOUBLE
+        bufSetDword(szBuf, "0")
+        bufSetDword(cntBuf, "0")
+        PdhGetFormattedCounterArrayA(c, toHandle("512"), szBuf, cntBuf, toHandle("0"))
+        sz  = bufGetDword(szBuf)
+        cnt = bufGetDword(cntBuf)
+    }
     if toInt(sz) == 0 {
         PdhCloseQuery(q)
         emit "0"
     }
     let items = bufNew(sz)
-    PdhGetFormattedCounterArrayA(c, toHandle("1024"), szBuf, cntBuf, items)
-    // PDH_FMT_COUNTERVALUE_ITEM_A layout on 64-bit Windows:
-    //   offset  0: szName     (LPSTR,    8 bytes)
-    //   offset  8: CStatus    (DWORD,    4 bytes)
-    //   offset 12: padding    (          4 bytes)
-    //   offset 16: largeValue (LONGLONG, 8 bytes)
-    //   sizeof = 24 bytes per item
+    let fmt   = "1024"
+    if toInt(cnt) == 0 { fmt = "512" }
+    PdhGetFormattedCounterArrayA(c, toHandle(fmt), szBuf, cntBuf, items)
+    // Accept any CStatus that isn't an error: error codes >= 0x80000000 parse negative
     let used = "0"
     let i = "0"
     while toInt(i) < toInt(cnt) {
         let off    = toInt(i) * 24
         let status = bufGetDwordAt(items, off + 8)
         let ok = "0"
-        if status == "0"   { ok = "1" }
-        if status == "512" { ok = "1" }
+        if toInt(status) >= 0 { ok = "1" }
         if ok == "1" {
             let valMB = div64(bufGetQwordAt(items, off + 16), "1048576")
             used = toInt(used) + toInt(valMB) + ""
@@ -124,7 +134,7 @@ func kfdxgivram() {
     let guid = bufNew("16")
     bufSetDwordAt(guid, "0",  "2071029484")   // 0x7B7166EC
     bufSetDwordAt(guid, "4",  "1152262599")   // 0x44AE21C7
-    bufSetDwordAt(guid, "8",  "4006156978")   // 0xAEC91AB2
+    bufSetDwordAt(guid, "8",  "-1362552142")   // 0xAEC91AB2
     bufSetDwordAt(guid, "12", "1776491058")   // 0x69E31A32
 
     let hD = LoadLibraryA("dxgi.dll")
@@ -189,10 +199,72 @@ func kfdxgivram() {
     emit result
 }
 
+// kfdxgibudget: returns used VRAM in MB using DXGI 1.4 QueryVideoMemoryInfo CurrentUsage
+func kfdxgibudget() {
+    let hD = LoadLibraryA("dxgi.dll")
+    if handleValid(hD) == "0" { emit "0" }
+    let pC = GetProcAddress(hD, "CreateDXGIFactory1")
+    if handleValid(pC) == "0" { FreeLibrary(hD)  emit "0" }
+    // IID_IDXGIFactory1 = {770AAE78-F26F-4DBA-A829-253C83D1B387}
+    let g1 = bufNew("16")
+    bufSetDwordAt(g1, "0",  "1997188728")
+    bufSetDwordAt(g1, "4",  "1304097391")
+    bufSetDwordAt(g1, "8",  "1009068456")
+    bufSetDwordAt(g1, "12", "-2018258557")
+    let pFOut = handleOut()
+    let hr1 = callPtr(pC, g1, pFOut)
+    if toInt(handleInt(hr1)) < 0 { FreeLibrary(hD)  emit "0" }
+    let pF = handleGet(pFOut)
+    if handleValid(pF) == "0" { FreeLibrary(hD)  emit "0" }
+    // EnumAdapters1 = vtable slot 12, Release = slot 2
+    let fv  = ptrDeref(pF)
+    let pE1 = ptrIndex(fv, "12")
+    let pFR = ptrIndex(fv, "2")
+    // IID_IDXGIAdapter3 = {645967A4-1392-4310-A798-8053CE3E93FD}
+    let g3 = bufNew("16")
+    bufSetDwordAt(g3, "0",  "1683580836")
+    bufSetDwordAt(g3, "4",  "1125127058")
+    bufSetDwordAt(g3, "8",  "1400936615")
+    bufSetDwordAt(g3, "12", "-40681778")
+    let result = "0"
+    let pA1Out = handleOut()
+    let hr2 = callPtr(pE1, pF, toHandle("0"), pA1Out)
+    if toInt(handleInt(hr2)) >= 0 {
+        let pA1 = handleGet(pA1Out)
+        if handleValid(pA1) != "0" {
+            let av1  = ptrDeref(pA1)
+            let pQI  = ptrIndex(av1, "0")
+            let pA1R = ptrIndex(av1, "2")
+            let pA3Out = handleOut()
+            let hr3 = callPtr(pQI, pA1, g3, pA3Out)
+            if toInt(handleInt(hr3)) >= 0 {
+                let pA3 = handleGet(pA3Out)
+                if handleValid(pA3) != "0" {
+                    // QueryVideoMemoryInfo = vtable slot 14
+                    let av3 = ptrDeref(pA3)
+                    let pQV  = ptrIndex(av3, "14")
+                    let pA3R = ptrIndex(av3, "2")
+                    // DXGI_QUERY_VIDEO_MEMORY_INFO: Budget(8), CurrentUsage(8), AvailForReserv(8), Reservation(8)
+                    let info = bufNew("32")
+                    callPtr(pQV, pA3, toHandle("0"), toHandle("0"), info)
+                    let usageMB = div64(bufGetQwordAt(info, "8"), "1048576")
+                    if toInt(usageMB) > 0 { result = usageMB + "" }
+                    callPtr(pA3R, pA3)
+                }
+            }
+            callPtr(pA1R, pA1)
+        }
+    }
+    callPtr(pFR, pF)
+    FreeLibrary(hD)
+    emit result
+}
+
 func gpuvram() {
     let v = trim(kfdxgivram())
     if v == "" { emit kfvramreg() }
     let used   = kfpdhgpu()
+    if used == "0" { used = kfdxgibudget() }
     let n      = linecount(v)
     let result = ""
     let i = "0"

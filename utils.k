@@ -149,7 +149,7 @@ func countRegSubkeys(hive, path) {
     let idx = "0"
     while toInt(idx) < 65536 {
         bufSetDword(sz, "256")
-        let r = RegEnumKeyExA(hk, toHandle(idx), buf, sz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        let r = handleInt(RegEnumKeyExA(hk, toHandle(idx), buf, sz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
         if toInt(r) != 0 { break }
         cnt = toInt(cnt) + 1 + ""
         idx = toInt(idx) + 1 + ""
@@ -160,15 +160,15 @@ func countRegSubkeys(hive, path) {
 
 // countDirs: count subdirectories in path (excludes . and ..)
 func countDirs(path) {
-    let attrs = GetFileAttributesA(path)
+    let attrs = handleInt(GetFileAttributesA(path))
     if attrs == "-1" { emit "0" }
     if bitAnd(attrs, "16") == "0" { emit "0" }
     let fd  = structNew("WIN32_FIND_DATAA")
     let h   = FindFirstFileA(path + "\\*", fd)
     if handleValid(h) == "0" { emit "0" }
     let cnt = "0"
-    let go  = "1"
-    while go == "1" {
+    let di  = "0"
+    while toInt(di) < 65536 {
         let fa   = structGet(fd, "WIN32_FIND_DATAA", "dwFileAttributes")
         let name = structGet(fd, "WIN32_FIND_DATAA", "cFileName")
         if bitAnd(fa, "16") != "0" {
@@ -178,8 +178,9 @@ func countDirs(path) {
                 }
             }
         }
-        let nxt = FindNextFileA(h, fd)
-        if nxt == "0" { go = "0" }
+        let nxt = handleInt(FindNextFileA(h, fd))
+        if nxt == "0" { break }
+        di = toInt(di) + 1 + ""
     }
     FindClose(h)
     emit cnt
@@ -199,9 +200,11 @@ func kfpkgs() {
     if toInt(scoop) < 0 { scoop = "0" }
 
     let chocoBase = environ("ChocolateyInstall")
+    if chocoBase == "" { chocoBase = regHklmStr("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "ChocolateyInstall") }
     let choco = "0"
     if chocoBase != "" {
-        choco = countDirs(chocoBase + "\\lib")
+        let chocoLib = chocoBase + "\\lib"
+        choco = countDirs(chocoLib)
     }
 
     let result = ""
