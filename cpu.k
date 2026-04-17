@@ -1,6 +1,5 @@
 import "windows.krh"
 
-// cpubrand: processor name from registry (no WMI/powershell)
 func cpubrand() {
     let regPath = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"
     let name    = trim(regHklmStr(regPath, "ProcessorNameString"))
@@ -8,9 +7,6 @@ func cpubrand() {
     emit name
 }
 
-// cpucores: physical + logical cores
-// logical: SYSTEM_INFO.dwNumberOfProcessors
-// physical: GetLogicalProcessorInformationEx via GetProcAddress (dynamic)
 func cpucores() {
     let si      = structNew("SYSTEM_INFO")
     GetNativeSystemInfo(si)
