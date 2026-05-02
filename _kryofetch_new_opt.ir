@@ -1,0 +1,4820 @@
+; Krypton IR
+; Source: run.k
+
+FUNC ansi 1
+PARAM s
+LOCAL esc
+PUSH 27
+BUILTIN fromCharCode 1
+STORE esc
+LOAD s
+PUSH "\\x1b"
+LOAD esc
+BUILTIN replace 3
+RETURN
+END
+
+FUNC vislen 1
+PARAM s
+LOCAL total
+LOAD s
+BUILTIN len 1
+STORE total
+LOCAL vis
+PUSH "0"
+STORE vis
+LOCAL i
+PUSH "0"
+STORE i
+LOCAL esc
+PUSH 27
+BUILTIN fromCharCode 1
+STORE esc
+LABEL _wloop_54
+LOAD i
+BUILTIN toInt 1
+LOAD total
+BUILTIN toInt 1
+LT
+JUMPIFNOT _wend_54
+LOCAL ch
+LOAD s
+LOAD i
+BUILTIN toInt 1
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+BUILTIN substring 3
+STORE ch
+LOAD ch
+LOAD esc
+EQ
+JUMPIFNOT _else_84
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+LABEL _wloop_99
+LOAD i
+BUILTIN toInt 1
+LOAD total
+BUILTIN toInt 1
+LT
+JUMPIFNOT _wend_99
+LOCAL c2
+LOAD s
+LOAD i
+BUILTIN toInt 1
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+BUILTIN substring 3
+STORE c2
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+LOAD c2
+PUSH "m"
+EQ
+JUMPIFNOT _endif_139
+BREAK
+LABEL _endif_139
+JUMP _wloop_99
+LABEL _wend_99
+JUMP _endif_84
+LABEL _else_84
+LOAD vis
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE vis
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+LABEL _endif_84
+JUMP _wloop_54
+LABEL _wend_54
+LOAD vis
+RETURN
+END
+
+FUNC padansi 2
+PARAM s
+PARAM w
+LOCAL vl
+LOAD s
+CALL vislen 1
+BUILTIN toInt 1
+STORE vl
+LOCAL pad
+LOAD w
+BUILTIN toInt 1
+LOAD vl
+SUB
+STORE pad
+LOCAL result
+LOAD s
+STORE result
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_210
+LOAD i
+BUILTIN toInt 1
+LOAD pad
+LT
+JUMPIFNOT _wend_210
+LOAD result
+PUSH " "
+ADD
+STORE result
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_210
+LABEL _wend_210
+LOAD result
+RETURN
+END
+
+FUNC firstpart 2
+PARAM s
+PARAM delim
+LOCAL pos
+LOAD s
+LOAD delim
+BUILTIN indexOf 2
+STORE pos
+LOAD pos
+PUSH 0
+LT
+JUMPIFNOT _endif_254
+LOAD s
+RETURN
+LABEL _endif_254
+LOAD s
+PUSH 0
+LOAD pos
+BUILTIN toInt 1
+BUILTIN substring 3
+RETURN
+END
+
+FUNC afterpart 2
+PARAM s
+PARAM delim
+LOCAL pos
+LOAD s
+LOAD delim
+BUILTIN indexOf 2
+STORE pos
+LOAD pos
+PUSH 0
+LT
+JUMPIFNOT _endif_292
+PUSH ""
+RETURN
+LABEL _endif_292
+LOAD s
+LOAD pos
+BUILTIN toInt 1
+PUSH 1
+ADD
+LOAD s
+BUILTIN len 1
+BUILTIN substring 3
+RETURN
+END
+
+FUNC linecount 1
+PARAM s
+LOAD s
+PUSH ""
+EQ
+JUMPIFNOT _endif_324
+PUSH "0"
+RETURN
+LABEL _endif_324
+LOCAL t
+LOAD s
+BUILTIN trim 1
+STORE t
+LOAD t
+PUSH ""
+EQ
+JUMPIFNOT _endif_339
+PUSH "0"
+RETURN
+LABEL _endif_339
+LOCAL n
+PUSH "1"
+STORE n
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_355
+LOAD i
+BUILTIN toInt 1
+LOAD t
+BUILTIN len 1
+LT
+JUMPIFNOT _wend_355
+LOCAL ch
+LOAD t
+LOAD i
+BUILTIN toInt 1
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+BUILTIN substring 3
+STORE ch
+LOAD ch
+PUSH "\\n"
+EQ
+JUMPIFNOT _endif_385
+LOAD n
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE n
+LABEL _endif_385
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_355
+LABEL _wend_355
+LOAD n
+RETURN
+END
+
+FUNC nthline 2
+PARAM s
+PARAM lineIdx
+LOCAL target
+LOAD lineIdx
+BUILTIN toInt 1
+STORE target
+LOCAL cur
+PUSH "0"
+STORE cur
+LOCAL start
+PUSH "0"
+STORE start
+LOCAL done
+PUSH "0"
+STORE done
+LABEL _wloop_442
+LOAD done
+PUSH "0"
+EQ
+JUMPIFNOT _wend_442
+LOCAL rest
+LOAD s
+LOAD start
+BUILTIN toInt 1
+LOAD s
+BUILTIN len 1
+BUILTIN substring 3
+STORE rest
+LOCAL nlPos
+LOAD rest
+PUSH "\\n"
+BUILTIN indexOf 2
+STORE nlPos
+LOAD nlPos
+PUSH 0
+LT
+JUMPIFNOT _else_473
+LOAD cur
+BUILTIN toInt 1
+LOAD target
+EQ
+JUMPIFNOT _endif_478
+LOAD rest
+BUILTIN trim 1
+RETURN
+LABEL _endif_478
+PUSH "1"
+STORE done
+JUMP _endif_473
+LABEL _else_473
+LOAD cur
+BUILTIN toInt 1
+LOAD target
+EQ
+JUMPIFNOT _endif_498
+LOAD rest
+PUSH 0
+LOAD nlPos
+BUILTIN toInt 1
+BUILTIN substring 3
+BUILTIN trim 1
+RETURN
+LABEL _endif_498
+LOAD start
+BUILTIN toInt 1
+LOAD nlPos
+BUILTIN toInt 1
+ADD
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE start
+LOAD cur
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cur
+LABEL _endif_473
+JUMP _wloop_442
+LABEL _wend_442
+PUSH ""
+RETURN
+END
+
+FUNC rambar 2
+PARAM usedMB
+PARAM totalMB
+LOCAL used
+LOAD usedMB
+BUILTIN toInt 1
+STORE used
+LOCAL total
+LOAD totalMB
+BUILTIN toInt 1
+STORE total
+LOAD total
+PUSH 0
+EQ
+JUMPIFNOT _endif_574
+PUSH "[                    ]"
+RETURN
+LABEL _endif_574
+LOCAL pct
+LOAD used
+PUSH 100
+MUL
+LOAD total
+DIV
+STORE pct
+LOCAL filled
+LOAD pct
+PUSH 20
+MUL
+PUSH 100
+DIV
+STORE filled
+LOCAL empty
+PUSH 20
+LOAD filled
+SUB
+STORE empty
+LOCAL bar
+PUSH "["
+STORE bar
+LOCAL i
+PUSH 0
+STORE i
+LABEL _wloop_612
+LOAD i
+LOAD filled
+LT
+JUMPIFNOT _wend_612
+LOAD bar
+PUSH "▒"
+ADD
+STORE bar
+LOAD i
+PUSH 1
+ADD
+STORE i
+JUMP _wloop_612
+LABEL _wend_612
+PUSH 0
+STORE i
+LABEL _wloop_629
+LOAD i
+LOAD empty
+LT
+JUMPIFNOT _wend_629
+LOAD bar
+PUSH "█"
+ADD
+STORE bar
+LOAD i
+PUSH 1
+ADD
+STORE i
+JUMP _wloop_629
+LABEL _wend_629
+LOAD bar
+PUSH "]"
+ADD
+RETURN
+END
+
+FUNC colorpalette 0
+LOCAL E
+PUSH 27
+BUILTIN fromCharCode 1
+STORE E
+LOCAL RST
+LOAD E
+PUSH "[0m"
+ADD
+STORE RST
+LOCAL blk
+PUSH "   "
+STORE blk
+LOCAL r1
+PUSH ""
+STORE r1
+LOCAL r2
+PUSH ""
+STORE r2
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_682
+LOAD i
+BUILTIN toInt 1
+PUSH 8
+LT
+JUMPIFNOT _wend_682
+LOCAL c1
+LOAD i
+BUILTIN toInt 1
+PUSH 40
+ADD
+PUSH ""
+ADD
+STORE c1
+LOCAL c2
+LOAD i
+BUILTIN toInt 1
+PUSH 100
+ADD
+PUSH ""
+ADD
+STORE c2
+LOAD r1
+LOAD E
+ADD
+PUSH "["
+ADD
+LOAD c1
+ADD
+PUSH "m"
+ADD
+LOAD blk
+ADD
+STORE r1
+LOAD r2
+LOAD E
+ADD
+PUSH "["
+ADD
+LOAD c2
+ADD
+PUSH "m"
+ADD
+LOAD blk
+ADD
+STORE r2
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_682
+LABEL _wend_682
+PUSH "  "
+LOAD r1
+ADD
+LOAD RST
+ADD
+BUILTIN kp 1
+POP
+PUSH "  "
+LOAD r2
+ADD
+LOAD RST
+ADD
+BUILTIN kp 1
+POP
+END
+
+FUNC idxfrom 3
+PARAM s
+PARAM sub
+PARAM start
+LOCAL slen
+LOAD s
+BUILTIN len 1
+STORE slen
+LOCAL sublen
+LOAD sub
+BUILTIN len 1
+STORE sublen
+LOCAL i
+LOAD start
+BUILTIN toInt 1
+STORE i
+LABEL _wloop_797
+LOAD i
+BUILTIN toInt 1
+LOAD slen
+BUILTIN toInt 1
+LOAD sublen
+BUILTIN toInt 1
+SUB
+LTE
+JUMPIFNOT _wend_797
+LOCAL piece
+LOAD s
+LOAD i
+BUILTIN toInt 1
+LOAD i
+BUILTIN toInt 1
+LOAD sublen
+BUILTIN toInt 1
+ADD
+BUILTIN substring 3
+STORE piece
+LOAD piece
+LOAD sub
+EQ
+JUMPIFNOT _endif_835
+LOAD i
+PUSH ""
+ADD
+RETURN
+LABEL _endif_835
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_797
+LABEL _wend_797
+PUSH "-1"
+RETURN
+END
+
+FUNC countRegSubkeys 2
+PARAM hive
+PARAM path
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD hive
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_902
+PUSH "0"
+RETURN
+LABEL _endif_902
+LOCAL buf
+PUSH "256"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOCAL cnt
+PUSH "0"
+STORE cnt
+LOCAL idx
+PUSH "0"
+STORE idx
+LABEL _wloop_935
+LOAD idx
+BUILTIN toInt 1
+PUSH 65536
+LT
+JUMPIFNOT _wend_935
+LOAD sz
+PUSH "256"
+BUILTIN bufSetDword 2
+POP
+LOCAL r
+LOAD hk
+LOAD idx
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+CALL RegEnumKeyExA 8
+BUILTIN handleInt 1
+STORE r
+LOAD r
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_988
+BREAK
+LABEL _endif_988
+LOAD cnt
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cnt
+LOAD idx
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE idx
+JUMP _wloop_935
+LABEL _wend_935
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD cnt
+RETURN
+END
+
+FUNC countDirs 1
+PARAM path
+LOCAL attrs
+LOAD path
+CALL GetFileAttributesA 1
+BUILTIN handleInt 1
+STORE attrs
+LOAD attrs
+PUSH "-1"
+EQ
+JUMPIFNOT _endif_1042
+PUSH "0"
+RETURN
+LABEL _endif_1042
+LOAD attrs
+PUSH "16"
+CALL bitAnd 2
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1050
+PUSH "0"
+RETURN
+LABEL _endif_1050
+LOCAL fd
+PUSH "WIN32_FIND_DATAA"
+BUILTIN structNew 1
+STORE fd
+LOCAL h
+LOAD path
+PUSH "\\*"
+ADD
+LOAD fd
+CALL FindFirstFileA 2
+STORE h
+LOAD h
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1081
+PUSH "0"
+RETURN
+LABEL _endif_1081
+LOCAL cnt
+PUSH "0"
+STORE cnt
+LOCAL di
+PUSH "0"
+STORE di
+LABEL _wloop_1100
+LOAD di
+BUILTIN toInt 1
+PUSH 65536
+LT
+JUMPIFNOT _wend_1100
+LOCAL fa
+LOAD fd
+PUSH "WIN32_FIND_DATAA"
+PUSH "dwFileAttributes"
+CALL structGet 3
+STORE fa
+LOCAL name
+LOAD fd
+PUSH "WIN32_FIND_DATAA"
+PUSH "cFileName"
+CALL structGet 3
+STORE name
+LOAD fa
+PUSH "16"
+CALL bitAnd 2
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_1130
+LOAD name
+PUSH "."
+NEQ
+JUMPIFNOT _endif_1140
+LOAD name
+PUSH ".."
+NEQ
+JUMPIFNOT _endif_1145
+LOAD cnt
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cnt
+LABEL _endif_1145
+LABEL _endif_1140
+LABEL _endif_1130
+LOCAL nxt
+LOAD h
+LOAD fd
+CALL FindNextFileA 2
+BUILTIN handleInt 1
+STORE nxt
+LOAD nxt
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1175
+BREAK
+LABEL _endif_1175
+LOAD di
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE di
+JUMP _wloop_1100
+LABEL _wend_1100
+LOAD h
+CALL FindClose 1
+POP
+LOAD cnt
+RETURN
+END
+
+FUNC kfpkgs 0
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL HKCU
+PUSH "2147483649"
+BUILTIN toHandle 1
+STORE HKCU
+LOCAL p1
+LOAD HKLM
+PUSH "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+CALL countRegSubkeys 2
+STORE p1
+LOCAL p2
+LOAD HKLM
+PUSH "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+CALL countRegSubkeys 2
+STORE p2
+LOCAL p3
+LOAD HKCU
+PUSH "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+CALL countRegSubkeys 2
+STORE p3
+LOCAL winget
+LOAD p1
+BUILTIN toInt 1
+LOAD p2
+BUILTIN toInt 1
+ADD
+LOAD p3
+BUILTIN toInt 1
+ADD
+PUSH ""
+ADD
+STORE winget
+LOCAL scoopPath
+PUSH "USERPROFILE"
+BUILTIN environ 1
+PUSH "\\scoop\\apps"
+ADD
+STORE scoopPath
+LOCAL scoopRaw
+LOAD scoopPath
+CALL countDirs 1
+STORE scoopRaw
+LOCAL scoop
+LOAD scoopRaw
+BUILTIN toInt 1
+PUSH 1
+SUB
+PUSH ""
+ADD
+STORE scoop
+LOAD scoop
+BUILTIN toInt 1
+PUSH 0
+LT
+JUMPIFNOT _endif_1292
+PUSH "0"
+STORE scoop
+LABEL _endif_1292
+LOCAL chocoBase
+PUSH "ChocolateyInstall"
+BUILTIN environ 1
+STORE chocoBase
+LOAD chocoBase
+PUSH ""
+EQ
+JUMPIFNOT _endif_1311
+PUSH "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"
+PUSH "ChocolateyInstall"
+CALL regHklmStr 2
+STORE chocoBase
+LABEL _endif_1311
+LOCAL choco
+PUSH "0"
+STORE choco
+LOAD chocoBase
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1329
+LOCAL chocoLib
+LOAD chocoBase
+PUSH "\\lib"
+ADD
+STORE chocoLib
+LOAD chocoLib
+CALL countDirs 1
+STORE choco
+LABEL _endif_1329
+LOCAL result
+PUSH ""
+STORE result
+LOAD winget
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_1351
+LOAD winget
+PUSH " (winget)"
+ADD
+STORE result
+LABEL _endif_1351
+LOAD scoop
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_1365
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1373
+LOAD result
+PUSH ", "
+ADD
+STORE result
+LABEL _endif_1373
+LOAD result
+LOAD scoop
+ADD
+PUSH " (scoop)"
+ADD
+STORE result
+LABEL _endif_1365
+LOAD choco
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_1392
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1400
+LOAD result
+PUSH ", "
+ADD
+STORE result
+LABEL _endif_1400
+LOAD result
+LOAD choco
+ADD
+PUSH " (choco)"
+ADD
+STORE result
+LABEL _endif_1392
+LOAD result
+RETURN
+END
+
+FUNC regHklmStr 2
+PARAM path
+PARAM name
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD HKLM
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1472
+PUSH ""
+RETURN
+LABEL _endif_1472
+LOCAL buf
+PUSH "1024"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "1024"
+BUILTIN bufSetDword 2
+POP
+LOAD hk
+LOAD name
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+CALL RegQueryValueExA 6
+POP
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD buf
+BUILTIN bufStr 1
+RETURN
+END
+
+FUNC regHkcuStr 2
+PARAM path
+PARAM name
+LOCAL HKCU
+PUSH "2147483649"
+BUILTIN toHandle 1
+STORE HKCU
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD HKCU
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1583
+PUSH ""
+RETURN
+LABEL _endif_1583
+LOCAL buf
+PUSH "1024"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "1024"
+BUILTIN bufSetDword 2
+POP
+LOAD hk
+LOAD name
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+CALL RegQueryValueExA 6
+POP
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD buf
+BUILTIN bufStr 1
+RETURN
+END
+
+FUNC regHklmDword 2
+PARAM path
+PARAM name
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD HKLM
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1694
+PUSH "0"
+RETURN
+LABEL _endif_1694
+LOCAL buf
+PUSH "4"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "4"
+BUILTIN bufSetDword 2
+POP
+LOAD hk
+LOAD name
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+CALL RegQueryValueExA 6
+POP
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD buf
+BUILTIN bufGetDword 1
+RETURN
+END
+
+FUNC regHkcuDword 2
+PARAM path
+PARAM name
+LOCAL HKCU
+PUSH "2147483649"
+BUILTIN toHandle 1
+STORE HKCU
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD HKCU
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1805
+PUSH "0"
+RETURN
+LABEL _endif_1805
+LOCAL buf
+PUSH "4"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "4"
+BUILTIN bufSetDword 2
+POP
+LOAD hk
+LOAD name
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+CALL RegQueryValueExA 6
+POP
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD buf
+BUILTIN bufGetDword 1
+RETURN
+END
+
+FUNC regHklmQword 2
+PARAM path
+PARAM name
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkey
+BUILTIN handleOut 0
+STORE hkey
+LOAD HKLM
+LOAD path
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkey
+CALL RegOpenKeyExA 5
+POP
+LOCAL hk
+LOAD hkey
+BUILTIN handleGet 1
+STORE hk
+LOAD hk
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1916
+PUSH "0"
+RETURN
+LABEL _endif_1916
+LOCAL buf
+PUSH "8"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "8"
+BUILTIN bufSetDword 2
+POP
+LOAD hk
+LOAD name
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD buf
+LOAD sz
+CALL RegQueryValueExA 6
+POP
+LOAD hk
+CALL RegCloseKey 1
+POP
+LOAD buf
+BUILTIN bufGetQword 1
+RETURN
+END
+
+FUNC cpubrand 0
+LOCAL regPath
+PUSH "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"
+STORE regPath
+LOCAL name
+LOAD regPath
+PUSH "ProcessorNameString"
+CALL regHklmStr 2
+BUILTIN trim 1
+STORE name
+LOAD name
+PUSH ""
+EQ
+JUMPIFNOT _endif_24
+PUSH "Unknown CPU"
+RETURN
+LABEL _endif_24
+LOAD name
+RETURN
+END
+
+FUNC cpucores 0
+LOCAL si
+PUSH "SYSTEM_INFO"
+BUILTIN structNew 1
+STORE si
+LOAD si
+CALL GetNativeSystemInfo 1
+POP
+LOCAL logical
+LOAD si
+PUSH "SYSTEM_INFO"
+PUSH "dwNumberOfProcessors"
+CALL structGet 3
+STORE logical
+LOCAL hK
+PUSH "kernel32.dll"
+CALL LoadLibraryA 1
+STORE hK
+LOAD hK
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_69
+LOAD logical
+PUSH ","
+ADD
+LOAD logical
+ADD
+RETURN
+LABEL _endif_69
+LOCAL pGLPI
+LOAD hK
+PUSH "GetLogicalProcessorInformationEx"
+CALL GetProcAddress 2
+STORE pGLPI
+LOAD pGLPI
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_93
+LOAD hK
+CALL FreeLibrary 1
+POP
+LOAD logical
+PUSH ","
+ADD
+LOAD logical
+ADD
+RETURN
+LABEL _endif_93
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD pGLPI
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD sz
+BUILTIN callPtr 4
+POP
+LOCAL bufLen
+LOAD sz
+BUILTIN bufGetDword 1
+STORE bufLen
+LOAD bufLen
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_148
+LOAD hK
+CALL FreeLibrary 1
+POP
+LOAD logical
+PUSH ","
+ADD
+LOAD logical
+ADD
+RETURN
+LABEL _endif_148
+LOCAL info
+LOAD bufLen
+BUILTIN bufNew 1
+STORE info
+LOCAL ret
+LOAD pGLPI
+PUSH "0"
+BUILTIN toHandle 1
+LOAD info
+LOAD sz
+BUILTIN callPtr 4
+BUILTIN handleInt 1
+STORE ret
+LOAD hK
+CALL FreeLibrary 1
+POP
+LOAD ret
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_197
+LOAD logical
+PUSH ","
+ADD
+LOAD logical
+ADD
+RETURN
+LABEL _endif_197
+LOCAL physical
+PUSH "0"
+STORE physical
+LOCAL off
+PUSH "0"
+STORE off
+LABEL _wloop_220
+LOAD off
+BUILTIN toInt 1
+LOAD bufLen
+BUILTIN toInt 1
+LT
+JUMPIFNOT _wend_220
+LOCAL rel
+LOAD info
+LOAD off
+BUILTIN toInt 1
+BUILTIN bufGetDwordAt 2
+STORE rel
+LOCAL esz
+LOAD info
+LOAD off
+BUILTIN toInt 1
+PUSH 4
+ADD
+BUILTIN bufGetDwordAt 2
+STORE esz
+LOAD rel
+PUSH "0"
+EQ
+JUMPIFNOT _endif_257
+LOAD physical
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE physical
+LABEL _endif_257
+LOAD esz
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_273
+BREAK
+LABEL _endif_273
+LOAD off
+BUILTIN toInt 1
+LOAD esz
+BUILTIN toInt 1
+ADD
+PUSH ""
+ADD
+STORE off
+JUMP _wloop_220
+LABEL _wend_220
+LOAD physical
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_297
+LOAD logical
+STORE physical
+LABEL _endif_297
+LOAD physical
+PUSH ","
+ADD
+LOAD logical
+ADD
+RETURN
+END
+
+FUNC osver 0
+LOCAL regPath
+PUSH "SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+STORE regPath
+LOCAL build
+LOAD regPath
+PUSH "CurrentBuildNumber"
+CALL regHklmStr 2
+BUILTIN trim 1
+STORE build
+LOCAL ed
+LOAD regPath
+PUSH "EditionID"
+CALL regHklmStr 2
+BUILTIN trim 1
+STORE ed
+LOAD build
+PUSH ""
+EQ
+JUMPIFNOT _endif_36
+PUSH "Windows"
+RETURN
+LABEL _endif_36
+LOCAL b
+LOAD build
+BUILTIN toInt 1
+STORE b
+LOCAL v
+PUSH "Windows"
+STORE v
+LOAD b
+PUSH 26100
+GTE
+JUMPIFNOT _else_55
+PUSH "Windows 11"
+STORE v
+JUMP _endif_55
+LABEL _else_55
+LOAD b
+PUSH 22000
+GTE
+JUMPIFNOT _else_65
+PUSH "Windows 11"
+STORE v
+JUMP _endif_65
+LABEL _else_65
+LOAD b
+PUSH 19041
+GTE
+JUMPIFNOT _else_75
+PUSH "Windows 10"
+STORE v
+JUMP _endif_75
+LABEL _else_75
+PUSH "Windows (legacy)"
+STORE v
+LABEL _endif_75
+LABEL _endif_65
+LABEL _endif_55
+LOAD ed
+PUSH "Professional"
+EQ
+JUMPIFNOT _endif_90
+PUSH "Pro"
+STORE ed
+LABEL _endif_90
+LOAD ed
+PUSH "Core"
+EQ
+JUMPIFNOT _endif_99
+PUSH "Home"
+STORE ed
+LABEL _endif_99
+LOAD ed
+PUSH "ProfessionalWorkstation"
+EQ
+JUMPIFNOT _endif_108
+PUSH "Pro Workstation"
+STORE ed
+LABEL _endif_108
+LOAD ed
+PUSH "IoTEnterprise"
+EQ
+JUMPIFNOT _endif_117
+PUSH "IoT Enterprise"
+STORE ed
+LABEL _endif_117
+LOAD ed
+PUSH "ProfessionalN"
+EQ
+JUMPIFNOT _endif_126
+PUSH "Pro N"
+STORE ed
+LABEL _endif_126
+LOAD ed
+PUSH "CoreN"
+EQ
+JUMPIFNOT _endif_135
+PUSH "Home N"
+STORE ed
+LABEL _endif_135
+LOAD ed
+PUSH "CoreSingleLanguage"
+EQ
+JUMPIFNOT _endif_144
+PUSH "Home SL"
+STORE ed
+LABEL _endif_144
+LOAD ed
+PUSH ""
+NEQ
+JUMPIFNOT _endif_153
+LOAD v
+PUSH " "
+ADD
+LOAD ed
+ADD
+PUSH " (build "
+ADD
+LOAD build
+ADD
+PUSH ")"
+ADD
+RETURN
+LABEL _endif_153
+LOAD v
+PUSH " (build "
+ADD
+LOAD build
+ADD
+PUSH ")"
+ADD
+RETURN
+END
+
+FUNC uptime 0
+LOCAL ms
+CALL GetTickCount64 0
+BUILTIN handleInt 1
+STORE ms
+LOCAL tsec
+LOAD ms
+PUSH "1000"
+CALL div64 2
+STORE tsec
+LOCAL mins
+LOAD tsec
+BUILTIN toInt 1
+PUSH 60
+DIV
+STORE mins
+LOCAL hrs
+LOAD mins
+PUSH 60
+DIV
+STORE hrs
+LOCAL days
+LOAD hrs
+PUSH 24
+DIV
+STORE days
+LOCAL h
+LOAD hrs
+LOAD days
+PUSH 24
+MUL
+SUB
+STORE h
+LOCAL m
+LOAD mins
+LOAD hrs
+PUSH 60
+MUL
+SUB
+STORE m
+LOAD days
+PUSH 0
+GT
+JUMPIFNOT _else_244
+LOAD days
+PUSH " days, "
+ADD
+LOAD h
+ADD
+PUSH " hrs, "
+ADD
+LOAD m
+ADD
+PUSH " min"
+ADD
+RETURN
+LABEL _else_244
+LOAD hrs
+PUSH 0
+GT
+JUMPIFNOT _else_263
+LOAD h
+PUSH " hrs, "
+ADD
+LOAD m
+ADD
+PUSH " min"
+ADD
+RETURN
+LABEL _else_263
+LOAD m
+PUSH " min"
+ADD
+RETURN
+LABEL _endif_263
+LABEL _endif_244
+END
+
+FUNC kfresolution 0
+LOCAL w
+PUSH "0"
+BUILTIN toHandle 1
+CALL GetSystemMetrics 1
+BUILTIN handleInt 1
+STORE w
+LOCAL h
+PUSH "1"
+BUILTIN toHandle 1
+CALL GetSystemMetrics 1
+BUILTIN handleInt 1
+STORE h
+LOAD w
+PUSH "0"
+EQ
+JUMPIFNOT _endif_316
+PUSH "unknown"
+RETURN
+LABEL _endif_316
+LOAD w
+PUSH "x"
+ADD
+LOAD h
+ADD
+RETURN
+END
+
+FUNC kfterminal 0
+LOCAL wt
+PUSH "WT_SESSION"
+BUILTIN environ 1
+STORE wt
+LOAD wt
+PUSH ""
+NEQ
+JUMPIFNOT _endif_343
+PUSH "Windows Terminal"
+RETURN
+LABEL _endif_343
+LOCAL ce
+PUSH "ConEmuPID"
+BUILTIN environ 1
+STORE ce
+LOAD ce
+PUSH ""
+NEQ
+JUMPIFNOT _endif_358
+PUSH "ConEmu"
+RETURN
+LABEL _endif_358
+LOCAL al
+PUSH "ALACRITTY_LOG"
+BUILTIN environ 1
+STORE al
+LOAD al
+PUSH ""
+NEQ
+JUMPIFNOT _endif_373
+PUSH "Alacritty"
+RETURN
+LABEL _endif_373
+LOCAL tp
+PUSH "TERM_PROGRAM"
+BUILTIN environ 1
+STORE tp
+LOAD tp
+PUSH ""
+NEQ
+JUMPIFNOT _endif_388
+LOAD tp
+RETURN
+LABEL _endif_388
+PUSH ""
+RETURN
+END
+
+FUNC kftheme 0
+LOCAL regPath
+PUSH "Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+STORE regPath
+LOCAL light
+LOAD regPath
+PUSH "AppsUseLightTheme"
+CALL regHkcuDword 2
+STORE light
+LOCAL accent
+LOAD regPath
+PUSH "AccentColor"
+CALL regHkcuDword 2
+BUILTIN toInt 1
+STORE accent
+LOCAL mode
+PUSH "Dark"
+STORE mode
+LOAD light
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_433
+PUSH "Light"
+STORE mode
+LABEL _endif_433
+LOCAL r
+LOAD accent
+LOAD accent
+PUSH 256
+DIV
+PUSH 256
+MUL
+SUB
+STORE r
+LOCAL g
+LOAD accent
+PUSH 256
+DIV
+LOAD accent
+PUSH 65536
+DIV
+PUSH 256
+MUL
+SUB
+STORE g
+LOCAL b
+LOAD accent
+PUSH 65536
+DIV
+LOAD accent
+PUSH 16777216
+DIV
+PUSH 256
+MUL
+SUB
+STORE b
+LOCAL hr
+LOAD r
+BUILTIN hex 1
+STORE hr
+LOCAL hg
+LOAD g
+BUILTIN hex 1
+STORE hg
+LOCAL hb
+LOAD b
+BUILTIN hex 1
+STORE hb
+LOAD hr
+BUILTIN len 1
+PUSH 2
+LT
+JUMPIFNOT _endif_503
+PUSH "0"
+LOAD hr
+ADD
+STORE hr
+LABEL _endif_503
+LOAD hg
+BUILTIN len 1
+PUSH 2
+LT
+JUMPIFNOT _endif_517
+PUSH "0"
+LOAD hg
+ADD
+STORE hg
+LABEL _endif_517
+LOAD hb
+BUILTIN len 1
+PUSH 2
+LT
+JUMPIFNOT _endif_531
+PUSH "0"
+LOAD hb
+ADD
+STORE hb
+LABEL _endif_531
+LOAD mode
+PUSH " (#"
+ADD
+LOAD hr
+BUILTIN toUpper 1
+ADD
+LOAD hg
+BUILTIN toUpper 1
+ADD
+LOAD hb
+BUILTIN toUpper 1
+ADD
+PUSH ")"
+ADD
+RETURN
+END
+
+FUNC kfbattery 0
+LOCAL sps
+PUSH "SYSTEM_POWER_STATUS"
+BUILTIN structNew 1
+STORE sps
+LOAD sps
+CALL GetSystemPowerStatus 1
+POP
+LOCAL pct
+LOAD sps
+PUSH "SYSTEM_POWER_STATUS"
+PUSH "BatteryLifePercent"
+CALL structGet 3
+BUILTIN toInt 1
+STORE pct
+LOCAL ac
+LOAD sps
+PUSH "SYSTEM_POWER_STATUS"
+PUSH "ACLineStatus"
+CALL structGet 3
+STORE ac
+LOAD pct
+PUSH 255
+EQ
+JUMPIFNOT _endif_608
+PUSH ""
+RETURN
+LABEL _endif_608
+LOCAL status
+PUSH "discharging"
+STORE status
+LOAD ac
+PUSH "1"
+EQ
+JUMPIFNOT _endif_620
+PUSH "charging"
+STORE status
+LABEL _endif_620
+LOAD pct
+PUSH "% ("
+ADD
+LOAD status
+ADD
+PUSH ")"
+ADD
+RETURN
+END
+
+FUNC sysuser 0
+LOCAL buf
+PUSH "256"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "256"
+BUILTIN bufSetDword 2
+POP
+LOAD buf
+LOAD sz
+CALL GetUserNameA 2
+POP
+LOAD buf
+BUILTIN bufStr 1
+RETURN
+END
+
+FUNC syshost 0
+LOCAL buf
+PUSH "256"
+BUILTIN bufNew 1
+STORE buf
+LOCAL sz
+PUSH "4"
+BUILTIN bufNew 1
+STORE sz
+LOAD sz
+PUSH "256"
+BUILTIN bufSetDword 2
+POP
+LOAD buf
+LOAD sz
+CALL GetComputerNameA 2
+POP
+LOAD buf
+BUILTIN bufStr 1
+RETURN
+END
+
+FUNC sysarch 0
+LOCAL si
+PUSH "SYSTEM_INFO"
+BUILTIN structNew 1
+STORE si
+LOAD si
+CALL GetNativeSystemInfo 1
+POP
+LOCAL arch
+LOAD si
+PUSH "SYSTEM_INFO"
+PUSH "wProcessorArchitecture"
+CALL structGet 3
+STORE arch
+LOAD arch
+PUSH "9"
+EQ
+JUMPIFNOT _endif_739
+PUSH "x86_64"
+RETURN
+LABEL _endif_739
+LOAD arch
+PUSH "5"
+EQ
+JUMPIFNOT _endif_747
+PUSH "ARM"
+RETURN
+LABEL _endif_747
+LOAD arch
+PUSH "12"
+EQ
+JUMPIFNOT _endif_755
+PUSH "ARM64"
+RETURN
+LABEL _endif_755
+LOAD arch
+PUSH "6"
+EQ
+JUMPIFNOT _endif_763
+PUSH "IA64"
+RETURN
+LABEL _endif_763
+PUSH "x86"
+RETURN
+END
+
+FUNC raminfo 0
+LOCAL ms
+PUSH "MEMORYSTATUSEX"
+BUILTIN structNew 1
+STORE ms
+LOAD ms
+PUSH "MEMORYSTATUSEX"
+PUSH "dwLength"
+PUSH "MEMORYSTATUSEX"
+CALL sizeOf 1
+CALL structSet 4
+POP
+LOAD ms
+CALL GlobalMemoryStatusEx 1
+POP
+LOCAL totalMB
+LOAD ms
+PUSH "MEMORYSTATUSEX"
+PUSH "ullTotalPhys"
+CALL structGet 3
+PUSH "1048576"
+CALL div64 2
+STORE totalMB
+LOCAL availMB
+LOAD ms
+PUSH "MEMORYSTATUSEX"
+PUSH "ullAvailPhys"
+CALL structGet 3
+PUSH "1048576"
+CALL div64 2
+STORE availMB
+LOAD totalMB
+PUSH ","
+ADD
+LOAD availMB
+ADD
+RETURN
+END
+
+FUNC driveinfo 0
+LOCAL drives
+CALL GetLogicalDrives 0
+BUILTIN handleInt 1
+STORE drives
+LOCAL letters
+PUSH "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+STORE letters
+LOCAL totalB
+PUSH "ULARGE_INTEGER"
+BUILTIN structNew 1
+STORE totalB
+LOCAL totalFB
+PUSH "ULARGE_INTEGER"
+BUILTIN structNew 1
+STORE totalFB
+LOCAL result
+PUSH ""
+STORE result
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_43
+LOAD i
+BUILTIN toInt 1
+PUSH 26
+LT
+JUMPIFNOT _wend_43
+LOCAL bit
+PUSH "1"
+LOAD i
+CALL bitShl 2
+STORE bit
+LOAD drives
+LOAD bit
+CALL bitAnd 2
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_60
+LOCAL letter
+LOAD letters
+LOAD i
+BUILTIN toInt 1
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+BUILTIN substring 3
+STORE letter
+LOCAL root
+LOAD letter
+PUSH ":\\"
+ADD
+STORE root
+LOAD root
+PUSH "0"
+BUILTIN toHandle 1
+LOAD totalB
+LOAD totalFB
+CALL GetDiskFreeSpaceExA 4
+POP
+LOCAL totalGB
+LOAD totalB
+PUSH "ULARGE_INTEGER"
+PUSH "QuadPart"
+CALL structGet 3
+PUSH "1073741824"
+CALL div64 2
+STORE totalGB
+LOCAL freeGB
+LOAD totalFB
+PUSH "ULARGE_INTEGER"
+PUSH "QuadPart"
+CALL structGet 3
+PUSH "1073741824"
+CALL div64 2
+STORE freeGB
+LOAD totalGB
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_140
+LOCAL usedGB
+LOAD totalGB
+BUILTIN toInt 1
+LOAD freeGB
+BUILTIN toInt 1
+SUB
+PUSH ""
+ADD
+STORE usedGB
+LOCAL pct
+LOAD usedGB
+BUILTIN toInt 1
+PUSH 100
+MUL
+LOAD totalGB
+BUILTIN toInt 1
+DIV
+PUSH ""
+ADD
+STORE pct
+LOCAL bar
+LOAD usedGB
+LOAD totalGB
+CALL rambar 2
+STORE bar
+LOCAL line
+LOAD bar
+PUSH "  "
+ADD
+LOAD root
+ADD
+PUSH " "
+ADD
+LOAD usedGB
+ADD
+PUSH "GB/"
+ADD
+LOAD totalGB
+ADD
+PUSH "GB "
+ADD
+LOAD pct
+ADD
+PUSH "%"
+ADD
+STORE line
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_209
+LOAD result
+PUSH "\\n"
+ADD
+STORE result
+LABEL _endif_209
+LOAD result
+LOAD line
+ADD
+STORE result
+LABEL _endif_140
+LABEL _endif_60
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_43
+LABEL _wend_43
+LOAD result
+RETURN
+END
+
+FUNC gpunames 0
+LOCAL regBase
+PUSH "SYSTEM\\CurrentControlSet\\Control\\Video"
+STORE regBase
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkBase
+BUILTIN handleOut 0
+STORE hkBase
+LOAD HKLM
+LOAD regBase
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkBase
+CALL RegOpenKeyExA 5
+POP
+LOCAL hb
+LOAD hkBase
+BUILTIN handleGet 1
+STORE hb
+LOAD hb
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_52
+PUSH "Unknown GPU"
+RETURN
+LABEL _endif_52
+LOCAL result
+PUSH ""
+STORE result
+LOCAL subBuf
+PUSH "256"
+BUILTIN bufNew 1
+STORE subBuf
+LOCAL subSz
+PUSH "4"
+BUILTIN bufNew 1
+STORE subSz
+LOCAL idx
+PUSH "0"
+STORE idx
+LABEL _wloop_85
+LOAD idx
+BUILTIN toInt 1
+PUSH 16
+LT
+JUMPIFNOT _wend_85
+LOAD subSz
+PUSH "256"
+BUILTIN bufSetDword 2
+POP
+LOCAL enumRet
+LOAD hb
+LOAD idx
+BUILTIN toHandle 1
+LOAD subBuf
+LOAD subSz
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+CALL RegEnumKeyExA 8
+BUILTIN handleInt 1
+STORE enumRet
+LOAD enumRet
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_138
+BREAK
+LABEL _endif_138
+LOCAL sub
+LOAD subBuf
+BUILTIN bufStr 1
+STORE sub
+LOCAL devPath
+LOAD regBase
+PUSH "\\"
+ADD
+LOAD sub
+ADD
+PUSH "\\0000"
+ADD
+STORE devPath
+LOCAL gpuName
+LOAD devPath
+PUSH "DriverDesc"
+CALL regHklmStr 2
+BUILTIN trim 1
+STORE gpuName
+LOAD gpuName
+PUSH ""
+NEQ
+JUMPIFNOT _endif_177
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_182
+LOAD result
+PUSH "\\n"
+ADD
+STORE result
+LABEL _endif_182
+LOAD result
+LOAD gpuName
+ADD
+STORE result
+LABEL _endif_177
+LOAD idx
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE idx
+JUMP _wloop_85
+LABEL _wend_85
+LOAD hb
+CALL RegCloseKey 1
+POP
+LOAD result
+PUSH ""
+EQ
+JUMPIFNOT _endif_214
+PUSH "Unknown GPU"
+RETURN
+LABEL _endif_214
+LOAD result
+RETURN
+END
+
+FUNC kfvramreg 0
+LOCAL regBase
+PUSH "SYSTEM\\CurrentControlSet\\Control\\Video"
+STORE regBase
+LOCAL HKLM
+PUSH "2147483650"
+BUILTIN toHandle 1
+STORE HKLM
+LOCAL kread
+PUSH "131097"
+BUILTIN toHandle 1
+STORE kread
+LOCAL hkBase
+BUILTIN handleOut 0
+STORE hkBase
+LOAD HKLM
+LOAD regBase
+PUSH "0"
+BUILTIN toHandle 1
+LOAD kread
+LOAD hkBase
+CALL RegOpenKeyExA 5
+POP
+LOCAL hb
+LOAD hkBase
+BUILTIN handleGet 1
+STORE hb
+LOAD hb
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_276
+PUSH ""
+RETURN
+LABEL _endif_276
+LOCAL result
+PUSH ""
+STORE result
+LOCAL cnt
+PUSH "0"
+STORE cnt
+LOCAL subBuf
+PUSH "256"
+BUILTIN bufNew 1
+STORE subBuf
+LOCAL subSz
+PUSH "4"
+BUILTIN bufNew 1
+STORE subSz
+LOCAL idx
+PUSH "0"
+STORE idx
+LABEL _wloop_313
+LOAD idx
+BUILTIN toInt 1
+PUSH 16
+LT
+JUMPIFNOT _wend_313
+LOAD cnt
+BUILTIN toInt 1
+PUSH 2
+GTE
+JUMPIFNOT _endif_321
+BREAK
+LABEL _endif_321
+LOAD subSz
+PUSH "256"
+BUILTIN bufSetDword 2
+POP
+LOCAL enumRet
+LOAD hb
+LOAD idx
+BUILTIN toHandle 1
+LOAD subBuf
+LOAD subSz
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+CALL RegEnumKeyExA 8
+BUILTIN handleInt 1
+STORE enumRet
+LOAD enumRet
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_376
+BREAK
+LABEL _endif_376
+LOCAL sub
+LOAD subBuf
+BUILTIN bufStr 1
+STORE sub
+LOCAL devPath
+LOAD regBase
+PUSH "\\"
+ADD
+LOAD sub
+ADD
+PUSH "\\0000"
+ADD
+STORE devPath
+LOCAL mem
+LOAD devPath
+PUSH "HardwareInformation.qwMemorySize"
+CALL regHklmQword 2
+STORE mem
+LOAD mem
+PUSH "0"
+EQ
+JUMPIFNOT _endif_412
+LOAD devPath
+PUSH "HardwareInformation.MemorySize"
+CALL regHklmDword 2
+STORE mem
+LABEL _endif_412
+LOAD mem
+PUSH "0"
+EQ
+JUMPIFNOT _endif_426
+LOAD devPath
+PUSH "HardwareInformation.MemorySizeLegacy"
+CALL regHklmDword 2
+STORE mem
+LABEL _endif_426
+LOAD mem
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_440
+LOCAL mb
+LOAD mem
+PUSH "1048576"
+CALL div64 2
+STORE mb
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_454
+LOAD result
+PUSH "\\n"
+ADD
+STORE result
+LABEL _endif_454
+LOAD result
+LOAD mb
+ADD
+PUSH ":0"
+ADD
+STORE result
+LOAD cnt
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cnt
+LABEL _endif_440
+LOAD idx
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE idx
+JUMP _wloop_313
+LABEL _wend_313
+LOAD hb
+CALL RegCloseKey 1
+POP
+LOAD result
+RETURN
+END
+
+FUNC kfpdhgpu 0
+LOCAL hQ
+BUILTIN handleOut 0
+STORE hQ
+LOCAL ret
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD hQ
+CALL PdhOpenQueryA 3
+BUILTIN handleInt 1
+STORE ret
+LOAD ret
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_532
+PUSH "0"
+RETURN
+LABEL _endif_532
+LOCAL q
+LOAD hQ
+BUILTIN handleGet 1
+STORE q
+LOCAL hC
+BUILTIN handleOut 0
+STORE hC
+LOCAL ret2
+LOAD q
+PUSH "\\GPU Adapter Memory(*)\\Dedicated Usage"
+PUSH "0"
+BUILTIN toHandle 1
+LOAD hC
+CALL PdhAddEnglishCounterA 4
+BUILTIN handleInt 1
+STORE ret2
+LOAD ret2
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_575
+LOAD q
+PUSH "\\GPU Local Adapter Memory(*)\\Local Usage"
+PUSH "0"
+BUILTIN toHandle 1
+LOAD hC
+CALL PdhAddEnglishCounterA 4
+BUILTIN handleInt 1
+STORE ret2
+LABEL _endif_575
+LOAD ret2
+BUILTIN toInt 1
+PUSH 0
+NEQ
+JUMPIFNOT _endif_602
+LOAD q
+CALL PdhCloseQuery 1
+POP
+PUSH "0"
+RETURN
+LABEL _endif_602
+LOCAL c
+LOAD hC
+BUILTIN handleGet 1
+STORE c
+LOAD q
+CALL PdhCollectQueryData 1
+POP
+LOAD q
+CALL PdhCollectQueryData 1
+POP
+LOCAL szBuf
+PUSH "4"
+BUILTIN bufNew 1
+STORE szBuf
+LOCAL cntBuf
+PUSH "4"
+BUILTIN bufNew 1
+STORE cntBuf
+LOAD szBuf
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD cntBuf
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD c
+PUSH "1024"
+BUILTIN toHandle 1
+LOAD szBuf
+LOAD cntBuf
+PUSH "0"
+BUILTIN toHandle 1
+CALL PdhGetFormattedCounterArrayA 5
+POP
+LOCAL sz
+LOAD szBuf
+BUILTIN bufGetDword 1
+STORE sz
+LOCAL cnt
+LOAD cntBuf
+BUILTIN bufGetDword 1
+STORE cnt
+LOAD sz
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_690
+LOAD szBuf
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD cntBuf
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD c
+PUSH "512"
+BUILTIN toHandle 1
+LOAD szBuf
+LOAD cntBuf
+PUSH "0"
+BUILTIN toHandle 1
+CALL PdhGetFormattedCounterArrayA 5
+POP
+LOAD szBuf
+BUILTIN bufGetDword 1
+STORE sz
+LOAD cntBuf
+BUILTIN bufGetDword 1
+STORE cnt
+LABEL _endif_690
+LOAD sz
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_741
+LOAD q
+CALL PdhCloseQuery 1
+POP
+PUSH "0"
+RETURN
+LABEL _endif_741
+LOCAL items
+LOAD sz
+BUILTIN bufNew 1
+STORE items
+LOCAL fmt
+PUSH "1024"
+STORE fmt
+LOAD cnt
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_767
+PUSH "512"
+STORE fmt
+LABEL _endif_767
+LOAD c
+LOAD fmt
+BUILTIN toHandle 1
+LOAD szBuf
+LOAD cntBuf
+LOAD items
+CALL PdhGetFormattedCounterArrayA 5
+POP
+LOCAL used
+PUSH "0"
+STORE used
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_802
+LOAD i
+BUILTIN toInt 1
+LOAD cnt
+BUILTIN toInt 1
+LT
+JUMPIFNOT _wend_802
+LOCAL off
+LOAD i
+BUILTIN toInt 1
+PUSH 24
+MUL
+STORE off
+LOCAL status
+LOAD items
+LOAD off
+PUSH 8
+ADD
+BUILTIN bufGetDwordAt 2
+STORE status
+LOCAL ok
+PUSH "0"
+STORE ok
+LOAD status
+BUILTIN toInt 1
+PUSH 0
+GTE
+JUMPIFNOT _endif_837
+PUSH "1"
+STORE ok
+LABEL _endif_837
+LOAD ok
+PUSH "1"
+EQ
+JUMPIFNOT _endif_849
+LOCAL valMB
+LOAD items
+LOAD off
+PUSH 16
+ADD
+BUILTIN bufGetQwordAt 2
+PUSH "1048576"
+CALL div64 2
+STORE valMB
+LOAD used
+BUILTIN toInt 1
+LOAD valMB
+BUILTIN toInt 1
+ADD
+PUSH ""
+ADD
+STORE used
+LABEL _endif_849
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_802
+LABEL _wend_802
+LOAD q
+CALL PdhCloseQuery 1
+POP
+LOAD used
+RETURN
+END
+
+FUNC kfdxgivram 0
+LOCAL guid
+PUSH "16"
+BUILTIN bufNew 1
+STORE guid
+LOAD guid
+PUSH "0"
+PUSH "2071029484"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD guid
+PUSH "4"
+PUSH "1152262599"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD guid
+PUSH "8"
+PUSH "-1362552142"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD guid
+PUSH "12"
+PUSH "1776491058"
+BUILTIN bufSetDwordAt 3
+POP
+LOCAL hD
+PUSH "dxgi.dll"
+CALL LoadLibraryA 1
+STORE hD
+LOAD hD
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_953
+PUSH ""
+RETURN
+LABEL _endif_953
+LOCAL pC
+LOAD hD
+PUSH "CreateDXGIFactory"
+CALL GetProcAddress 2
+STORE pC
+LOAD pC
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_973
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH ""
+RETURN
+LABEL _endif_973
+LOCAL pFOut
+BUILTIN handleOut 0
+STORE pFOut
+LOCAL hr1
+LOAD pC
+LOAD guid
+LOAD pFOut
+BUILTIN callPtr 3
+STORE hr1
+LOCAL pF
+LOAD pFOut
+BUILTIN handleGet 1
+STORE pF
+LOAD hr1
+BUILTIN handleInt 1
+BUILTIN toInt 1
+PUSH 0
+LT
+JUMPIFNOT _endif_1012
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH ""
+RETURN
+LABEL _endif_1012
+LOAD pF
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1030
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH ""
+RETURN
+LABEL _endif_1030
+LOCAL fv
+LOAD pF
+BUILTIN ptrDeref 1
+STORE fv
+LOCAL pE
+LOAD fv
+PUSH "7"
+BUILTIN ptrIndex 2
+STORE pE
+LOCAL pFR
+LOAD fv
+PUSH "2"
+BUILTIN ptrIndex 2
+STORE pFR
+LOCAL result
+PUSH ""
+STORE result
+LOCAL cnt
+PUSH "0"
+STORE cnt
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_1082
+LOAD cnt
+BUILTIN toInt 1
+PUSH 2
+LT
+JUMPIFNOT _wend_1082
+LOCAL pAOut
+BUILTIN handleOut 0
+STORE pAOut
+LOCAL hr2
+LOAD pE
+LOAD pF
+LOAD i
+BUILTIN toHandle 1
+LOAD pAOut
+BUILTIN callPtr 4
+STORE hr2
+LOAD hr2
+BUILTIN handleInt 1
+BUILTIN toInt 1
+PUSH 0
+LT
+JUMPIFNOT _endif_1112
+BREAK
+LABEL _endif_1112
+LOCAL pA
+LOAD pAOut
+BUILTIN handleGet 1
+STORE pA
+LOAD pA
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1132
+BREAK
+LABEL _endif_1132
+LOCAL av
+LOAD pA
+BUILTIN ptrDeref 1
+STORE av
+LOCAL pG
+LOAD av
+PUSH "8"
+BUILTIN ptrIndex 2
+STORE pG
+LOCAL pAR
+LOAD av
+PUSH "2"
+BUILTIN ptrIndex 2
+STORE pAR
+LOCAL desc
+PUSH "304"
+BUILTIN bufNew 1
+STORE desc
+LOAD pG
+LOAD pA
+LOAD desc
+BUILTIN callPtr 3
+POP
+LOCAL vram
+LOAD desc
+PUSH "272"
+BUILTIN bufGetQwordAt 2
+STORE vram
+LOAD vram
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_1191
+LOCAL mb
+LOAD vram
+PUSH "1048576"
+CALL div64 2
+STORE mb
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1205
+LOAD result
+PUSH "\\n"
+ADD
+STORE result
+LABEL _endif_1205
+LOAD result
+LOAD mb
+ADD
+STORE result
+LOAD cnt
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cnt
+LABEL _endif_1191
+LOAD pAR
+LOAD pA
+BUILTIN callPtr 2
+POP
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_1082
+LABEL _wend_1082
+LOAD pFR
+LOAD pF
+BUILTIN callPtr 2
+POP
+LOAD hD
+CALL FreeLibrary 1
+POP
+LOAD result
+RETURN
+END
+
+FUNC kfdxgibudget 0
+LOCAL hD
+PUSH "dxgi.dll"
+CALL LoadLibraryA 1
+STORE hD
+LOAD hD
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1274
+PUSH "0"
+RETURN
+LABEL _endif_1274
+LOCAL pC
+LOAD hD
+PUSH "CreateDXGIFactory1"
+CALL GetProcAddress 2
+STORE pC
+LOAD pC
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1294
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH "0"
+RETURN
+LABEL _endif_1294
+LOCAL g1
+PUSH "16"
+BUILTIN bufNew 1
+STORE g1
+LOAD g1
+PUSH "0"
+PUSH "1997188728"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g1
+PUSH "4"
+PUSH "1304097391"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g1
+PUSH "8"
+PUSH "1009068456"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g1
+PUSH "12"
+PUSH "-2018258557"
+BUILTIN bufSetDwordAt 3
+POP
+LOCAL pFOut
+BUILTIN handleOut 0
+STORE pFOut
+LOCAL hr1
+LOAD pC
+LOAD g1
+LOAD pFOut
+BUILTIN callPtr 3
+STORE hr1
+LOAD hr1
+BUILTIN handleInt 1
+BUILTIN toInt 1
+PUSH 0
+LT
+JUMPIFNOT _endif_1365
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH "0"
+RETURN
+LABEL _endif_1365
+LOCAL pF
+LOAD pFOut
+BUILTIN handleGet 1
+STORE pF
+LOAD pF
+CALL handleValid 1
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1390
+LOAD hD
+CALL FreeLibrary 1
+POP
+PUSH "0"
+RETURN
+LABEL _endif_1390
+LOCAL fv
+LOAD pF
+BUILTIN ptrDeref 1
+STORE fv
+LOCAL pE1
+LOAD fv
+PUSH "12"
+BUILTIN ptrIndex 2
+STORE pE1
+LOCAL pFR
+LOAD fv
+PUSH "2"
+BUILTIN ptrIndex 2
+STORE pFR
+LOCAL g3
+PUSH "16"
+BUILTIN bufNew 1
+STORE g3
+LOAD g3
+PUSH "0"
+PUSH "1683580836"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g3
+PUSH "4"
+PUSH "1125127058"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g3
+PUSH "8"
+PUSH "1400936615"
+BUILTIN bufSetDwordAt 3
+POP
+LOAD g3
+PUSH "12"
+PUSH "-40681778"
+BUILTIN bufSetDwordAt 3
+POP
+LOCAL result
+PUSH "0"
+STORE result
+LOCAL pA1Out
+BUILTIN handleOut 0
+STORE pA1Out
+LOCAL hr2
+LOAD pE1
+LOAD pF
+PUSH "0"
+BUILTIN toHandle 1
+LOAD pA1Out
+BUILTIN callPtr 4
+STORE hr2
+LOAD hr2
+BUILTIN handleInt 1
+BUILTIN toInt 1
+PUSH 0
+GTE
+JUMPIFNOT _endif_1495
+LOCAL pA1
+LOAD pA1Out
+BUILTIN handleGet 1
+STORE pA1
+LOAD pA1
+CALL handleValid 1
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_1513
+LOCAL av1
+LOAD pA1
+BUILTIN ptrDeref 1
+STORE av1
+LOCAL pQI
+LOAD av1
+PUSH "0"
+BUILTIN ptrIndex 2
+STORE pQI
+LOCAL pA1R
+LOAD av1
+PUSH "2"
+BUILTIN ptrIndex 2
+STORE pA1R
+LOCAL pA3Out
+BUILTIN handleOut 0
+STORE pA3Out
+LOCAL hr3
+LOAD pQI
+LOAD pA1
+LOAD g3
+LOAD pA3Out
+BUILTIN callPtr 4
+STORE hr3
+LOAD hr3
+BUILTIN handleInt 1
+BUILTIN toInt 1
+PUSH 0
+GTE
+JUMPIFNOT _endif_1565
+LOCAL pA3
+LOAD pA3Out
+BUILTIN handleGet 1
+STORE pA3
+LOAD pA3
+CALL handleValid 1
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_1583
+LOCAL av3
+LOAD pA3
+BUILTIN ptrDeref 1
+STORE av3
+LOCAL pQV
+LOAD av3
+PUSH "14"
+BUILTIN ptrIndex 2
+STORE pQV
+LOCAL pA3R
+LOAD av3
+PUSH "2"
+BUILTIN ptrIndex 2
+STORE pA3R
+LOCAL info
+PUSH "32"
+BUILTIN bufNew 1
+STORE info
+LOAD pQV
+LOAD pA3
+PUSH "0"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+LOAD info
+BUILTIN callPtr 5
+POP
+LOCAL usageMB
+LOAD info
+PUSH "8"
+BUILTIN bufGetQwordAt 2
+PUSH "1048576"
+CALL div64 2
+STORE usageMB
+LOAD usageMB
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_1655
+LOAD usageMB
+PUSH ""
+ADD
+STORE result
+LABEL _endif_1655
+LOAD pA3R
+LOAD pA3
+BUILTIN callPtr 2
+POP
+LABEL _endif_1583
+LABEL _endif_1565
+LOAD pA1R
+LOAD pA1
+BUILTIN callPtr 2
+POP
+LABEL _endif_1513
+LABEL _endif_1495
+LOAD pFR
+LOAD pF
+BUILTIN callPtr 2
+POP
+LOAD hD
+CALL FreeLibrary 1
+POP
+LOAD result
+RETURN
+END
+
+FUNC gpuvram 0
+LOCAL v
+CALL kfdxgivram 0
+BUILTIN trim 1
+STORE v
+LOAD v
+PUSH ""
+EQ
+JUMPIFNOT _endif_1712
+CALL kfvramreg 0
+RETURN
+LABEL _endif_1712
+LOCAL used
+CALL kfpdhgpu 0
+STORE used
+LOAD used
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1728
+CALL kfdxgibudget 0
+STORE used
+LABEL _endif_1728
+LOCAL n
+LOAD v
+CALL linecount 1
+STORE n
+LOCAL result
+PUSH ""
+STORE result
+LOCAL i
+PUSH "0"
+STORE i
+LABEL _wloop_1754
+LOAD i
+BUILTIN toInt 1
+LOAD n
+BUILTIN toInt 1
+LT
+JUMPIFNOT _wend_1754
+LOCAL line
+LOAD v
+LOAD i
+CALL nthline 2
+STORE line
+LOCAL entry
+LOAD line
+PUSH ":0"
+ADD
+STORE entry
+LOAD i
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1780
+LOAD line
+PUSH ":"
+ADD
+LOAD used
+ADD
+STORE entry
+LABEL _endif_1780
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1793
+LOAD result
+PUSH "\\n"
+ADD
+STORE result
+LABEL _endif_1793
+LOAD result
+LOAD entry
+ADD
+STORE result
+LOAD i
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE i
+JUMP _wloop_1754
+LABEL _wend_1754
+LOAD result
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1820
+LOAD result
+RETURN
+LABEL _endif_1820
+CALL kfvramreg 0
+RETURN
+END
+
+FUNC fmtgpu 2
+PARAM name
+PARAM vramLine
+LOAD name
+PUSH ""
+EQ
+JUMPIFNOT _endif_1841
+PUSH ""
+RETURN
+LABEL _endif_1841
+LOAD vramLine
+PUSH ""
+EQ
+JUMPIFNOT _endif_1849
+LOAD name
+RETURN
+LABEL _endif_1849
+LOCAL tb
+LOAD vramLine
+PUSH ":"
+CALL firstpart 2
+STORE tb
+LOCAL ub
+LOAD vramLine
+PUSH ":"
+CALL afterpart 2
+STORE ub
+LOAD tb
+BUILTIN toInt 1
+PUSH 0
+EQ
+JUMPIFNOT _endif_1875
+LOAD name
+RETURN
+LABEL _endif_1875
+LOCAL n
+LOAD tb
+BUILTIN toInt 1
+STORE n
+LOCAL gb
+LOAD n
+PUSH 1024
+DIV
+STORE gb
+LOCAL t
+LOAD n
+PUSH 10
+MUL
+PUSH 1024
+DIV
+LOAD gb
+PUSH 10
+MUL
+SUB
+STORE t
+LOAD ub
+BUILTIN toInt 1
+PUSH 0
+GT
+JUMPIFNOT _endif_1911
+LOCAL un
+LOAD ub
+BUILTIN toInt 1
+STORE un
+LOCAL ugb
+LOAD un
+PUSH 1024
+DIV
+STORE ugb
+LOCAL ut
+LOAD un
+PUSH 10
+MUL
+PUSH 1024
+DIV
+LOAD ugb
+PUSH 10
+MUL
+SUB
+STORE ut
+LOCAL pct
+LOAD un
+PUSH 100
+MUL
+LOAD n
+DIV
+STORE pct
+LOCAL bar
+LOAD ub
+LOAD tb
+CALL rambar 2
+STORE bar
+LOAD bar
+PUSH "  "
+ADD
+LOAD name
+ADD
+PUSH "  "
+ADD
+LOAD ugb
+ADD
+PUSH "."
+ADD
+LOAD ut
+ADD
+PUSH " GB / "
+ADD
+LOAD gb
+ADD
+PUSH "."
+ADD
+LOAD t
+ADD
+PUSH " GB  "
+ADD
+LOAD pct
+ADD
+PUSH "%"
+ADD
+RETURN
+LABEL _endif_1911
+LOAD name
+PUSH " ("
+ADD
+LOAD gb
+ADD
+PUSH "."
+ADD
+LOAD t
+ADD
+PUSH " GB VRAM)"
+ADD
+RETURN
+END
+
+FUNC kfcls 0
+LOCAL E
+PUSH 27
+BUILTIN fromCharCode 1
+STORE E
+LOAD E
+PUSH "[2J"
+ADD
+LOAD E
+ADD
+PUSH "[H"
+ADD
+BUILTIN kp 1
+POP
+PUSH ""
+RETURN
+END
+
+FUNC kfstdout 0
+PUSH "4294967285"
+BUILTIN toHandle 1
+CALL GetStdHandle 1
+RETURN
+END
+
+FUNC kfinit 0
+PUSH "65001"
+BUILTIN toHandle 1
+CALL SetConsoleOutputCP 1
+POP
+LOCAL h
+CALL kfstdout 0
+STORE h
+LOCAL modeBuf
+PUSH "4"
+BUILTIN bufNew 1
+STORE modeBuf
+LOAD modeBuf
+PUSH "0"
+BUILTIN bufSetDword 2
+POP
+LOAD h
+LOAD modeBuf
+CALL GetConsoleMode 2
+POP
+LOCAL m
+LOAD modeBuf
+BUILTIN bufGetDword 1
+BUILTIN toInt 1
+STORE m
+LOCAL newm
+LOAD m
+PUSH ""
+ADD
+PUSH "4"
+CALL bitOr 2
+STORE newm
+LOAD h
+LOAD newm
+BUILTIN toHandle 1
+CALL SetConsoleMode 2
+POP
+PUSH ""
+RETURN
+END
+
+FUNC kfconsize 0
+LOCAL h
+CALL kfstdout 0
+STORE h
+LOCAL csbi
+PUSH "CONSOLE_SCREEN_BUFFER_INFO"
+BUILTIN structNew 1
+STORE csbi
+LOAD h
+LOAD csbi
+CALL GetConsoleScreenBufferInfo 2
+POP
+LOCAL right
+LOAD csbi
+PUSH "CONSOLE_SCREEN_BUFFER_INFO"
+PUSH "srWindowRight"
+CALL structGet 3
+BUILTIN toInt 1
+STORE right
+LOCAL left
+LOAD csbi
+PUSH "CONSOLE_SCREEN_BUFFER_INFO"
+PUSH "srWindowLeft"
+CALL structGet 3
+BUILTIN toInt 1
+STORE left
+LOCAL bot
+LOAD csbi
+PUSH "CONSOLE_SCREEN_BUFFER_INFO"
+PUSH "srWindowBottom"
+CALL structGet 3
+BUILTIN toInt 1
+STORE bot
+LOCAL top
+LOAD csbi
+PUSH "CONSOLE_SCREEN_BUFFER_INFO"
+PUSH "srWindowTop"
+CALL structGet 3
+BUILTIN toInt 1
+STORE top
+LOAD right
+PUSH 0
+EQ
+JUMPIFNOT _endif_194
+PUSH "0,0"
+RETURN
+LABEL _endif_194
+LOCAL cols
+LOAD right
+LOAD left
+SUB
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE cols
+LOCAL rows
+LOAD bot
+LOAD top
+SUB
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE rows
+LOAD cols
+PUSH ","
+ADD
+LOAD rows
+ADD
+RETURN
+END
+
+FUNC kfshell 0
+LOCAL mypid
+CALL GetCurrentProcessId 0
+BUILTIN handleInt 1
+STORE mypid
+LOCAL snap
+PUSH "2"
+BUILTIN toHandle 1
+PUSH "0"
+BUILTIN toHandle 1
+CALL CreateToolhelp32Snapshot 2
+STORE snap
+LOCAL entry
+PUSH "PROCESSENTRY32"
+BUILTIN structNew 1
+STORE entry
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "dwSize"
+PUSH "304"
+CALL structSet 4
+POP
+LOCAL ppid
+PUSH ""
+STORE ppid
+LOCAL result
+PUSH ""
+STORE result
+LOCAL ok
+LOAD snap
+LOAD entry
+CALL Process32First 2
+BUILTIN handleInt 1
+STORE ok
+LABEL _wloop_295
+LOAD ok
+PUSH "0"
+NEQ
+JUMPIFNOT _wend_295
+LOCAL pid
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "th32ProcessID"
+CALL structGet 3
+STORE pid
+LOAD pid
+LOAD mypid
+EQ
+JUMPIFNOT _endif_311
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "th32ParentProcessID"
+CALL structGet 3
+STORE ppid
+LABEL _endif_311
+LOAD snap
+LOAD entry
+CALL Process32Next 2
+BUILTIN handleInt 1
+STORE ok
+JUMP _wloop_295
+LABEL _wend_295
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "dwSize"
+PUSH "304"
+CALL structSet 4
+POP
+LOAD snap
+LOAD entry
+CALL Process32First 2
+BUILTIN handleInt 1
+STORE ok
+LABEL _wloop_360
+LOAD ok
+PUSH "0"
+NEQ
+JUMPIFNOT _wend_360
+LOCAL pid
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "th32ProcessID"
+CALL structGet 3
+STORE pid
+LOAD pid
+LOAD ppid
+EQ
+JUMPIFNOT _endif_376
+LOAD entry
+PUSH "PROCESSENTRY32"
+PUSH "szExeFile"
+CALL structGet 3
+STORE result
+LABEL _endif_376
+LOAD snap
+LOAD entry
+CALL Process32Next 2
+BUILTIN handleInt 1
+STORE ok
+JUMP _wloop_360
+LABEL _wend_360
+LOAD snap
+CALL CloseHandle 1
+POP
+LOAD result
+PUSH ""
+EQ
+JUMPIFNOT _endif_408
+PUSH "cmd"
+RETURN
+LABEL _endif_408
+LOCAL low
+LOAD result
+BUILTIN toLower 1
+STORE low
+LOAD low
+PUSH "powershell"
+BUILTIN contains 2
+JUMPIFNOT _endif_423
+PUSH "PowerShell"
+RETURN
+LABEL _endif_423
+LOAD low
+PUSH "pwsh"
+BUILTIN contains 2
+JUMPIFNOT _endif_434
+PUSH "PowerShell"
+RETURN
+LABEL _endif_434
+LOAD low
+PUSH "bash"
+BUILTIN contains 2
+JUMPIFNOT _endif_445
+PUSH "bash"
+RETURN
+LABEL _endif_445
+LOAD low
+PUSH "zsh"
+BUILTIN contains 2
+JUMPIFNOT _endif_456
+PUSH "zsh"
+RETURN
+LABEL _endif_456
+LOAD low
+PUSH "nu"
+BUILTIN contains 2
+JUMPIFNOT _endif_467
+PUSH "nushell"
+RETURN
+LABEL _endif_467
+LOAD low
+PUSH "cmd"
+BUILTIN contains 2
+JUMPIFNOT _endif_478
+PUSH "cmd"
+RETURN
+LABEL _endif_478
+LOAD result
+RETURN
+END
+
+FUNC run 0
+CALL kfcls 0
+POP
+CALL kfinit 0
+POP
+LOCAL E
+PUSH 27
+BUILTIN fromCharCode 1
+STORE E
+LOCAL GRN
+LOAD E
+PUSH "[32;1m"
+ADD
+STORE GRN
+LOCAL CYN
+LOAD E
+PUSH "[36;1m"
+ADD
+STORE CYN
+LOCAL RST
+LOAD E
+PUSH "[0m"
+ADD
+STORE RST
+LOCAL BLU
+LOAD E
+PUSH "[34m"
+ADD
+STORE BLU
+LOCAL CY
+LOAD E
+PUSH "[36m"
+ADD
+STORE CY
+LOCAL LW
+PUSH "40"
+STORE LW
+LOCAL l0
+LOAD BLU
+PUSH "        ,.=:!!t3Z3z.,"
+ADD
+LOAD RST
+ADD
+STORE l0
+LOCAL l1
+LOAD BLU
+PUSH "       :tt:::tt333EE3"
+ADD
+LOAD RST
+ADD
+STORE l1
+LOCAL l2
+LOAD BLU
+PUSH "       Et:::ztt33EEEL"
+ADD
+LOAD CY
+ADD
+PUSH " @Ee.,      ..,"
+ADD
+LOAD RST
+ADD
+STORE l2
+LOCAL l3
+LOAD BLU
+PUSH "      ;tt:::tt333EE7"
+ADD
+LOAD CY
+ADD
+PUSH " ;EEEEEEttttt33#"
+ADD
+LOAD RST
+ADD
+STORE l3
+LOCAL l4
+LOAD BLU
+PUSH "     :Et:::zt333EEQ"
+ADD
+LOAD CY
+ADD
+PUSH "  SEEEEEttttt33QL"
+ADD
+LOAD RST
+ADD
+STORE l4
+LOCAL l5
+LOAD BLU
+PUSH "     it::::tt333EEF"
+ADD
+LOAD CY
+ADD
+PUSH " @EEEEttttt33F"
+ADD
+LOAD RST
+ADD
+STORE l5
+LOCAL l6
+LOAD BLU
+PUSH "    ;3=*^   "
+ADD
+PUSH "\""
+ADD
+PUSH "*4EEV"
+ADD
+LOAD CY
+ADD
+PUSH " :EEEEttttt33@."
+ADD
+LOAD RST
+ADD
+STORE l6
+LOCAL l7
+LOAD CY
+PUSH "    ,.=::::!t=.,"
+ADD
+LOAD BLU
+ADD
+PUSH "  @EEEEtttz33QF"
+ADD
+LOAD RST
+ADD
+STORE l7
+LOCAL l8
+LOAD CY
+PUSH "   ;::::::::zt33)"
+ADD
+LOAD BLU
+ADD
+PUSH "   "
+ADD
+PUSH "\""
+ADD
+PUSH "4EEEtttji"
+ADD
+LOAD RST
+ADD
+STORE l8
+LOCAL l9
+LOAD CY
+PUSH "  :t::::::::tt33."
+ADD
+LOAD BLU
+ADD
+PUSH " :Z3z..    "
+ADD
+LOAD RST
+ADD
+STORE l9
+LOCAL l10
+LOAD CY
+PUSH "  i::::::::zt33F"
+ADD
+LOAD BLU
+ADD
+PUSH " AEEEtttt::::ztF"
+ADD
+LOAD RST
+ADD
+STORE l10
+LOCAL l11
+LOAD CY
+PUSH " ;:::::::::t33V"
+ADD
+LOAD BLU
+ADD
+PUSH " ;EEEttttt::::t3"
+ADD
+LOAD RST
+ADD
+STORE l11
+LOCAL l12
+LOAD CY
+PUSH " E::::::::zt33L"
+ADD
+LOAD BLU
+ADD
+PUSH " @EEEtttt::::z3F"
+ADD
+LOAD RST
+ADD
+STORE l12
+LOCAL l13
+LOAD CY
+PUSH "{3=*^   "
+ADD
+PUSH "\""
+ADD
+PUSH "*4E3)"
+ADD
+LOAD BLU
+ADD
+PUSH " ;EEEtttt:::::tZ"
+ADD
+LOAD RST
+ADD
+STORE l13
+LOCAL l14
+LOAD CY
+PUSH "            "
+ADD
+LOAD BLU
+ADD
+PUSH " :EEEEtttt::::z7"
+ADD
+LOAD RST
+ADD
+STORE l14
+LOCAL l15
+LOAD BLU
+PUSH "                 "
+ADD
+PUSH "\""
+ADD
+PUSH "VEzjt:;;z>*"
+ADD
+LOAD RST
+ADD
+STORE l15
+LOCAL usr
+CALL sysuser 0
+STORE usr
+LOCAL host
+CALL syshost 0
+STORE host
+LOCAL arch
+CALL sysarch 0
+STORE arch
+LOCAL os
+CALL osver 0
+STORE os
+LOCAL cpu
+CALL cpubrand 0
+STORE cpu
+LOCAL ci
+CALL cpucores 0
+STORE ci
+LOCAL cn
+LOAD ci
+PUSH ","
+CALL firstpart 2
+STORE cn
+LOCAL tn
+LOAD ci
+PUSH ","
+CALL afterpart 2
+STORE tn
+LOCAL mi
+CALL raminfo 0
+STORE mi
+LOCAL tmb
+LOAD mi
+PUSH ","
+CALL firstpart 2
+STORE tmb
+LOCAL fmb
+LOAD mi
+PUSH ","
+CALL afterpart 2
+STORE fmb
+LOCAL umb
+LOAD tmb
+BUILTIN toInt 1
+LOAD fmb
+BUILTIN toInt 1
+SUB
+PUSH ""
+ADD
+STORE umb
+LOCAL tgb
+LOAD tmb
+BUILTIN toInt 1
+PUSH 1024
+DIV
+PUSH ""
+ADD
+STORE tgb
+LOCAL ugb
+LOAD umb
+BUILTIN toInt 1
+PUSH 1024
+DIV
+PUSH ""
+ADD
+STORE ugb
+LOCAL rpct
+LOAD umb
+BUILTIN toInt 1
+PUSH 100
+MUL
+LOAD tmb
+BUILTIN toInt 1
+DIV
+PUSH ""
+ADD
+STORE rpct
+LOCAL rb
+LOAD umb
+LOAD tmb
+CALL rambar 2
+STORE rb
+LOCAL di
+CALL driveinfo 0
+STORE di
+LOCAL d1
+LOAD di
+PUSH "0"
+CALL nthline 2
+STORE d1
+LOCAL d2
+LOAD di
+PUSH "1"
+CALL nthline 2
+STORE d2
+LOCAL d3
+LOAD di
+PUSH "2"
+CALL nthline 2
+STORE d3
+LOCAL gp
+CALL gpunames 0
+STORE gp
+LOCAL ng
+LOAD gp
+CALL linecount 1
+STORE ng
+LOCAL g1
+PUSH ""
+STORE g1
+LOCAL g2
+PUSH ""
+STORE g2
+LOAD ng
+PUSH "1"
+EQ
+JUMPIFNOT _endif_945
+LOAD gp
+STORE g1
+LABEL _endif_945
+LOAD ng
+BUILTIN toInt 1
+PUSH 2
+GTE
+JUMPIFNOT _endif_954
+LOAD gp
+PUSH "0"
+CALL nthline 2
+STORE g1
+LOAD gp
+PUSH "1"
+CALL nthline 2
+STORE g2
+LABEL _endif_954
+LOAD g1
+PUSH ""
+EQ
+JUMPIFNOT _endif_979
+PUSH "None"
+STORE g1
+LABEL _endif_979
+LOCAL vd
+CALL gpuvram 0
+STORE vd
+LOCAL vn
+LOAD vd
+CALL linecount 1
+STORE vn
+LOCAL vr1
+PUSH ""
+STORE vr1
+LOCAL vr2
+PUSH ""
+STORE vr2
+LOAD vn
+BUILTIN toInt 1
+PUSH 1
+GTE
+JUMPIFNOT _endif_1009
+LOAD vd
+PUSH "0"
+CALL nthline 2
+STORE vr1
+LABEL _endif_1009
+LOAD vn
+BUILTIN toInt 1
+PUSH 2
+GTE
+JUMPIFNOT _endif_1026
+LOAD vd
+PUSH "1"
+CALL nthline 2
+STORE vr2
+LABEL _endif_1026
+LOCAL tc
+CALL kfconsize 0
+STORE tc
+LOCAL cols
+LOAD tc
+PUSH ","
+CALL firstpart 2
+STORE cols
+LOCAL rows
+LOAD tc
+PUSH ","
+CALL afterpart 2
+STORE rows
+LOCAL up
+CALL uptime 0
+STORE up
+LOCAL sh
+CALL kfshell 0
+STORE sh
+LOCAL tnm
+CALL kfterminal 0
+STORE tnm
+LOCAL res
+CALL kfresolution 0
+STORE res
+LOCAL thm
+CALL kftheme 0
+STORE thm
+LOCAL bat
+CALL kfbattery 0
+STORE bat
+LOCAL lb0
+PUSH "User"
+STORE lb0
+LOCAL v0
+LOAD usr
+PUSH "@"
+ADD
+LOAD host
+ADD
+STORE v0
+LOCAL lb1
+PUSH "OS"
+STORE lb1
+LOCAL v1
+LOAD os
+PUSH " "
+ADD
+LOAD arch
+ADD
+STORE v1
+LOCAL lb2
+PUSH "CPU"
+STORE lb2
+LOCAL v2
+LOAD cpu
+PUSH " ("
+ADD
+LOAD cn
+ADD
+PUSH "c / "
+ADD
+LOAD tn
+ADD
+PUSH "t)"
+ADD
+STORE v2
+LOCAL lb3
+PUSH "RAM"
+STORE lb3
+LOCAL v3
+LOAD rb
+PUSH "  "
+ADD
+LOAD ugb
+ADD
+PUSH " GB / "
+ADD
+LOAD tgb
+ADD
+PUSH " GB  "
+ADD
+LOAD rpct
+ADD
+PUSH "%"
+ADD
+STORE v3
+LOCAL lb4
+PUSH "Disk"
+STORE lb4
+LOCAL v4
+LOAD d1
+STORE v4
+LOCAL lb5
+PUSH ""
+STORE lb5
+LOCAL v5
+LOAD d2
+STORE v5
+LOCAL lb6
+PUSH ""
+STORE lb6
+LOCAL v6
+LOAD d3
+STORE v6
+LOCAL lb7
+PUSH "GPU"
+STORE lb7
+LOCAL v7
+LOAD g1
+LOAD vr1
+CALL fmtgpu 2
+STORE v7
+LOCAL lb8
+PUSH ""
+STORE lb8
+LOCAL v8
+PUSH ""
+STORE v8
+LOAD g2
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1212
+PUSH "GPU2"
+STORE lb8
+LOAD g2
+LOAD vr2
+CALL fmtgpu 2
+STORE v8
+LABEL _endif_1212
+LOCAL lb9
+PUSH "Shell"
+STORE lb9
+LOCAL v9
+LOAD sh
+STORE v9
+LOCAL lb10
+PUSH ""
+STORE lb10
+LOCAL v10
+PUSH ""
+STORE v10
+LOCAL termv
+PUSH ""
+STORE termv
+LOAD tnm
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1249
+LOAD tnm
+STORE termv
+LABEL _endif_1249
+LOAD cols
+PUSH "0"
+NEQ
+JUMPIFNOT _endif_1258
+LOAD termv
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1263
+LOAD termv
+PUSH " "
+ADD
+LOAD cols
+ADD
+PUSH "x"
+ADD
+LOAD rows
+ADD
+STORE termv
+LABEL _endif_1263
+LOAD termv
+PUSH ""
+EQ
+JUMPIFNOT _endif_1280
+LOAD cols
+PUSH "x"
+ADD
+LOAD rows
+ADD
+STORE termv
+LABEL _endif_1280
+LABEL _endif_1258
+LOAD termv
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1294
+PUSH "Term"
+STORE lb10
+LOAD termv
+STORE v10
+LABEL _endif_1294
+LOCAL lb11
+PUSH "Res"
+STORE lb11
+LOCAL v11
+LOAD res
+STORE v11
+LOCAL lb12
+PUSH "Uptime"
+STORE lb12
+LOCAL v12
+LOAD up
+STORE v12
+LOCAL lb13
+PUSH "Pkgs"
+STORE lb13
+LOCAL v13
+CALL kfpkgs 0
+STORE v13
+LOCAL lb14
+PUSH "Theme"
+STORE lb14
+LOCAL v14
+LOAD thm
+STORE v14
+LOCAL lb15
+PUSH ""
+STORE lb15
+LOCAL v15
+PUSH ""
+STORE v15
+LOAD bat
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1348
+PUSH "Battery"
+STORE lb15
+LOAD bat
+STORE v15
+LABEL _endif_1348
+LOCAL idx
+PUSH "0"
+STORE idx
+LABEL _wloop_1364
+LOAD idx
+BUILTIN toInt 1
+PUSH 16
+LT
+JUMPIFNOT _wend_1364
+LOCAL logo
+PUSH ""
+STORE logo
+LOAD idx
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1376
+LOAD l0
+STORE logo
+LABEL _endif_1376
+LOAD idx
+PUSH "1"
+EQ
+JUMPIFNOT _endif_1385
+LOAD l1
+STORE logo
+LABEL _endif_1385
+LOAD idx
+PUSH "2"
+EQ
+JUMPIFNOT _endif_1394
+LOAD l2
+STORE logo
+LABEL _endif_1394
+LOAD idx
+PUSH "3"
+EQ
+JUMPIFNOT _endif_1403
+LOAD l3
+STORE logo
+LABEL _endif_1403
+LOAD idx
+PUSH "4"
+EQ
+JUMPIFNOT _endif_1412
+LOAD l4
+STORE logo
+LABEL _endif_1412
+LOAD idx
+PUSH "5"
+EQ
+JUMPIFNOT _endif_1421
+LOAD l5
+STORE logo
+LABEL _endif_1421
+LOAD idx
+PUSH "6"
+EQ
+JUMPIFNOT _endif_1430
+LOAD l6
+STORE logo
+LABEL _endif_1430
+LOAD idx
+PUSH "7"
+EQ
+JUMPIFNOT _endif_1439
+LOAD l7
+STORE logo
+LABEL _endif_1439
+LOAD idx
+PUSH "8"
+EQ
+JUMPIFNOT _endif_1448
+LOAD l8
+STORE logo
+LABEL _endif_1448
+LOAD idx
+PUSH "9"
+EQ
+JUMPIFNOT _endif_1457
+LOAD l9
+STORE logo
+LABEL _endif_1457
+LOAD idx
+PUSH "10"
+EQ
+JUMPIFNOT _endif_1466
+LOAD l10
+STORE logo
+LABEL _endif_1466
+LOAD idx
+PUSH "11"
+EQ
+JUMPIFNOT _endif_1475
+LOAD l11
+STORE logo
+LABEL _endif_1475
+LOAD idx
+PUSH "12"
+EQ
+JUMPIFNOT _endif_1484
+LOAD l12
+STORE logo
+LABEL _endif_1484
+LOAD idx
+PUSH "13"
+EQ
+JUMPIFNOT _endif_1493
+LOAD l13
+STORE logo
+LABEL _endif_1493
+LOAD idx
+PUSH "14"
+EQ
+JUMPIFNOT _endif_1502
+LOAD l14
+STORE logo
+LABEL _endif_1502
+LOAD idx
+PUSH "15"
+EQ
+JUMPIFNOT _endif_1511
+LOAD l15
+STORE logo
+LABEL _endif_1511
+LOCAL lb
+PUSH ""
+STORE lb
+LOCAL v
+PUSH ""
+STORE v
+LOAD idx
+PUSH "0"
+EQ
+JUMPIFNOT _endif_1528
+LOAD lb0
+STORE lb
+LOAD v0
+STORE v
+LABEL _endif_1528
+LOAD idx
+PUSH "1"
+EQ
+JUMPIFNOT _endif_1541
+LOAD lb1
+STORE lb
+LOAD v1
+STORE v
+LABEL _endif_1541
+LOAD idx
+PUSH "2"
+EQ
+JUMPIFNOT _endif_1554
+LOAD lb2
+STORE lb
+LOAD v2
+STORE v
+LABEL _endif_1554
+LOAD idx
+PUSH "3"
+EQ
+JUMPIFNOT _endif_1567
+LOAD lb3
+STORE lb
+LOAD v3
+STORE v
+LABEL _endif_1567
+LOAD idx
+PUSH "4"
+EQ
+JUMPIFNOT _endif_1580
+LOAD lb4
+STORE lb
+LOAD v4
+STORE v
+LABEL _endif_1580
+LOAD idx
+PUSH "5"
+EQ
+JUMPIFNOT _endif_1593
+LOAD lb5
+STORE lb
+LOAD v5
+STORE v
+LABEL _endif_1593
+LOAD idx
+PUSH "6"
+EQ
+JUMPIFNOT _endif_1606
+LOAD lb6
+STORE lb
+LOAD v6
+STORE v
+LABEL _endif_1606
+LOAD idx
+PUSH "7"
+EQ
+JUMPIFNOT _endif_1619
+LOAD lb7
+STORE lb
+LOAD v7
+STORE v
+LABEL _endif_1619
+LOAD idx
+PUSH "8"
+EQ
+JUMPIFNOT _endif_1632
+LOAD lb8
+STORE lb
+LOAD v8
+STORE v
+LABEL _endif_1632
+LOAD idx
+PUSH "9"
+EQ
+JUMPIFNOT _endif_1645
+LOAD lb9
+STORE lb
+LOAD v9
+STORE v
+LABEL _endif_1645
+LOAD idx
+PUSH "10"
+EQ
+JUMPIFNOT _endif_1658
+LOAD lb10
+STORE lb
+LOAD v10
+STORE v
+LABEL _endif_1658
+LOAD idx
+PUSH "11"
+EQ
+JUMPIFNOT _endif_1671
+LOAD lb11
+STORE lb
+LOAD v11
+STORE v
+LABEL _endif_1671
+LOAD idx
+PUSH "12"
+EQ
+JUMPIFNOT _endif_1684
+LOAD lb12
+STORE lb
+LOAD v12
+STORE v
+LABEL _endif_1684
+LOAD idx
+PUSH "13"
+EQ
+JUMPIFNOT _endif_1697
+LOAD lb13
+STORE lb
+LOAD v13
+STORE v
+LABEL _endif_1697
+LOAD idx
+PUSH "14"
+EQ
+JUMPIFNOT _endif_1710
+LOAD lb14
+STORE lb
+LOAD v14
+STORE v
+LABEL _endif_1710
+LOAD idx
+PUSH "15"
+EQ
+JUMPIFNOT _endif_1723
+LOAD lb15
+STORE lb
+LOAD v15
+STORE v
+LABEL _endif_1723
+LOCAL info
+PUSH ""
+STORE info
+LOAD lb
+PUSH ""
+NEQ
+JUMPIFNOT _else_1740
+LOCAL lbc
+LOAD lb
+PUSH ":"
+ADD
+STORE lbc
+LOCAL padlen
+PUSH 7
+LOAD lbc
+BUILTIN len 1
+SUB
+STORE padlen
+LOCAL pad
+PUSH ""
+STORE pad
+LOCAL pi
+PUSH "0"
+STORE pi
+LABEL _wloop_1768
+LOAD pi
+BUILTIN toInt 1
+LOAD padlen
+LT
+JUMPIFNOT _wend_1768
+LOAD pad
+PUSH " "
+ADD
+STORE pad
+LOAD pi
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE pi
+JUMP _wloop_1768
+LABEL _wend_1768
+LOAD GRN
+LOAD lbc
+ADD
+LOAD RST
+ADD
+LOAD pad
+ADD
+LOAD v
+ADD
+STORE info
+JUMP _endif_1740
+LABEL _else_1740
+LOAD v
+PUSH ""
+NEQ
+JUMPIFNOT _endif_1806
+PUSH "       "
+LOAD v
+ADD
+STORE info
+LABEL _endif_1806
+LABEL _endif_1740
+LOAD logo
+LOAD LW
+BUILTIN toInt 1
+CALL padansi 2
+PUSH "  "
+ADD
+LOAD info
+ADD
+BUILTIN kp 1
+POP
+LOAD idx
+BUILTIN toInt 1
+PUSH 1
+ADD
+PUSH ""
+ADD
+STORE idx
+JUMP _wloop_1364
+LABEL _wend_1364
+PUSH ""
+BUILTIN kp 1
+POP
+LOAD CYN
+PUSH "  KryoFetch"
+ADD
+LOAD RST
+ADD
+PUSH " by KryptonBytes"
+ADD
+BUILTIN kp 1
+POP
+PUSH ""
+BUILTIN kp 1
+POP
+CALL colorpalette 0
+POP
+PUSH ""
+BUILTIN kp 1
+POP
+PUSH ""
+RETURN
+END
+
+FUNC __main__ 0
+CALL run 0
+POP
+END
