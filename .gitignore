@@ -9,3 +9,6 @@ kcc.sh
 build.bat
 kryofetch.exe
 .output/
+*.dll
+kcc.sh
+*.ir

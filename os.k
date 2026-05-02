@@ -1,6 +1,5 @@
 import "windows.krh"
 
-// osver: Windows build + edition from registry (no powershell)
 func osver() {
     let regPath = "SOFTWARE\Microsoft\Windows NT\CurrentVersion"
     let build   = trim(regHklmStr(regPath, "CurrentBuildNumber"))
@@ -23,7 +22,6 @@ func osver() {
     emit v + " (build " + build + ")"
 }
 
-// uptime: GetTickCount64 (UINT64 via -> annotation) -> human readable
 func uptime() {
     let ms   = handleInt(GetTickCount64())
     let tsec = div64(ms, "1000")
@@ -37,8 +35,6 @@ func uptime() {
     else { emit m + " min" }
 }
 
-// kfresolution: GetSystemMetrics (INT via -> annotation) for screen size
-// SM_CXSCREEN=0, SM_CYSCREEN=1; use toHandle to pass integer as pointer-sized int
 func kfresolution() {
     let w = handleInt(GetSystemMetrics(toHandle("0")))
     let h = handleInt(GetSystemMetrics(toHandle("1")))
@@ -46,7 +42,6 @@ func kfresolution() {
     emit w + "x" + h
 }
 
-// kfterminal: detect terminal emulator from environment variables
 func kfterminal() {
     let wt = environ("WT_SESSION")
     if wt != "" { emit "Windows Terminal" }
@@ -59,7 +54,6 @@ func kfterminal() {
     emit ""
 }
 
-// kftheme: read dark/light mode + accent color from registry (no powershell)
 func kftheme() {
     let regPath = "Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
     let light  = regHkcuDword(regPath, "AppsUseLightTheme")
@@ -78,7 +72,6 @@ func kftheme() {
     emit mode + " (#" + toUpper(hr) + toUpper(hg) + toUpper(hb) + ")"
 }
 
-// kfbattery: GetSystemPowerStatus via SYSTEM_POWER_STATUS struct (no WMI)
 func kfbattery() {
     let sps = structNew("SYSTEM_POWER_STATUS")
     GetSystemPowerStatus(sps)
@@ -90,7 +83,6 @@ func kfbattery() {
     emit pct + "% (" + status + ")"
 }
 
-// sysuser: GetUserNameA via bufNew/bufSetDword/bufStr (no shell)
 func sysuser() {
     let buf = bufNew("256")
     let sz  = bufNew("4")
@@ -99,7 +91,6 @@ func sysuser() {
     emit bufStr(buf)
 }
 
-// syshost: GetComputerNameA via bufNew/bufSetDword/bufStr (no shell)
 func syshost() {
     let buf = bufNew("256")
     let sz  = bufNew("4")
@@ -108,7 +99,6 @@ func syshost() {
     emit bufStr(buf)
 }
 
-// sysarch: GetNativeSystemInfo -> wProcessorArchitecture (no shell)
 func sysarch() {
     let si   = structNew("SYSTEM_INFO")
     GetNativeSystemInfo(si)
