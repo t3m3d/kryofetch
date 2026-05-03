@@ -1,21 +1,35 @@
 @echo off
 setlocal
 
-echo [1/2] Krypton to C...
-..\krypton\kcc.exe --headers ..\krypton\headers run.k > kryofetch_tmp.c
-if errorlevel 1 (
-    echo ERROR: Krypton compilation failed.
-    del /Q kryofetch_tmp.c 2>nul
-    exit /b 1
-)
+set KRYPTON=..\krypton
+set KCC=%KRYPTON%\kcc.exe
+set OPT=%KRYPTON%\compiler\windows_x86\optimize_host.exe
+set X64=%KRYPTON%\compiler\windows_x86\x64_host.exe
+set RT=%KRYPTON%\runtime\krypton_rt.dll
+set IR=_kf_build.kir
+set IRO=_kf_build_opt.kir
 
-echo [2/2] C to exe...
-gcc kryofetch_tmp.c -o kryofetch.exe -lsetupapi -ladvapi32 -lpdh -lm -w
-if errorlevel 1 (
-    echo ERROR: gcc failed.
-    del /Q kryofetch_tmp.c 2>nul
-    exit /b 1
-)
-del /Q kryofetch_tmp.c
+echo Building kryofetch (native PE/COFF, no gcc)...
+
+if not exist "%KCC%"  ( echo ERROR: %KCC% not found  & exit /b 1 )
+if not exist "%OPT%"  ( echo ERROR: %OPT% not found  & exit /b 1 )
+if not exist "%X64%"  ( echo ERROR: %X64% not found  & exit /b 1 )
+
+echo [1/3] Krypton to IR...
+"%KCC%" --ir --headers %KRYPTON%\headers run.k > %IR%
+if errorlevel 1 ( echo ERROR: IR emission failed & del /Q %IR% 2>nul & exit /b 1 )
+
+echo [2/3] Optimizing IR...
+"%OPT%" %IR% > %IRO%
+if errorlevel 1 ( echo ERROR: optimizer failed & del /Q %IR% %IRO% 2>nul & exit /b 1 )
+
+echo [3/3] IR to PE/COFF...
+"%X64%" %IRO% kryofetch.exe
+if errorlevel 1 ( echo ERROR: x64 codegen failed & del /Q %IR% %IRO% 2>nul & exit /b 1 )
+
+del /Q %IR% %IRO% 2>nul
+
+if exist "%RT%" copy /Y "%RT%" krypton_rt.dll >nul
 
 echo Done! Run kryofetch.exe to see output.
+echo (krypton_rt.dll bundled alongside.)

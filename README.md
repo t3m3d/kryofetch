@@ -23,11 +23,22 @@ A Windows system information fetch tool written in [Krypton](https://github.com/
 
 ## Build
 
-Requires [KCC for Windows](https://github.com/t3m3d/krypton).
+Two builds ship side by side:
 
-Or just run `build.bat`.
+- **`build.bat`** — default. Native PE/COFF via the Krypton compiler's
+  Windows backend (`x64.k`). **No gcc required.** Produces `kryofetch.exe`
+  alongside a freshly-copied `krypton_rt.dll`.
+- **`build_gcc.bat`** — legacy fallback. Krypton → C → gcc.
+  Requires [TDM-GCC](https://jmeubank.github.io/tdm-gcc/) and links against
+  `setupapi`, `advapi32`, `pdh`, `psapi`, and `m`.
+
+Both expect the [Krypton repo](https://github.com/t3m3d/krypton) cloned
+side-by-side as `..\krypton`. The native build pulls `kcc.exe`, the
+optimizer host, the `x64` host, and `krypton_rt.dll` from that location
+automatically.
 
 ## Requirements
 
 - Windows 10 / 11
-- KCC - Krypton-Lang compiler.
+- The Krypton repo cloned to `..\krypton` (sibling directory)
+- For `build_gcc.bat` only: TDM-GCC or another MinGW toolchain with `gcc` on PATH
