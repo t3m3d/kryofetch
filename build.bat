@@ -16,7 +16,7 @@ if not exist "%OPT%"  ( echo ERROR: %OPT% not found  & exit /b 1 )
 if not exist "%X64%"  ( echo ERROR: %X64% not found  & exit /b 1 )
 
 echo [1/3] Krypton to IR...
-"%KCC%" --ir --headers %KRYPTON%\headers run.k > %IR%
+"%KCC%" --ir run.k > %IR%
 if errorlevel 1 ( echo ERROR: IR emission failed & del /Q %IR% 2>nul & exit /b 1 )
 
 echo [2/3] Optimizing IR...

@@ -133,19 +133,20 @@ func idxfrom(s, sub, start) {
 }
 
 func countRegSubkeys(hive, path) {
-    let kread = toHandle("131097")
-    let hkey  = handleOut()
-    RegOpenKeyExA(hive, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "0" }
+    // 2.0: phResult is a buffer; extract HKEY via bufGetQword(phResult,0).
+    let kread = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(hive, path, "0", kread, phResult)
+    if r != "0" { emit "0" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("256")
     let sz  = bufNew("4")
     let cnt = "0"
     let idx = "0"
     while toInt(idx) < 65536 {
         bufSetDword(sz, "256")
-        let r = handleInt(RegEnumKeyExA(hk, toHandle(idx), buf, sz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
-        if toInt(r) != 0 { break }
+        let er = RegEnumKeyExA(hk, idx, buf, sz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if er != "0" { break }
         cnt = toInt(cnt) + 1 + ""
         idx = toInt(idx) + 1 + ""
     }
@@ -154,12 +155,17 @@ func countRegSubkeys(hive, path) {
 }
 
 func countDirs(path) {
-    let attrs = handleInt(GetFileAttributesA(path))
+    // 2.0: GetFileAttributesA + FindFirstFileA + FindNextFileA all itoa'd.
+    let attrs = GetFileAttributesA(path)
+    // INVALID_FILE_ATTRIBUTES = (DWORD)-1 = 4294967295
+    if attrs == "4294967295" { emit "0" }
     if attrs == "-1" { emit "0" }
     if bitAnd(attrs, "16") == "0" { emit "0" }
     let fd  = structNew("WIN32_FIND_DATAA")
     let h   = FindFirstFileA(path + "\\*", fd)
-    if handleValid(h) == "0" { emit "0" }
+    if h == "0" { emit "0" }
+    // INVALID_HANDLE_VALUE = (HANDLE)-1 = 18446744073709551615
+    if h == "18446744073709551615" { emit "0" }
     let cnt = "0"
     let di  = "0"
     while toInt(di) < 65536 {
@@ -172,7 +178,7 @@ func countDirs(path) {
                 }
             }
         }
-        let nxt = handleInt(FindNextFileA(h, fd))
+        let nxt = FindNextFileA(h, fd)
         if nxt == "0" { break }
         di = toInt(di) + 1 + ""
     }
@@ -181,8 +187,8 @@ func countDirs(path) {
 }
 
 func kfpkgs() {
-    let HKLM = toHandle("2147483650")
-    let HKCU = toHandle("2147483649")
+    let HKLM = "2147483650"
+    let HKCU = "2147483649"
     let p1 = countRegSubkeys(HKLM, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
     let p2 = countRegSubkeys(HKLM, "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
     let p3 = countRegSubkeys(HKCU, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
@@ -215,14 +221,24 @@ func kfpkgs() {
 }
 
 // ── Krypton registry helpers ──────────────────────────────────────────
-// Use bufNew/bufStr/bufGetDword/handleOut/handleGet/toHandle + windows.krh
+// 2.0: Reg* functions are Win32-marshalled in x64.k. Int args (hKey,
+// ulOptions, samDesired) go as plain strings — atoi happens at the call
+// site. NULL POINTER args (e.g. RegQueryValueExA's lpReserved/lpType)
+// still need toHandle("0") to be raw int 0 — passing string "0" would
+// give Win32 a pointer to "0\0" which it would then DEREFERENCE and
+// WRITE OUT through, corrupting the Krypton arena.
+// 2.0 ABI: phResult = bufNew(8) — Win32 writes HKEY into the byte buffer,
+// then bufGetQword extracts it as an int. Avoid handleOut/handleGet (1.x
+// raw-pointer convention incompatible with marshalled call sites). NULL
+// pointer args use toHandle("0") so they go through as raw int 0, not as
+// pointers to a "0\0" string (which Win32 would dereference and write to).
 func regHklmStr(path, name) {
-    let HKLM     = toHandle("2147483650")
-    let kread = toHandle("131097")
-    let hkey = handleOut()
-    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "" }
+    let HKLM     = "2147483650"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(HKLM, path, "0", kread, phResult)
+    if r != "0" { emit "" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("1024")
     let sz  = bufNew("4")
     bufSetDword(sz, "1024")
@@ -232,12 +248,12 @@ func regHklmStr(path, name) {
 }
 
 func regHkcuStr(path, name) {
-    let HKCU     = toHandle("2147483649")
-    let kread = toHandle("131097")
-    let hkey = handleOut()
-    RegOpenKeyExA(HKCU, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "" }
+    let HKCU     = "2147483649"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(HKCU, path, "0", kread, phResult)
+    if r != "0" { emit "" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("1024")
     let sz  = bufNew("4")
     bufSetDword(sz, "1024")
@@ -247,12 +263,12 @@ func regHkcuStr(path, name) {
 }
 
 func regHklmDword(path, name) {
-    let HKLM     = toHandle("2147483650")
-    let kread = toHandle("131097")
-    let hkey = handleOut()
-    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "0" }
+    let HKLM     = "2147483650"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(HKLM, path, "0", kread, phResult)
+    if r != "0" { emit "0" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("4")
     let sz  = bufNew("4")
     bufSetDword(sz, "4")
@@ -262,12 +278,12 @@ func regHklmDword(path, name) {
 }
 
 func regHkcuDword(path, name) {
-    let HKCU     = toHandle("2147483649")
-    let kread = toHandle("131097")
-    let hkey = handleOut()
-    RegOpenKeyExA(HKCU, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "0" }
+    let HKCU     = "2147483649"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(HKCU, path, "0", kread, phResult)
+    if r != "0" { emit "0" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("4")
     let sz  = bufNew("4")
     bufSetDword(sz, "4")
@@ -277,12 +293,12 @@ func regHkcuDword(path, name) {
 }
 
 func regHklmQword(path, name) {
-    let HKLM  = toHandle("2147483650")
-    let kread = toHandle("131097")
-    let hkey  = handleOut()
-    RegOpenKeyExA(HKLM, path, toHandle("0"), kread, hkey)
-    let hk = handleGet(hkey)
-    if handleValid(hk) == "0" { emit "0" }
+    let HKLM     = "2147483650"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let r = RegOpenKeyExA(HKLM, path, "0", kread, phResult)
+    if r != "0" { emit "0" }
+    let hk  = bufGetQword(phResult)
     let buf = bufNew("8")
     let sz  = bufNew("4")
     bufSetDword(sz, "8")

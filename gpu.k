@@ -1,20 +1,22 @@
 // gpunames: enumerate GPU names from registry (no WMI/powershell)
+// 2.0: phResult = bufNew(8), bufGetQword extracts HKEY. NULL ptr args use
+// toHandle("0"). RegEnumKeyExA returns marshalled int-string.
 func gpunames() {
-    let regBase = "SYSTEM\\CurrentControlSet\\Control\\Video"
-    let HKLM     = toHandle("2147483650")
-    let kread = toHandle("131097")
-    let hkBase = handleOut()
-    RegOpenKeyExA(HKLM, regBase, toHandle("0"), kread, hkBase)
-    let hb = handleGet(hkBase)
-    if handleValid(hb) == "0" { emit "Unknown GPU" }
+    let regBase  = "SYSTEM\\CurrentControlSet\\Control\\Video"
+    let HKLM     = "2147483650"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let openR = RegOpenKeyExA(HKLM, regBase, "0", kread, phResult)
+    if openR != "0" { emit "Unknown GPU" }
+    let hb = bufGetQword(phResult)
     let result  = ""
     let subBuf  = bufNew("256")
     let subSz   = bufNew("4")
     let idx = "0"
     while toInt(idx) < 16 {
         bufSetDword(subSz, "256")
-        let enumRet = handleInt(RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
-        if toInt(enumRet) != 0 { break }
+        let enumRet = RegEnumKeyExA(hb, idx, subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if enumRet != "0" { break }
         let sub = bufStr(subBuf)
         let devPath = regBase + "\\" + sub + "\\0000"
         let gpuName = trim(regHklmStr(devPath, "DriverDesc"))
@@ -30,13 +32,13 @@ func gpunames() {
 }
 
 func kfvramreg() {
-    let regBase = "SYSTEM\\CurrentControlSet\\Control\\Video"
-    let HKLM    = toHandle("2147483650")
-    let kread   = toHandle("131097")
-    let hkBase  = handleOut()
-    RegOpenKeyExA(HKLM, regBase, toHandle("0"), kread, hkBase)
-    let hb = handleGet(hkBase)
-    if handleValid(hb) == "0" { emit "" }
+    let regBase  = "SYSTEM\\CurrentControlSet\\Control\\Video"
+    let HKLM     = "2147483650"
+    let kread    = "131097"
+    let phResult = bufNew("8")
+    let openR = RegOpenKeyExA(HKLM, regBase, "0", kread, phResult)
+    if openR != "0" { emit "" }
+    let hb = bufGetQword(phResult)
     let result = ""
     let cnt    = "0"
     let subBuf = bufNew("256")
@@ -45,8 +47,8 @@ func kfvramreg() {
     while toInt(idx) < 16 {
         if toInt(cnt) >= 2 { break }
         bufSetDword(subSz, "256")
-        let enumRet = handleInt(RegEnumKeyExA(hb, toHandle(idx), subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0")))
-        if toInt(enumRet) != 0 { break }
+        let enumRet = RegEnumKeyExA(hb, idx, subBuf, subSz, toHandle("0"), toHandle("0"), toHandle("0"), toHandle("0"))
+        if enumRet != "0" { break }
         let sub     = bufStr(subBuf)
         let devPath = regBase + "\\" + sub + "\\0000"
         let mem     = regHklmQword(devPath, "HardwareInformation.qwMemorySize")
@@ -239,23 +241,26 @@ func kfdxgibudget() {
 }
 
 func gpuvram() {
-    let v = trim(kfdxgivram())
-    if v == "" { emit kfvramreg() }
-    let used   = kfpdhgpu()
-    if used == "0" { used = kfdxgibudget() }
-    let n      = linecount(v)
+    // 2.0: registry for totals (works), PDH for usage (pdh.dll is not in
+    // the Win32 marshalling list — raw-pointer 1.x convention still works).
+    // Skip DXGI paths: they need LoadLibraryA + COM vtable, which is
+    // fragile.
+    let v = kfvramreg()
+    if v == "" { emit "" }
+    let used = kfpdhgpu()
+    let n    = linecount(v)
     let result = ""
     let i = "0"
     while toInt(i) < toInt(n) {
         let line  = nthline(v, i)
-        let entry = line + ":0"
-        if i == "0" { entry = line + ":" + used }
+        let tb    = firstpart(line, ":")
+        let entry = tb + ":0"
+        if i == "0" { entry = tb + ":" + used }
         if result != "" { result = result + "\n" }
         result = result + entry
         i = toInt(i) + 1 + ""
     }
-    if result != "" { emit result }
-    emit kfvramreg()
+    emit result
 }
 
 func fmtgpu(name, vramLine) {

@@ -1,7 +1,7 @@
 import "windows.krh"
 
 func driveinfo() {
-    let drives = handleInt(GetLogicalDrives())
+    let drives = GetLogicalDrives()
     let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     let totalB  = structNew("ULARGE_INTEGER")
     let totalFB = structNew("ULARGE_INTEGER")

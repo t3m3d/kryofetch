@@ -7,21 +7,24 @@ func kfcls() {
     emit ""
 }
 
-// STD_OUTPUT_HANDLE = (DWORD)-11 = 4294967285 unsigned
+// STD_OUTPUT_HANDLE = (DWORD)-11 = 4294967285 unsigned.
+// 2.0: GetStdHandle is now Win32-marshalled in x64.k (atoi's the int
+// arg, itoa's the HANDLE return). Pass the int as a string directly;
+// dropping the legacy toHandle() wrapper.
 func kfstdout() {
-    emit GetStdHandle(toHandle("4294967285"))
+    emit GetStdHandle("4294967285")
 }
 
 // kfinit: enable UTF-8 output and VT100 escape processing
 func kfinit() {
-    SetConsoleOutputCP(toHandle("65001"))
+    SetConsoleOutputCP("65001")
     let h       = kfstdout()
     let modeBuf = bufNew("4")
     bufSetDword(modeBuf, "0")
     GetConsoleMode(h, modeBuf)
     let m    = toInt(bufGetDword(modeBuf))
     let newm = bitOr(m + "", "4")
-    SetConsoleMode(h, toHandle(newm))
+    SetConsoleMode(h, newm)
     emit ""
 }
 
@@ -41,31 +44,32 @@ func kfconsize() {
 }
 
 // kfshell: walk parent process tree to identify the calling shell
+// 2.0: Win32 returns are already itoa'd strings — drop handleInt() wraps.
 func kfshell() {
-    let mypid  = handleInt(GetCurrentProcessId())
-    let snap   = CreateToolhelp32Snapshot(toHandle("2"), toHandle("0"))
+    let mypid  = GetCurrentProcessId()
+    let snap   = CreateToolhelp32Snapshot("2", "0")
     let entry  = structNew("PROCESSENTRY32")
     structSet(entry, "PROCESSENTRY32", "dwSize", "304")
     let ppid   = ""
     let result = ""
     // first pass: find our parent PID
-    let ok = handleInt(Process32First(snap, entry))
+    let ok = Process32First(snap, entry)
     while ok != "0" {
         let pid = structGet(entry, "PROCESSENTRY32", "th32ProcessID")
         if pid == mypid {
             ppid = structGet(entry, "PROCESSENTRY32", "th32ParentProcessID")
         }
-        ok = handleInt(Process32Next(snap, entry))
+        ok = Process32Next(snap, entry)
     }
     // second pass: find parent exe name
     structSet(entry, "PROCESSENTRY32", "dwSize", "304")
-    ok = handleInt(Process32First(snap, entry))
+    ok = Process32First(snap, entry)
     while ok != "0" {
         let pid = structGet(entry, "PROCESSENTRY32", "th32ProcessID")
         if pid == ppid {
             result = structGet(entry, "PROCESSENTRY32", "szExeFile")
         }
-        ok = handleInt(Process32Next(snap, entry))
+        ok = Process32Next(snap, entry)
     }
     CloseHandle(snap)
     if result == "" { emit "cmd" }

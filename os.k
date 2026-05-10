@@ -23,7 +23,8 @@ func osver() {
 }
 
 func uptime() {
-    let ms   = handleInt(GetTickCount64())
+    // 2.0: GetTickCount64 returns itoa'd string — no handleInt wrap needed.
+    let ms   = GetTickCount64()
     let tsec = div64(ms, "1000")
     let mins = toInt(tsec) / 60
     let hrs  = mins / 60
@@ -36,8 +37,8 @@ func uptime() {
 }
 
 func kfresolution() {
-    let w = handleInt(GetSystemMetrics(toHandle("0")))
-    let h = handleInt(GetSystemMetrics(toHandle("1")))
+    let w = GetSystemMetrics("0")
+    let h = GetSystemMetrics("1")
     if w == "0" { emit "unknown" }
     emit w + "x" + h
 }
