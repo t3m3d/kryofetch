@@ -40,31 +40,29 @@ by registry-iteration code on the next pass (manifests as e.g. a phantom
 
 ## Build
 
-Two builds ship side by side:
+```
+build.bat
+```
 
-- **`build.bat`** — default. Native PE/COFF via the Krypton compiler's
-  Windows backend (`x64.k`). **No gcc required.** Produces `kryofetch.exe`
-  alongside a freshly-copied `krypton_rt.dll`. Companion DLLs
-  (`ckrypton_gui.dll`, `ckrypton_proc.dll`, `ckrypton_fs.dll`) must
-  also sit next to the .exe — copy them from `..\krypton\runtime\`
-  if you don't already have them locally.
-- **`build_gcc.bat`** — legacy fallback. Krypton → C → gcc.
-  Requires [TDM-GCC](https://jmeubank.github.io/tdm-gcc/) and links
-  against `setupapi`, `advapi32`, `pdh`, `psapi`, `m`. Doesn't need
-  the companion DLLs (everything statically linked into the .exe).
+Native PE/COFF via the Krypton compiler's Windows backend (`x64.k`).
+**No gcc, no MinGW, no MSVC.** Produces `kryofetch.exe` alongside a
+freshly-copied `krypton_rt.dll`.
 
-Both expect the [Krypton repo](https://github.com/t3m3d/krypton) cloned
+Companion DLLs (`ckrypton_gui.dll`, `ckrypton_proc.dll`,
+`ckrypton_fs.dll`) must sit next to the .exe — copy them from
+`..\krypton\runtime\` if you don't already have them locally.
+
+Expects the [Krypton repo](https://github.com/t3m3d/krypton) cloned
 side-by-side as `..\krypton`.
 
 ## Requirements
 
 - Windows 10 / 11
 - Krypton 2.0 repo cloned to `..\krypton` (sibling directory)
-- For native build: `C:\krypton\bin\x64_host_new.exe` must be in lockstep
-  with `..\krypton\compiler\windows_x86\x64_host.exe` — `kcc.exe -o` shells
+- `C:\krypton\bin\x64_host_new.exe` must be in lockstep with
+  `..\krypton\compiler\windows_x86\x64_host.exe` — `kcc.exe -o` shells
   out to the installed copy. Stale installs cause "should-work" examples
   to AV.
-- For `build_gcc.bat` only: TDM-GCC or another MinGW toolchain with `gcc` on PATH
 
 ## Notes
 
