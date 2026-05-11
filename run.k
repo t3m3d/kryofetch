@@ -43,7 +43,23 @@ func kfconsize() {
     emit cols + "," + rows
 }
 
-// kfshell: walk parent process tree to identify the calling shell
+// kfshell: identify the calling shell.
+//
+// Two-tier detection:
+//   1. Walk the parent process tree via Toolhelp32 — exact exe name of
+//      whatever spawned us. Right answer when it works.
+//   2. Env-var fallback for when the process walk yields nothing.
+func _kfshell_byEnv() {
+    // Most reliable PowerShell Core signal — set on pwsh.exe startup,
+    // NOT typically inherited by spawned cmd.exe children.
+    let psdc = environ("POWERSHELL_DISTRIBUTION_CHANNEL")
+    if psdc != "" { emit "PowerShell" }
+    // Windows PowerShell 5.x and PowerShell Core both set this.
+    let psmod = environ("PSModulePath")
+    if psmod != "" { emit "PowerShell" }
+    emit "cmd"
+}
+
 // 2.0: Win32 returns are already itoa'd strings — drop handleInt() wraps.
 func kfshell() {
     let mypid  = GetCurrentProcessId()
@@ -72,7 +88,8 @@ func kfshell() {
         ok = Process32Next(snap, entry)
     }
     CloseHandle(snap)
-    if result == "" { emit "cmd" }
+    // Process walk yielded nothing → env-var fallback.
+    if result == "" { emit _kfshell_byEnv() }
     let low = toLower(result)
     if contains(low, "powershell") { emit "PowerShell" }
     if contains(low, "pwsh")       { emit "PowerShell" }
@@ -288,5 +305,41 @@ func run() {
 }
 
 just run {
-    run()
+    // --watch [interval_ms]: re-render in a loop. gcCheckpoint at the
+    // start of each iteration + gcRestore at the end reclaims per-render
+    // allocations without disturbing pre-watch setup state. Tighter scope
+    // than gcCollect (mark+sweep across the entire heap). Default
+    // interval = 1000 ms.
+    //
+    // Krypton 2.0: Sleep is Win32-marshalled — pass interval as plain
+    // string, no toHandle() wrap.
+    let watch = "0"
+    let intervalMs = "1000"
+    let argc = argCount()
+    let i = "0"
+    while toInt(i) < toInt(argc) {
+        let a = arg(i)
+        if a == "--watch" {
+            watch = "1"
+            if toInt(i) + 1 < toInt(argc) {
+                intervalMs = arg(toInt(i) + 1 + "")
+            }
+        }
+        i = toInt(i) + 1 + ""
+    }
+
+    if watch == "0" {
+        run()
+    } else {
+        while watch == "1" {
+            run()
+            Sleep(intervalMs)
+            // 2.0 mark+sweep: reclaims unreachable allocations from this
+            // render. Tighter than gcCheckpoint/gcRestore (which rolls
+            // the arena back to a snapshot — fine in 1.x, but in 2.0
+            // it can clobber heap state used by registry-iteration code
+            // run later, manifesting as e.g. phantom GPU2 entries).
+            gcCollect()
+        }
+    }
 }

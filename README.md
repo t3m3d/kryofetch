@@ -23,6 +23,21 @@ A Windows system information fetch tool written in [Krypton](https://github.com/
 - **Battery** — charge percentage and AC status (laptops only, hidden on desktops)
 - **Color palette** — 16-color ANSI block palette
 
+## Run
+
+```
+kryofetch.exe              # one-shot render
+kryofetch.exe --watch      # live re-render every 1000 ms
+kryofetch.exe --watch 500  # custom interval (ms)
+```
+
+In `--watch` mode kryofetch calls `gcCollect()` (2.0 mark+sweep) after
+each render so unreachable allocations are reclaimed and the working
+set stays bounded. The 1.x `gcCheckpoint()` / `gcRestore()` arena-rollback
+approach is **not** used here: under 2.0 it can clobber heap state used
+by registry-iteration code on the next pass (manifests as e.g. a phantom
+`GPU2` entry on iteration 2+).
+
 ## Build
 
 Two builds ship side by side:

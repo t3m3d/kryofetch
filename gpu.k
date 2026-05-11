@@ -1,6 +1,38 @@
-// gpunames: enumerate GPU names from registry (no WMI/powershell)
+// Filter helpers — drop garbage / virtual entries from the GPU list.
+
+func _gpu_isPrintable(s) {
+    let i = "0"
+    while toInt(i) < len(s) {
+        let n = toInt(charCode(substring(s, toInt(i), toInt(i) + 1)))
+        if n < 32 { emit "0" }
+        if n > 126 { emit "0" }
+        i = toInt(i) + 1 + ""
+    }
+    emit "1"
+}
+
+func _gpu_isVirtual(name) {
+    let low = toLower(name)
+    if contains(low, "microsoft basic display") { emit "1" }
+    if contains(low, "remote display")          { emit "1" }
+    if contains(low, "rdp ")                    { emit "1" }
+    if contains(low, "citrix")                  { emit "1" }
+    if contains(low, "hyper-v")                 { emit "1" }
+    if contains(low, "hyperv")                  { emit "1" }
+    if contains(low, "vmware")                  { emit "1" }
+    if contains(low, "virtualbox")              { emit "1" }
+    if contains(low, "parallels")               { emit "1" }
+    if contains(low, "displaylink")             { emit "1" }
+    if contains(low, "vgpu")                    { emit "1" }
+    emit "0"
+}
+
+// gpunames: enumerate GPU names from registry (no WMI/powershell).
 // 2.0: phResult = bufNew(8), bufGetQword extracts HKEY. NULL ptr args use
-// toHandle("0"). RegEnumKeyExA returns marshalled int-string.
+// toHandle("0"). RegEnumKeyExA returns marshalled int-string. Filters out
+// virtual / mirror / RDP adapters and entries with non-printable bytes
+// (registry sometimes returns garbage for second-slot adapters with no
+// real DriverDesc).
 func gpunames() {
     let regBase  = "SYSTEM\\CurrentControlSet\\Control\\Video"
     let HKLM     = "2147483650"
@@ -21,8 +53,12 @@ func gpunames() {
         let devPath = regBase + "\\" + sub + "\\0000"
         let gpuName = trim(regHklmStr(devPath, "DriverDesc"))
         if gpuName != "" {
-            if result != "" { result = result + "\n" }
-            result = result + gpuName
+            if _gpu_isPrintable(gpuName) == "1" {
+                if _gpu_isVirtual(gpuName) == "0" {
+                    if result != "" { result = result + "\n" }
+                    result = result + gpuName
+                }
+            }
         }
         idx = toInt(idx) + 1 + ""
     }
