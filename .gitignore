@@ -1,5 +1,3 @@
 *.exe
-kcc.sh
 build.bat
 .output/
-*.dll
