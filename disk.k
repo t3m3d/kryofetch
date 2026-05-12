@@ -1,4 +1,4 @@
-import "windows.krh"
+import "head:windows"
 
 func driveinfo() {
     let drives = GetLogicalDrives()

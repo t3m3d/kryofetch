@@ -1,4 +1,4 @@
-import "windows.krh"
+import "head:windows"
 
 func osver() {
     let regPath = "SOFTWARE\Microsoft\Windows NT\CurrentVersion"

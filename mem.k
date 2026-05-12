@@ -1,4 +1,4 @@
-import "windows.krh"
+import "head:windows"
 
 func raminfo() {
     let ms = structNew("MEMORYSTATUSEX")

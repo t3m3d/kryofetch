@@ -1,4 +1,4 @@
-import "windows.krh"
+import "head:windows"
 
 func cpubrand() {
     let regPath = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"
