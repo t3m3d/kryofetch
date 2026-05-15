@@ -3,8 +3,10 @@
 A cross-platform system information fetch tool written in [Krypton](https://github.com/t3m3d/krypton) — a self-hosting language that compiles to machine code.
 
 **Krypton 2.0 only.**
-
+Windows
 <img width="1207" height="426" alt="image" src="https://github.com/user-attachments/assets/673da10d-dc15-4ae5-857f-e4bca77eca2a" />
+MacOS Tahoe
+
 
 ## Features
 
