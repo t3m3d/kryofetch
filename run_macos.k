@@ -44,22 +44,28 @@ func run() {
     let CY    = E + "[36m"
     let LW    = "40"
 
-    let l0  = BLU + "        ,.=:!!t3Z3z.," + RST
-    let l1  = BLU + "       :tt:::tt333EE3" + RST
-    let l2  = BLU + "       Et:::ztt33EEEL" + CY + " @Ee.,      ..," + RST
-    let l3  = BLU + "      ;tt:::tt333EE7" + CY + " ;EEEEEEttttt33#" + RST
-    let l4  = BLU + "     :Et:::zt333EEQ" + CY + "  SEEEEEttttt33QL" + RST
-    let l5  = BLU + "     it::::tt333EEF" + CY + " @EEEEttttt33F" + RST
-    let l6  = BLU + "    ;3=*^   " + "\"" + "*4EEV" + CY + " :EEEEttttt33@." + RST
-    let l7  = CY + "    ,.=::::!t=.," + BLU + "  @EEEEtttz33QF" + RST
-    let l8  = CY + "   ;::::::::zt33)" + BLU + "   " + "\"" + "4EEEtttji" + RST
-    let l9  = CY + "  :t::::::::tt33." + BLU + " :Z3z..    " + RST
-    let l10 = CY + "  i::::::::zt33F" + BLU + " AEEEtttt::::ztF" + RST
-    let l11 = CY + " ;:::::::::t33V" + BLU + " ;EEEttttt::::t3" + RST
-    let l12 = CY + " E::::::::zt33L" + BLU + " @EEEtttt::::z3F" + RST
-    let l13 = CY + "{3=*^   " + "\"" + "*4E3)" + BLU + " ;EEEtttt:::::tZ" + RST
-    let l14 = CY + "            " + BLU + " :EEEEtttt::::z7" + RST
-    let l15 = BLU + "                 " + "\"" + "VEzjt:;;z>*" + RST
+    let GR2 = E + "[32m"
+    let YEL = E + "[33m"
+    let ORG = E + "[33;1m"
+    let RED = E + "[31m"
+    let PUR = E + "[35m"
+
+    let l0  = GR2 + "                    'c." + RST
+    let l1  = GR2 + "                 ,xNMM." + RST
+    let l2  = YEL + "               .OMMMMo" + RST
+    let l3  = YEL + "               OMMM0," + RST
+    let l4  = ORG + "     .;loddo:' loolloddol;." + RST
+    let l5  = ORG + "   cKMMMMMMMMMMNWMMMMMMMMMM0:" + RST
+    let l6  = RED + " .KMMMMMMMMMMMMMMMMMMMMMMMWd." + RST
+    let l7  = RED + " XMMMMMMMMMMMMMMMMMMMMMMMX." + RST
+    let l8  = PUR + ";MMMMMMMMMMMMMMMMMMMMMMMM:" + RST
+    let l9  = PUR + ":MMMMMMMMMMMMMMMMMMMMMMMM:" + RST
+    let l10 = BLU + ".MMMMMMMMMMMMMMMMMMMMMMMMX." + RST
+    let l11 = BLU + " kMMMMMMMMMMMMMMMMMMMMMMMMWd." + RST
+    let l12 = BLU + " .XMMMMMMMMMMMMMMMMMMMMMMMMMMk" + RST
+    let l13 = BLU + "  .XMMMMMMMMMMMMMMMMMMMMMMMMK." + RST
+    let l14 = BLU + "    kMMMMMMMMMMMMMMMMMMMMMMd" + RST
+    let l15 = BLU + "     ;KMMMMMMMWXXWMMMMMMMk." + RST
 
     let usr  = sysuser()
     let host = syshost()
