@@ -6,25 +6,11 @@ A cross-platform system information fetch tool written in [Krypton](https://gith
 Windows
 <img width="1207" height="426" alt="image" src="https://github.com/user-attachments/assets/673da10d-dc15-4ae5-857f-e4bca77eca2a" />
 MacOS Tahoe
+<img width="1772" height="982" alt="image" src="https://github.com/user-attachments/assets/0722f35f-2111-4fae-a4e7-40adad4a19e8" />
 
 
-## Features
 
-- **User** — username and hostname
-- **OS** — version, edition/build (Windows) or product version (macOS) and architecture
-- **CPU** — processor name with physical and logical core count
-- **RAM** — used / total with percentage and usage bar
-- **Disk** — drives/volumes with used / total and usage bars
-- **GPU** — name and VRAM (discrete) or chip name (Apple Silicon)
-- **Shell** — detected shell (zsh, bash, PowerShell, cmd, fish, nushell)
-- **Term** — terminal emulator and console size
-- **Resolution** — primary display resolution
-- **Uptime** — days, hours, minutes
-- **Packages** — installed package counts
-- **Theme** — light/dark mode
-- **Battery** — charge percentage and AC status (laptops only)
-- **Color palette** — 16-color ANSI block palette
-
+INSTALL
 ---
 
 ## macOS
