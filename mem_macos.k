@@ -17,3 +17,9 @@ func raminfo() {
 
     emit totalMB + "," + freeMB + ""
 }
+
+func swapinfo() {
+    let out = exec("sysctl vm.swapusage 2>/dev/null | awk '{if($7+0==0) print \"Unused\"; else print $7 \" used / \" $4 \" total\"}'")
+    if out == "" { emit "Unused" }
+    emit trim(out)
+}

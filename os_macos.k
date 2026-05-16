@@ -45,6 +45,12 @@ func kfbattraw() {
     emit raw
 }
 
+func kfkernel() {
+    let k = exec("uname -sr 2>/dev/null")
+    if k == "" { emit "unknown" }
+    emit trim(k)
+}
+
 func sysmodel() {
     let mid = trim(exec("sysctl -n hw.model 2>/dev/null"))
     // M1
@@ -101,6 +107,50 @@ func sysmodel() {
     let name = exec("system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/{print $2}'")
     if name != "" { emit trim(name) }
     emit "unknown"
+}
+
+func kftermfont() {
+    let tp = environ("TERM_PROGRAM")
+    if tp == "iTerm.app" {
+        let f = trim(exec("defaults read com.googlecode.iterm2 \"Normal Font\" 2>/dev/null | awk '{n=split($0,a,\" \");sz=a[n];nm=\"\";for(i=1;i<n;i++){nm=nm a[i]\" \"};gsub(/-Regular|-Bold|-Light|-Medium|-Thin|-ExtraLight|-SemiBold/,\"\",nm);gsub(/^ | $/,\"\",nm);print nm \" (\" sz \"pt)\"}'"))
+        if f != "" { emit f }
+    }
+    emit ""
+}
+
+func kfdisplayinfo() {
+    let raw = exec("system_profiler SPDisplaysDataType -json 2>/dev/null | python3 -c \"import sys,json;d=json.load(sys.stdin);[print(a.get('_name','')+'|'+a.get('_spdisplays_pixels','').replace(' x ','x')+'|'+(a.get('_spdisplays_resolution','').split('@')[1].strip().rstrip('Hz').split('.')[0]+'Hz' if '@' in a.get('_spdisplays_resolution','') else '')+'|'+('Built-in' if 'internal' in a.get('spdisplays_connection_type','') else 'External')+'|'+('2x' if 'Retina' in a.get('spdisplays_pixelresolution','') else '1x')) for arr in d.get('SPDisplaysDataType',[]) for a in arr.get('spdisplays_ndrvs',[])]\" 2>/dev/null | head -1")
+    if raw == "" { emit "" }
+    emit trim(raw)
+}
+
+func kfwmver() {
+    let v = trim(exec("defaults read /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/version.plist CFBundleShortVersionString 2>/dev/null"))
+    if v == "" { emit "Quartz Compositor" }
+    emit "Quartz Compositor " + v
+}
+
+func kfaccent() {
+    let ac = trim(exec("defaults read -g AppleAccentColor 2>/dev/null"))
+    let name = "Multicolor"
+    if ac == "-1" { name = "Graphite" }
+    if ac == "0"  { name = "Red" }
+    if ac == "1"  { name = "Orange" }
+    if ac == "2"  { name = "Yellow" }
+    if ac == "3"  { name = "Green" }
+    if ac == "4"  { name = "Blue" }
+    if ac == "5"  { name = "Purple" }
+    if ac == "6"  { name = "Pink" }
+    let style = trim(exec("defaults read -g AppleInterfaceStyle 2>/dev/null"))
+    if style == "" { style = "Light" }
+    emit name + " (" + style + ")"
+}
+
+func kfthemename() {
+    let v = exec("sw_vers -productVersion 2>/dev/null")
+    let major = firstpart(v, ".")
+    if toInt(major) >= 26 { emit "Liquid Glass" }
+    emit "Aqua"
 }
 
 func kflocalip() {

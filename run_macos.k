@@ -24,10 +24,22 @@ func kfconsize() {
 
 func kfshell() {
     let sh = environ("SHELL")
-    if contains(sh, "zsh")  { emit "zsh" }
-    if contains(sh, "bash") { emit "bash" }
-    if contains(sh, "fish") { emit "fish" }
-    if contains(sh, "nu")   { emit "nushell" }
+    if contains(sh, "zsh") {
+        let v = trim(exec("zsh --version 2>/dev/null | awk '{print $2}'"))
+        if v != "" { emit "zsh " + v }
+        emit "zsh"
+    }
+    if contains(sh, "bash") {
+        let v = trim(exec("bash --version 2>/dev/null | head -1 | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+'"))
+        if v != "" { emit "bash " + v }
+        emit "bash"
+    }
+    if contains(sh, "fish") {
+        let v = trim(exec("fish --version 2>/dev/null | awk '{print $NF}'"))
+        if v != "" { emit "fish " + v }
+        emit "fish"
+    }
+    if contains(sh, "nu") { emit "nushell" }
     if sh != "" { emit sh }
     emit "unknown"
 }
@@ -71,12 +83,14 @@ func run() {
     let host = syshost()
     let arch = sysarch()
     let os   = osver()
+    let kern = kfkernel()
     let mdl  = sysmodel()
     let cpu  = cpubrand()
     let ci   = cpucores()
     let cn   = firstpart(ci, ",")
     let tn   = afterpart(ci, ",")
 
+    let swp  = swapinfo()
     let mi   = raminfo()
     let tmb  = firstpart(mi, ",")
     let fmb  = afterpart(mi, ",")
@@ -115,8 +129,26 @@ func run() {
     let up   = uptime()
     let sh   = kfshell()
     let tnm  = kfterminal()
+    let tfnt = kftermfont()
     let res  = kfresolution()
-    let thm  = kftheme()
+    let diraw = kfdisplayinfo()
+    let dinm  = firstpart(diraw, "|")
+    let diraw2 = afterpart(diraw, "|")
+    let dipx   = firstpart(diraw2, "|")
+    let diraw3 = afterpart(diraw2, "|")
+    let dihz   = firstpart(diraw3, "|")
+    let diraw4 = afterpart(diraw3, "|")
+    let dict   = firstpart(diraw4, "|")
+    let discl  = afterpart(diraw4, "|")
+    let paren_pos = indexOf(mdl, "(")
+    let inch_pos  = indexOf(mdl, "-inch")
+    let disize = ""
+    if toInt(inch_pos) > 0 {
+        if toInt(paren_pos) > 0 { disize = substring(mdl, toInt(paren_pos) + 1, toInt(inch_pos)) }
+    }
+    let wm   = kfwmver()
+    let wmth = kfaccent()
+    let thm  = kfthemename()
     let lip  = kflocalip()
     let batraw = kfbattraw()
     let bchip = nthline(batraw, "0")
@@ -144,10 +176,12 @@ func run() {
     IL = IL + GRN + "User:  " + RST + usr + "@" + host + "\n"
     IL = IL + GRN + "OS:    " + RST + os + " " + arch + "\n"
     IL = IL + GRN + "Host:  " + RST + mdl + "\n"
+    IL = IL + GRN + "Kernel:" + RST + kern + "\n"
     IL = IL + GRN + "CPU:   " + RST + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
     IL = IL + GRN + "GPU:   " + RST + fmtgpu(g1, vr1) + "\n"
     if g2 != "" { IL = IL + GRN + "GPU2:  " + RST + fmtgpu(g2, vr2) + "\n" }
     IL = IL + GRN + "RAM:   " + RST + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    IL = IL + GRN + "Swap:  " + RST + swp + "\n"
     IL = IL + GRN + "Disk:  " + RST + d1 + "\n"
     if d2 != "" { IL = IL + "       " + d2 + "\n" }
     if d3 != "" { IL = IL + "       " + d3 + "\n" }
@@ -159,15 +193,27 @@ func run() {
         if termv == "" { termv = cols + "x" + rows }
     }
     if termv != "" { IL = IL + GRN + "Term:  " + RST + termv + "\n" }
+    if tfnt != "" { IL = IL + GRN + "TermFont:" + RST + tfnt + "\n" }
     IL = IL + GRN + "Res:   " + RST + res + "\n"
+    let diline = dipx
+    if discl != "" { diline = diline + " @ " + discl }
+    if disize != "" { diline = diline + " in " + disize + "\"" }
+    if dihz != "" { diline = diline + ", " + dihz }
+    if dict != "" { diline = diline + " [" + dict + "]" }
+    if dinm != "" { IL = IL + GRN + "Display (" + dinm + "):" + RST + diline + "\n" }
+    IL = IL + GRN + "WM:    " + RST + wm + "\n"
+    IL = IL + GRN + "WMTheme:" + RST + wmth + "\n"
+    IL = IL + GRN + "Theme: " + RST + thm + "\n"
     IL = IL + GRN + "Uptime:" + RST + up + "\n"
     IL = IL + GRN + "Pkgs:  " + RST + kfpkgs() + "\n"
-    IL = IL + GRN + "Theme: " + RST + thm + "\n"
     if lip != "" { IL = IL + GRN + "IP(en0):" + RST + lip + "\n" }
     if bchip != "" { IL = IL + GRN + batlbl + ":" + RST + batval + "\n" }
 
     let idx = "0"
-    while toInt(idx) < 16 {
+    let infolen = linecount(IL)
+    let maxidx = "16"
+    if toInt(infolen) > 16 { maxidx = infolen }
+    while toInt(idx) < toInt(maxidx) {
         let logo = ""
         if idx == "0"  { logo = l0  }
         if idx == "1"  { logo = l1  }
