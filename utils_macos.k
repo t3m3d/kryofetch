@@ -118,6 +118,29 @@ func colorpalette() {
     kp("  " + r2 + RST)
 }
 
+// Like nthline but preserves leading whitespace (needed for continuation lines)
+func infoline(s, lineIdx) {
+    let target = toInt(lineIdx)
+    let cur = "0"
+    let start = "0"
+    let done = "0"
+    while done == "0" {
+        let rest = substring(s, toInt(start), len(s))
+        let nlPos = indexOf(rest, "\n")
+        if nlPos < 0 {
+            if toInt(cur) == target { emit rest }
+            done = "1"
+        } else {
+            if toInt(cur) == target {
+                emit substring(rest, 0, toInt(nlPos))
+            }
+            start = toInt(start) + toInt(nlPos) + 1 + ""
+            cur = toInt(cur) + 1 + ""
+        }
+    }
+    emit ""
+}
+
 func idxfrom(s, sub, start) {
     let slen = len(s)
     let sublen = len(sub)

@@ -71,6 +71,7 @@ func run() {
     let host = syshost()
     let arch = sysarch()
     let os   = osver()
+    let mdl  = sysmodel()
     let cpu  = cpubrand()
     let ci   = cpucores()
     let cn   = firstpart(ci, ",")
@@ -116,58 +117,54 @@ func run() {
     let tnm  = kfterminal()
     let res  = kfresolution()
     let thm  = kftheme()
-    let bat  = kfbattery()
-
-    let lb0  = "User"
-    let v0   = usr + "@" + host
-    let lb1  = "OS"
-    let v1   = os + " " + arch
-    let lb2  = "CPU"
-    let v2   = cpu + " (" + cn + "c / " + tn + "t)"
-    let lb3  = "RAM"
-    let v3   = rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%"
-    let lb4  = "Disk"
-    let v4   = d1
-    let lb5  = ""
-    let v5   = d2
-    let lb6  = ""
-    let v6   = d3
-    let lb7  = "GPU"
-    let v7   = fmtgpu(g1, vr1)
-    let lb8  = ""
-    let v8   = ""
-    if g2 != "" {
-        lb8 = "GPU2"
-        v8  = fmtgpu(g2, vr2)
+    let lip  = kflocalip()
+    let batraw = kfbattraw()
+    let bchip = nthline(batraw, "0")
+    let bpct  = nthline(batraw, "1")
+    let bmins = nthline(batraw, "2")
+    let bchrg = nthline(batraw, "3")
+    let bfull = nthline(batraw, "4")
+    let bstat = "Discharging"
+    if bchrg == "Yes" { bstat = "Charging" }
+    if bfull == "Yes" { bstat = "Charged" }
+    let bh  = toInt(bmins) / 60 + ""
+    let brm = toInt(bmins) - toInt(bh) * 60 + ""
+    let btimestr = ""
+    if toInt(bmins) > 0 {
+        if toInt(bmins) < 65535 { btimestr = bh + " hours, " + brm + " mins remaining" }
     }
-    let lb9  = "Shell"
-    let v9   = sh
-    let lb10 = ""
-    let v10  = ""
+    let batval = bpct + "%"
+    if btimestr != "" { batval = batval + " (" + btimestr + ")" }
+    batval = batval + " [" + bstat + "]"
+    let batlbl = "Battery"
+    if bchip != "" { batlbl = "Battery (" + bchip + ")" }
+
+    // Build packed info list — only non-empty entries are added
+    let IL = ""
+    IL = IL + GRN + "User:  " + RST + usr + "@" + host + "\n"
+    IL = IL + GRN + "OS:    " + RST + os + " " + arch + "\n"
+    IL = IL + GRN + "Host:  " + RST + mdl + "\n"
+    IL = IL + GRN + "CPU:   " + RST + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
+    IL = IL + GRN + "GPU:   " + RST + fmtgpu(g1, vr1) + "\n"
+    if g2 != "" { IL = IL + GRN + "GPU2:  " + RST + fmtgpu(g2, vr2) + "\n" }
+    IL = IL + GRN + "RAM:   " + RST + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    IL = IL + GRN + "Disk:  " + RST + d1 + "\n"
+    if d2 != "" { IL = IL + "       " + d2 + "\n" }
+    if d3 != "" { IL = IL + "       " + d3 + "\n" }
+    IL = IL + GRN + "Shell: " + RST + sh + "\n"
     let termv = ""
     if tnm != "" { termv = tnm }
     if cols != "0" {
         if termv != "" { termv = termv + " " + cols + "x" + rows }
         if termv == "" { termv = cols + "x" + rows }
     }
-    if termv != "" {
-        lb10 = "Term"
-        v10  = termv
-    }
-    let lb11 = "Res"
-    let v11  = res
-    let lb12 = "Uptime"
-    let v12  = up
-    let lb13 = "Pkgs"
-    let v13  = kfpkgs()
-    let lb14 = "Theme"
-    let v14  = thm
-    let lb15 = ""
-    let v15  = ""
-    if bat != "" {
-        lb15 = "Battery"
-        v15  = bat
-    }
+    if termv != "" { IL = IL + GRN + "Term:  " + RST + termv + "\n" }
+    IL = IL + GRN + "Res:   " + RST + res + "\n"
+    IL = IL + GRN + "Uptime:" + RST + up + "\n"
+    IL = IL + GRN + "Pkgs:  " + RST + kfpkgs() + "\n"
+    IL = IL + GRN + "Theme: " + RST + thm + "\n"
+    if lip != "" { IL = IL + GRN + "IP(en0):" + RST + lip + "\n" }
+    if bchip != "" { IL = IL + GRN + batlbl + ":" + RST + batval + "\n" }
 
     let idx = "0"
     while toInt(idx) < 16 {
@@ -189,41 +186,7 @@ func run() {
         if idx == "14" { logo = l14 }
         if idx == "15" { logo = l15 }
 
-        let lb = ""
-        let v  = ""
-        if idx == "0"  { lb = lb0;  v = v0  }
-        if idx == "1"  { lb = lb1;  v = v1  }
-        if idx == "2"  { lb = lb2;  v = v2  }
-        if idx == "3"  { lb = lb3;  v = v3  }
-        if idx == "4"  { lb = lb4;  v = v4  }
-        if idx == "5"  { lb = lb5;  v = v5  }
-        if idx == "6"  { lb = lb6;  v = v6  }
-        if idx == "7"  { lb = lb7;  v = v7  }
-        if idx == "8"  { lb = lb8;  v = v8  }
-        if idx == "9"  { lb = lb9;  v = v9  }
-        if idx == "10" { lb = lb10; v = v10 }
-        if idx == "11" { lb = lb11; v = v11 }
-        if idx == "12" { lb = lb12; v = v12 }
-        if idx == "13" { lb = lb13; v = v13 }
-        if idx == "14" { lb = lb14; v = v14 }
-        if idx == "15" { lb = lb15; v = v15 }
-
-        let info = ""
-        if lb != "" {
-            let lbc    = lb + ":"
-            let padlen = 7 - len(lbc)
-            let pad    = ""
-            let pi     = "0"
-            while toInt(pi) < padlen {
-                pad = pad + " "
-                pi  = toInt(pi) + 1 + ""
-            }
-            info = GRN + lbc + RST + pad + v
-        } else {
-            if v != "" { info = "       " + v }
-        }
-
-        kp(padansi(logo, toInt(LW)) + "  " + info)
+        kp(padansi(logo, toInt(LW)) + "  " + infoline(IL, idx))
         idx = toInt(idx) + 1 + ""
     }
 

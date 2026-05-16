@@ -1,9 +1,19 @@
 import "utils_macos.k"
 
 func osver() {
-    let v = exec("sw_vers -productVersion 2>/dev/null")
+    let v     = exec("sw_vers -productVersion 2>/dev/null")
+    let build = exec("sw_vers -buildVersion 2>/dev/null")
     if v == "" { emit "macOS" }
-    emit "macOS " + v
+    let major = firstpart(v, ".")
+    let name  = ""
+    if major == "26" { name = "Tahoe" }
+    if major == "15" { name = "Sequoia" }
+    if major == "14" { name = "Sonoma" }
+    if major == "13" { name = "Ventura" }
+    if major == "12" { name = "Monterey" }
+    if major == "11" { name = "Big Sur" }
+    if name == "" { emit "macOS " + v + " (" + build + ")" }
+    emit "macOS " + name + " " + v + " (" + build + ")"
 }
 
 func uptime() {
@@ -30,12 +40,73 @@ func kftheme() {
     emit "Light"
 }
 
-func kfbattery() {
-    let pct    = exec("pmset -g batt 2>/dev/null | grep -Eo '[0-9]+%' | head -1")
-    if pct == "" { emit "" }
-    let status = exec("pmset -g batt 2>/dev/null | grep -Eo '(charging|discharging|charged)' | head -1")
-    if status == "" { emit pct }
-    emit pct + " (" + status + ")"
+func kfbattraw() {
+    let raw = exec("ioreg -r -n AppleSmartBattery 2>/dev/null | awk '/\"DeviceName\"/{gsub(/.*= \"/,\"\");gsub(/\".*/,\"\");chip=$0} /\"CurrentCapacity\" =/{pct=$NF} /\"TimeRemaining\" =/{mins=$NF} /\"IsCharging\" =/{chrg=$NF} /\"FullyCharged\" =/{full=$NF} END{print chip;print pct;print mins;print chrg;print full}'")
+    emit raw
+}
+
+func sysmodel() {
+    let mid = trim(exec("sysctl -n hw.model 2>/dev/null"))
+    // M1
+    if mid == "MacBookAir10,1"  { emit "MacBook Air (M1, 2020)" }
+    if mid == "MacBookPro17,1"  { emit "MacBook Pro (13-inch, M1, 2020)" }
+    if mid == "Macmini9,1"      { emit "Mac mini (M1, 2020)" }
+    if mid == "iMac21,1"        { emit "iMac (24-inch, M1, 2021)" }
+    if mid == "iMac21,2"        { emit "iMac (24-inch, M1, 2021)" }
+    if mid == "MacBookPro18,1"  { emit "MacBook Pro (16-inch, M1 Pro, 2021)" }
+    if mid == "MacBookPro18,2"  { emit "MacBook Pro (16-inch, M1 Max, 2021)" }
+    if mid == "MacBookPro18,3"  { emit "MacBook Pro (14-inch, M1 Pro, 2021)" }
+    if mid == "MacBookPro18,4"  { emit "MacBook Pro (14-inch, M1 Max, 2021)" }
+    if mid == "Mac13,1"         { emit "Mac Studio (M1 Max, 2022)" }
+    if mid == "Mac13,2"         { emit "Mac Studio (M1 Ultra, 2022)" }
+    // M2
+    if mid == "Mac14,2"         { emit "MacBook Air (M2, 2022)" }
+    if mid == "Mac14,7"         { emit "MacBook Pro (13-inch, M2, 2022)" }
+    if mid == "Mac14,3"         { emit "Mac mini (M2, 2023)" }
+    if mid == "Mac14,12"        { emit "Mac mini (M2 Pro, 2023)" }
+    if mid == "Mac14,5"         { emit "MacBook Pro (14-inch, M2 Max, 2023)" }
+    if mid == "Mac14,6"         { emit "MacBook Pro (16-inch, M2 Max, 2023)" }
+    if mid == "Mac14,9"         { emit "MacBook Pro (14-inch, M2 Pro, 2023)" }
+    if mid == "Mac14,10"        { emit "MacBook Pro (16-inch, M2 Pro, 2023)" }
+    if mid == "Mac14,8"         { emit "Mac Pro (M2 Ultra, 2023)" }
+    if mid == "Mac14,13"        { emit "Mac Studio (M2 Max, 2023)" }
+    if mid == "Mac14,14"        { emit "Mac Studio (M2 Ultra, 2023)" }
+    if mid == "Mac14,15"        { emit "MacBook Air (15-inch, M2, 2023)" }
+    // M3
+    if mid == "Mac15,3"         { emit "MacBook Pro (14-inch, M3, 2023)" }
+    if mid == "Mac15,6"         { emit "MacBook Pro (14-inch, M3 Pro, 2023)" }
+    if mid == "Mac15,7"         { emit "MacBook Pro (14-inch, M3 Max, 2023)" }
+    if mid == "Mac15,9"         { emit "MacBook Pro (14-inch, M3 Pro, 2023)" }
+    if mid == "Mac15,8"         { emit "MacBook Pro (16-inch, M3 Pro, 2023)" }
+    if mid == "Mac15,10"        { emit "MacBook Pro (16-inch, M3 Pro, 2023)" }
+    if mid == "Mac15,11"        { emit "MacBook Pro (16-inch, M3 Max, 2023)" }
+    if mid == "Mac15,4"         { emit "iMac (24-inch, M3, 2023)" }
+    if mid == "Mac15,5"         { emit "iMac (24-inch, M3, 2023)" }
+    if mid == "Mac15,12"        { emit "MacBook Air (15-inch, M3, 2024)" }
+    if mid == "Mac15,13"        { emit "MacBook Air (13-inch, M3, 2024)" }
+    // M4
+    if mid == "Mac16,1"         { emit "MacBook Pro (14-inch, M4, 2024)" }
+    if mid == "Mac16,5"         { emit "MacBook Pro (16-inch, M4 Pro, 2024)" }
+    if mid == "Mac16,6"         { emit "MacBook Pro (14-inch, M4 Pro, 2024)" }
+    if mid == "Mac16,7"         { emit "MacBook Pro (14-inch, M4 Max, 2024)" }
+    if mid == "Mac16,8"         { emit "MacBook Pro (16-inch, M4 Max, 2024)" }
+    if mid == "Mac16,10"        { emit "iMac (24-inch, M4, 2024)" }
+    if mid == "Mac16,11"        { emit "Mac mini (M4, 2024)" }
+    if mid == "Mac16,15"        { emit "Mac mini (M4 Pro, 2024)" }
+    if mid == "Mac16,12"        { emit "MacBook Air (13-inch, M4, 2025)" }
+    if mid == "Mac16,13"        { emit "MacBook Air (15-inch, M4, 2025)" }
+    if mid == "Mac16,14"        { emit "Mac Studio (M4 Max, 2025)" }
+    if mid == "Mac16,16"        { emit "Mac Studio (M4 Ultra, 2025)" }
+    // fallback to machine name
+    let name = exec("system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/{print $2}'")
+    if name != "" { emit trim(name) }
+    emit "unknown"
+}
+
+func kflocalip() {
+    let ip = exec("ifconfig en0 2>/dev/null | awk 'BEGIN{b[\"0\"]=0;b[\"1\"]=1;b[\"2\"]=1;b[\"3\"]=2;b[\"4\"]=1;b[\"5\"]=2;b[\"6\"]=2;b[\"7\"]=3;b[\"8\"]=1;b[\"9\"]=2;b[\"a\"]=2;b[\"b\"]=3;b[\"c\"]=2;b[\"d\"]=3;b[\"e\"]=3;b[\"f\"]=4} /inet /{ip=$2;hex=$4;sub(/0x/,\"\",hex);bits=0;for(i=1;i<=8;i++)bits+=b[tolower(substr(hex,i,1))];print ip\"/\"bits}'")
+    if ip == "" { emit "" }
+    emit trim(ip)
 }
 
 func sysuser() {
