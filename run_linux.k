@@ -342,6 +342,231 @@ func kfcls() {
     emit ""
 }
 
+// distro id from /etc/os-release (ID=), lowercased by spec. BlackArch is
+// Arch-based (ID=arch) so it's matched by NAME/PRETTY_NAME instead.
+func distroId() {
+    let r = readFile("/etc/os-release")
+    let pn = findLine(r, "PRETTY_NAME=")
+    if indexOf(pn, "BlackArch") >= 0 { emit "blackarch" }
+    let nm = findLine(r, "NAME=")
+    if indexOf(nm, "BlackArch") >= 0 { emit "blackarch" }
+    let idl = findLine(r, "ID=")
+    if idl == "" { emit "linux" }
+    let v = afterpart(idl, "=")
+    if startsWith(v, "\"") { v = substring(v, 1, len(v)) }
+    if endsWith(v, "\"")   { v = substring(v, 0, len(v) - 1) }
+    emit v
+}
+
+// AUTO-GENERATED distro art (from neofetch canonical logos).
+func distroArt(id, E) {
+    let R = E + "[0m"
+    let a = ""
+    if id == "arch" {
+        a = a + E + "[36;1m" + E + "[36;1m" + "                   -`" + R + "\n"
+        a = a + E + "[36;1m" + "                  .o+`" + R + "\n"
+        a = a + E + "[36;1m" + "                 `ooo/" + R + "\n"
+        a = a + E + "[36;1m" + "                `+oooo:" + R + "\n"
+        a = a + E + "[36;1m" + "               `+oooooo:" + R + "\n"
+        a = a + E + "[36;1m" + "               -+oooooo+:" + R + "\n"
+        a = a + E + "[36;1m" + "             `/:-:++oooo+:" + R + "\n"
+        a = a + E + "[36;1m" + "            `/++++/+++++++:" + R + "\n"
+        a = a + E + "[36;1m" + "           `/++++++++++++++:" + R + "\n"
+        a = a + E + "[36;1m" + "          `/+++o" + E + "[36;1m" + "oooooooo" + E + "[36;1m" + "oooo/`" + R + "\n"
+        a = a + E + "[36;1m" + E + "[36;1m" + "         " + E + "[36;1m" + "./" + E + "[36;1m" + "ooosssso++osssssso" + E + "[36;1m" + "+`" + R + "\n"
+        a = a + E + "[36;1m" + E + "[36;1m" + "        .oossssso-````/ossssss+`" + R + "\n"
+        a = a + E + "[36;1m" + "       -osssssso.      :ssssssso." + R + "\n"
+        a = a + E + "[36;1m" + "      :osssssss/        osssso+++." + R + "\n"
+        a = a + E + "[36;1m" + "     /ossssssss/        +ssssooo/-" + R + "\n"
+        a = a + E + "[36;1m" + "   `/ossssso+/:-        -:/+osssso+-" + R + "\n"
+        a = a + E + "[36;1m" + "  `+sso+:-`                 `.-/+oso:" + R + "\n"
+        a = a + E + "[36;1m" + " `++:.                           `-/+/" + R + "\n"
+        a = a + E + "[36;1m" + " .`                                 `/" + R + "\n"
+        emit a
+    }
+    if id == "blackarch" {
+        a = a + E + "[31;1m" + E + "[30;1m" + "                   00" + R + "\n"
+        a = a + E + "[30;1m" + "                   11" + R + "\n"
+        a = a + E + "[30;1m" + "                  ====" + E + "[31;1m" + R + "\n"
+        a = a + E + "[31;1m" + "                  ." + E + "[30;1m" + "//" + E + "[31;1m" + R + "\n"
+        a = a + E + "[31;1m" + "                 `o" + E + "[30;1m" + "//" + E + "[31;1m" + ":" + R + "\n"
+        a = a + E + "[31;1m" + "                `+o" + E + "[30;1m" + "//" + E + "[31;1m" + "o:" + R + "\n"
+        a = a + E + "[31;1m" + "               `+oo" + E + "[30;1m" + "//" + E + "[31;1m" + "oo:" + R + "\n"
+        a = a + E + "[31;1m" + "               -+oo" + E + "[30;1m" + "//" + E + "[31;1m" + "oo+:" + R + "\n"
+        a = a + E + "[31;1m" + "             `/:-:+" + E + "[30;1m" + "//" + E + "[31;1m" + "ooo+:" + R + "\n"
+        a = a + E + "[31;1m" + "            `/+++++" + E + "[30;1m" + "//" + E + "[31;1m" + "+++++:" + R + "\n"
+        a = a + E + "[31;1m" + "           `/++++++" + E + "[30;1m" + "//" + E + "[31;1m" + "++++++:" + R + "\n"
+        a = a + E + "[31;1m" + "          `/+++o" + E + "[31;1m" + "ooo" + E + "[30;1m" + "//" + E + "[31;1m" + "ooo" + E + "[31;1m" + "oooo/`" + R + "\n"
+        a = a + E + "[31;1m" + E + "[31;1m" + "         " + E + "[31;1m" + "./" + E + "[31;1m" + "ooosssso" + E + "[30;1m" + "//" + E + "[31;1m" + "osssssso" + E + "[31;1m" + "+`" + R + "\n"
+        a = a + E + "[31;1m" + E + "[31;1m" + "        .oossssso-`" + E + "[30;1m" + "//" + E + "[31;1m" + "`/ossssss+`" + R + "\n"
+        a = a + E + "[31;1m" + "       -osssssso.  " + E + "[30;1m" + "//" + E + "[31;1m" + "  :ssssssso." + R + "\n"
+        a = a + E + "[31;1m" + "      :osssssss/   " + E + "[30;1m" + "//" + E + "[31;1m" + "   osssso+++." + R + "\n"
+        a = a + E + "[31;1m" + "     /ossssssss/   " + E + "[30;1m" + "//" + E + "[31;1m" + "   +ssssooo/-" + R + "\n"
+        a = a + E + "[31;1m" + "   `/ossssso+/:-   " + E + "[30;1m" + "//" + E + "[31;1m" + "   -:/+osssso+-" + R + "\n"
+        a = a + E + "[31;1m" + "  `+sso+:-`        " + E + "[30;1m" + "//" + E + "[31;1m" + "       `.-/+oso:" + R + "\n"
+        a = a + E + "[31;1m" + " `++:.             " + E + "[30;1m" + "//" + E + "[31;1m" + "            `-/+/" + R + "\n"
+        a = a + E + "[31;1m" + " .`                " + E + "[30;1m" + "/" + E + "[31;1m" + "                `/" + R + "\n"
+        emit a
+    }
+    if id == "gentoo" {
+        a = a + E + "[35;1m" + E + "[35;1m" + "         -/oyddmdhs+:." + R + "\n"
+        a = a + E + "[35;1m" + "     -o" + E + "[37;1m" + "dNMMMMMMMMNNmhy+" + E + "[35;1m" + "-`" + R + "\n"
+        a = a + E + "[35;1m" + "   -y" + E + "[37;1m" + "NMMMMMMMMMMMNNNmmdhy" + E + "[35;1m" + "+-" + R + "\n"
+        a = a + E + "[35;1m" + " `o" + E + "[37;1m" + "mMMMMMMMMMMMMNmdmmmmddhhy" + E + "[35;1m" + "/`" + R + "\n"
+        a = a + E + "[35;1m" + " om" + E + "[37;1m" + "MMMMMMMMMMMN" + E + "[35;1m" + "hhyyyo" + E + "[37;1m" + "hmdddhhhd" + E + "[35;1m" + "o`" + R + "\n"
+        a = a + E + "[35;1m" + ".y" + E + "[37;1m" + "dMMMMMMMMMMd" + E + "[35;1m" + "hs++so/s" + E + "[37;1m" + "mdddhhhhdm" + E + "[35;1m" + "+`" + R + "\n"
+        a = a + E + "[35;1m" + " oy" + E + "[37;1m" + "hdmNMMMMMMMN" + E + "[35;1m" + "dyooy" + E + "[37;1m" + "dmddddhhhhyhN" + E + "[35;1m" + "d." + R + "\n"
+        a = a + E + "[35;1m" + "  :o" + E + "[37;1m" + "yhhdNNMMMMMMMNNNmmdddhhhhhyym" + E + "[35;1m" + "Mh" + R + "\n"
+        a = a + E + "[35;1m" + "    .:" + E + "[37;1m" + "+sydNMMMMMNNNmmmdddhhhhhhmM" + E + "[35;1m" + "my" + R + "\n"
+        a = a + E + "[35;1m" + "       /m" + E + "[37;1m" + "MMMMMMNNNmmmdddhhhhhmMNh" + E + "[35;1m" + "s:" + R + "\n"
+        a = a + E + "[35;1m" + "    `o" + E + "[37;1m" + "NMMMMMMMNNNmmmddddhhdmMNhs" + E + "[35;1m" + "+`" + R + "\n"
+        a = a + E + "[35;1m" + "  `s" + E + "[37;1m" + "NMMMMMMMMNNNmmmdddddmNMmhs" + E + "[35;1m" + "/." + R + "\n"
+        a = a + E + "[35;1m" + " /N" + E + "[37;1m" + "MMMMMMMMNNNNmmmdddmNMNdso" + E + "[35;1m" + ":`" + R + "\n"
+        a = a + E + "[35;1m" + "+M" + E + "[37;1m" + "MMMMMMNNNNNmmmmdmNMNdso" + E + "[35;1m" + "/-" + R + "\n"
+        a = a + E + "[35;1m" + "yM" + E + "[37;1m" + "MNNNNNNNmmmmmNNMmhs+/" + E + "[35;1m" + "-`" + R + "\n"
+        a = a + E + "[35;1m" + "/h" + E + "[37;1m" + "MMNNNNNNNNMNdhs++/" + E + "[35;1m" + "-`" + R + "\n"
+        a = a + E + "[35;1m" + "`/" + E + "[37;1m" + "ohdmmddhys+++/:" + E + "[35;1m" + ".`" + R + "\n"
+        a = a + E + "[35;1m" + "  `-//////:--." + R + "\n"
+        emit a
+    }
+    if id == "void" {
+        a = a + E + "[32;1m" + E + "[32;1m" + "                __.;=====;.__" + R + "\n"
+        a = a + E + "[32;1m" + "            _.=+==++=++=+=+===;." + R + "\n"
+        a = a + E + "[32;1m" + "             -=+++=+===+=+=+++++=_" + R + "\n"
+        a = a + E + "[32;1m" + "        .     -=:``     `--==+=++==." + R + "\n"
+        a = a + E + "[32;1m" + "       _vi,    `            --+=++++:" + R + "\n"
+        a = a + E + "[32;1m" + "      .uvnvi.       _._       -==+==+." + R + "\n"
+        a = a + E + "[32;1m" + "     .vvnvnI`    .;==|==;.     :|=||=|." + R + "\n"
+        a = a + E + "[32;1m" + E + "[38;5;8m" + "+QmQQm" + E + "[32;1m" + "pvvnv; " + E + "[38;5;8m" + "_yYsyQQWUUQQQm #QmQ#" + E + "[32;1m" + ":" + E + "[38;5;8m" + "QQQWUV$QQm." + R + "\n"
+        a = a + E + "[38;5;8m" + E + "[38;5;8m" + " -QQWQW" + E + "[32;1m" + "pvvo" + E + "[38;5;8m" + "wZ?.wQQQE" + E + "[32;1m" + "==<" + E + "[38;5;8m" + "QWWQ/QWQW.QQWW" + E + "[32;1m" + "(: " + E + "[38;5;8m" + "jQWQE" + R + "\n"
+        a = a + E + "[38;5;8m" + E + "[38;5;8m" + "  -$QQQQmmU'  jQQQ@" + E + "[32;1m" + "+=<" + E + "[38;5;8m" + "QWQQ)mQQQ.mQQQC" + E + "[32;1m" + "+;" + E + "[38;5;8m" + "jWQQ@'" + R + "\n"
+        a = a + E + "[38;5;8m" + E + "[38;5;8m" + "   -$WQ8Y" + E + "[32;1m" + "nI:   " + E + "[38;5;8m" + "QWQQwgQQWV" + E + "[32;1m" + "`" + E + "[38;5;8m" + "mWQQ.jQWQQgyyWW@!" + R + "\n"
+        a = a + E + "[38;5;8m" + E + "[32;1m" + "     -1vvnvv.     `~+++`        ++|+++" + R + "\n"
+        a = a + E + "[32;1m" + "      +vnvnnv,                 `-|===" + R + "\n"
+        a = a + E + "[32;1m" + "       +vnvnvns.           .      :=-" + R + "\n"
+        a = a + E + "[32;1m" + "        -Invnvvnsi..___..=sv=.     `" + R + "\n"
+        a = a + E + "[32;1m" + "          +Invnvnvnnnnnnnnvvnn;." + R + "\n"
+        a = a + E + "[32;1m" + "            ~|Invnvnvvnvvvnnv}+`" + R + "\n"
+        a = a + E + "[32;1m" + "               -~|{*l}*|~" + R + "\n"
+        emit a
+    }
+    if id == "parrot" {
+        a = a + E + "[36;1m" + E + "[36;1m" + "  `:oho/-`" + R + "\n"
+        a = a + E + "[36;1m" + "`mMMMMMMMMMMMNmmdhy-" + R + "\n"
+        a = a + E + "[36;1m" + " dMMMMMMMMMMMMMMMMMMs`" + R + "\n"
+        a = a + E + "[36;1m" + " +MMsohNMMMMMMMMMMMMMm/" + R + "\n"
+        a = a + E + "[36;1m" + " .My   .+dMMMMMMMMMMMMMh." + R + "\n"
+        a = a + E + "[36;1m" + "  +       :NMMMMMMMMMMMMNo" + R + "\n"
+        a = a + E + "[36;1m" + "           `yMMMMMMMMMMMMMm:" + R + "\n"
+        a = a + E + "[36;1m" + "             /NMMMMMMMMMMMMMy`" + R + "\n"
+        a = a + E + "[36;1m" + "              .hMMMMMMMMMMMMMN+" + R + "\n"
+        a = a + E + "[36;1m" + "                  ``-NMMMMMMMMMd-" + R + "\n"
+        a = a + E + "[36;1m" + "                     /MMMMMMMMMMMs`" + R + "\n"
+        a = a + E + "[36;1m" + "                      mMMMMMMMsyNMN/" + R + "\n"
+        a = a + E + "[36;1m" + "                      +MMMMMMMo  :sNh." + R + "\n"
+        a = a + E + "[36;1m" + "                      `NMMMMMMm     -o/" + R + "\n"
+        a = a + E + "[36;1m" + "                       oMMMMMMM." + R + "\n"
+        a = a + E + "[36;1m" + "                       `NMMMMMM+" + R + "\n"
+        a = a + E + "[36;1m" + "                        +MMd/NMh" + R + "\n"
+        a = a + E + "[36;1m" + "                         mMm -mN`" + R + "\n"
+        a = a + E + "[36;1m" + "                         /MM  `h:" + R + "\n"
+        a = a + E + "[36;1m" + "                          dM`   ." + R + "\n"
+        a = a + E + "[36;1m" + "                          :M-" + R + "\n"
+        a = a + E + "[36;1m" + "                           d:" + R + "\n"
+        a = a + E + "[36;1m" + "                           -+" + R + "\n"
+        a = a + E + "[36;1m" + "                            -" + R + "\n"
+        emit a
+    }
+    if id == "exherbo" {
+        a = a + E + "[34;1m" + E + "[37;1m" + " ," + R + "\n"
+        a = a + E + "[37;1m" + "OXo." + R + "\n"
+        a = a + E + "[37;1m" + "NXdX0:    .cok0KXNNXXK0ko:." + R + "\n"
+        a = a + E + "[37;1m" + "KX  '0XdKMMK;.xMMMk, .0MMMMMXx;  ..." + R + "\n"
+        a = a + E + "[37;1m" + "'NO..xWkMMx   kMMM    cMMMMMX,NMWOxOXd." + R + "\n"
+        a = a + E + "[37;1m" + "  cNMk  NK    .oXM.   OMMMMO. 0MMNo  kW." + R + "\n"
+        a = a + E + "[37;1m" + "  lMc   o:       .,   .oKNk;   ;NMMWlxW'" + R + "\n"
+        a = a + E + "[37;1m" + " ;Mc    ..   .,,'    .0M" + E + "[34;1m" + "g;" + E + "[37;1m" + "WMN'dWMMMMMMO" + R + "\n"
+        a = a + E + "[37;1m" + " XX        ,WMMMMW.  cM" + E + "[34;1m" + "cfli" + E + "[37;1m" + "WMKlo.   .kMk" + R + "\n"
+        a = a + E + "[37;1m" + ".Mo        .WM" + E + "[34;1m" + "GD" + E + "[37;1m" + "MW.   XM" + E + "[34;1m" + "WO0" + E + "[37;1m" + "MMk        oMl" + R + "\n"
+        a = a + E + "[37;1m" + ",M:         ,XMMWx::,''oOK0x;          NM." + R + "\n"
+        a = a + E + "[37;1m" + "'Ml      ,kNKOxxxxxkkO0XXKOd:.         oMk" + R + "\n"
+        a = a + E + "[37;1m" + " NK    .0Nxc" + E + "[31;1m" + ":::::::::::::::" + E + "[37;1m" + "fkKNk,      .MW" + R + "\n"
+        a = a + E + "[37;1m" + " ,Mo  .NXc" + E + "[31;1m" + "::" + E + "[37;1m" + "qXWXb" + E + "[31;1m" + "::::::::::" + E + "[37;1m" + "oo" + E + "[31;1m" + "::" + E + "[37;1m" + "lNK.    .MW" + R + "\n"
+        a = a + E + "[37;1m" + "  ;Wo oMd" + E + "[31;1m" + ":::" + E + "[37;1m" + "oNMNP" + E + "[31;1m" + "::::::::" + E + "[37;1m" + "oWMMMx" + E + "[31;1m" + ":" + E + "[37;1m" + "c0M;   lMO" + R + "\n"
+        a = a + E + "[37;1m" + "   'NO;W0c" + E + "[31;1m" + ":::::::::::::::" + E + "[37;1m" + "dMMMMO" + E + "[31;1m" + "::" + E + "[37;1m" + "lMk  .WM'" + R + "\n"
+        a = a + E + "[37;1m" + "     xWONXdc" + E + "[31;1m" + "::::::::::::::" + E + "[37;1m" + "oOOo" + E + "[31;1m" + "::" + E + "[37;1m" + "lXN. ,WMd" + R + "\n"
+        a = a + E + "[37;1m" + "      'KWWNXXK0Okxxo," + E + "[31;1m" + ":::::::" + E + "[37;1m" + ",lkKNo  xMMO" + R + "\n"
+        a = a + E + "[37;1m" + "        :XMNxl,';:lodxkOO000Oxc. .oWMMo" + R + "\n"
+        a = a + E + "[37;1m" + "          'dXMMXkl;,.        .,o0MMNo'" + R + "\n"
+        a = a + E + "[37;1m" + "             ':d0XWMMMMWNNNNMMMNOl'" + R + "\n"
+        a = a + E + "[37;1m" + "                   ':okKXWNKkl'" + R + "\n"
+        emit a
+    }
+    if id == "fedora" {
+        a = a + E + "[38;5;12m" + E + "[38;5;12m" + "             .',;::::;,'." + R + "\n"
+        a = a + E + "[38;5;12m" + "         .';:cccccccccccc:;,." + R + "\n"
+        a = a + E + "[38;5;12m" + "      .;cccccccccccccccccccccc;." + R + "\n"
+        a = a + E + "[38;5;12m" + "    .:cccccccccccccccccccccccccc:." + R + "\n"
+        a = a + E + "[38;5;12m" + "  .;ccccccccccccc;" + E + "[37;1m" + ".:dddl:." + E + "[38;5;12m" + ";ccccccc;." + R + "\n"
+        a = a + E + "[38;5;12m" + " .:ccccccccccccc;" + E + "[37;1m" + "OWMKOOXMWd" + E + "[38;5;12m" + ";ccccccc:." + R + "\n"
+        a = a + E + "[38;5;12m" + ".:ccccccccccccc;" + E + "[37;1m" + "KMMc" + E + "[38;5;12m" + ";cc;" + E + "[37;1m" + "xMMc" + E + "[38;5;12m" + ";ccccccc:." + R + "\n"
+        a = a + E + "[38;5;12m" + ",cccccccccccccc;" + E + "[37;1m" + "MMM." + E + "[38;5;12m" + ";cc;" + E + "[37;1m" + ";WW:" + E + "[38;5;12m" + ";cccccccc," + R + "\n"
+        a = a + E + "[38;5;12m" + ":cccccccccccccc;" + E + "[37;1m" + "MMM." + E + "[38;5;12m" + ";cccccccccccccccc:" + R + "\n"
+        a = a + E + "[38;5;12m" + ":ccccccc;" + E + "[37;1m" + "oxOOOo" + E + "[38;5;12m" + ";" + E + "[37;1m" + "MMM0OOk." + E + "[38;5;12m" + ";cccccccccccc:" + R + "\n"
+        a = a + E + "[38;5;12m" + "cccccc;" + E + "[37;1m" + "0MMKxdd:" + E + "[38;5;12m" + ";" + E + "[37;1m" + "MMMkddc." + E + "[38;5;12m" + ";cccccccccccc;" + R + "\n"
+        a = a + E + "[38;5;12m" + "ccccc;" + E + "[37;1m" + "XM0'" + E + "[38;5;12m" + ";cccc;" + E + "[37;1m" + "MMM." + E + "[38;5;12m" + ";cccccccccccccccc'" + R + "\n"
+        a = a + E + "[38;5;12m" + "ccccc;" + E + "[37;1m" + "MMo" + E + "[38;5;12m" + ";ccccc;" + E + "[37;1m" + "MMW." + E + "[38;5;12m" + ";ccccccccccccccc;" + R + "\n"
+        a = a + E + "[38;5;12m" + "ccccc;" + E + "[37;1m" + "0MNc." + E + "[38;5;12m" + "ccc" + E + "[37;1m" + ".xMMd" + E + "[38;5;12m" + ";ccccccccccccccc;" + R + "\n"
+        a = a + E + "[38;5;12m" + "cccccc;" + E + "[37;1m" + "dNMWXXXWM0:" + E + "[38;5;12m" + ";cccccccccccccc:," + R + "\n"
+        a = a + E + "[38;5;12m" + "cccccccc;" + E + "[37;1m" + ".:odl:." + E + "[38;5;12m" + ";cccccccccccccc:,." + R + "\n"
+        a = a + E + "[38;5;12m" + ":cccccccccccccccccccccccccccc:'." + R + "\n"
+        a = a + E + "[38;5;12m" + ".:cccccccccccccccccccccc:;,.." + R + "\n"
+        a = a + E + "[38;5;12m" + "  '::cccccccccccccc::;,." + R + "\n"
+        emit a
+    }
+    if id == "chimera" {
+        a = a + E + "[36;1m" + "ddddddddddddddc  ,cc:" + R + "\n"
+        a = a + E + "[36;1m" + "ddddddddddddddc  ,cc:" + R + "\n"
+        a = a + E + "[36;1m" + "ddddddddddddddd  ,cc:" + R + "\n"
+        a = a + E + "[36;1m" + "ddddddddddddl:'  ,cc:" + R + "\n"
+        a = a + E + "[36;1m" + "dddddddddl'    ..;cc:" + R + "\n"
+        a = a + E + "[36;1m" + "dddddddo.   ,:cccccc:" + R + "\n"
+        a = a + E + "[36;1m" + "ddddddl   ,ccc:'''''" + R + "\n"
+        a = a + E + "[36;1m" + "dddddo.  ;ccc.          ............" + R + "\n"
+        a = a + E + "[36;1m" + "        .ccc.           cccccccccccc" + R + "\n"
+        a = a + E + "[36;1m" + "......  .ccc.          .ccc'''''''''" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOk.  ;ccc.        .ccc;   ......" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOd   'ccc:,....,:ccc'   coooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOx.   ':cccccccc:'   .looooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOOOd,     `'''`     .coooooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOOOOOOdc,.    ..,coooooooooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOOOOOOOOOO'  .oooooooooooooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOOOOOOOOOO'  .oooooooooooooooo" + R + "\n"
+        a = a + E + "[36;1m" + "OOOOOOOOOOOOOOOO'  .oooooooooooooooo" + R + "\n"
+        emit a
+    }
+    // fallback: Tux
+    let W = E + "[37;1m"
+    let Y = E + "[33;1m"
+    a = a + W + "         a8888b." + R + "\n"
+    a = a + W + "        d888888b." + R + "\n"
+    a = a + W + "        8P\"YP\"Y88" + R + "\n"
+    a = a + W + "        8|o||o|88" + R + "\n"
+    a = a + W + "        8" + Y + "'    " + W + ".88" + R + "\n"
+    a = a + W + "        8" + Y + "`._.'" + W + " Y8." + R + "\n"
+    a = a + W + "       d/      `8b." + R + "\n"
+    a = a + W + "      dP   .    Y8b." + R + "\n"
+    a = a + W + "     d8:'  \"  `::88b." + R + "\n"
+    a = a + W + "    d8\"         'Y88b" + R + "\n"
+    a = a + W + "   :8P    '      :888" + R + "\n"
+    a = a + W + "    8a.   :     _a88P" + R + "\n"
+    a = a + Y + "  ._/\"Yaa_ :    .| 88P|" + R + "\n"
+    a = a + Y + "  \\    YP\"      `| 8P  `." + R + "\n"
+    a = a + Y + "  /     \\._____.d|    .'" + R + "\n"
+    a = a + Y + "  `--..__)888888P`._.'" + R + "\n"
+    emit a
+}
+
 func run() {
     kfcls()
 
@@ -353,23 +578,8 @@ func run() {
     let WHT = E + "[37;1m"
     let LW  = "42"
 
-    // Tux — the Linux mascot.
-    let l0  = WHT + "         a8888b." + RST
-    let l1  = WHT + "        d888888b." + RST
-    let l2  = WHT + "        8P\"YP\"Y88" + RST
-    let l3  = WHT + "        8|o||o|88" + RST
-    let l4  = WHT + "        8" + YEL + "'    " + WHT + ".88" + RST
-    let l5  = WHT + "        8" + YEL + "`._.'" + WHT + " Y8." + RST
-    let l6  = WHT + "       d/      `8b." + RST
-    let l7  = WHT + "      dP   .    Y8b." + RST
-    let l8  = WHT + "     d8:'  \"  `::88b." + RST
-    let l9  = WHT + "    d8\"         'Y88b" + RST
-    let l10 = WHT + "   :8P    '      :888" + RST
-    let l11 = WHT + "    8a.   :     _a88P" + RST
-    let l12 = YEL + "  ._/\"Yaa_ :    .| 88P|" + RST
-    let l13 = YEL + "  \\    YP\"      `| 8P  `." + RST
-    let l14 = YEL + "  /     \\._____.d|    .'" + RST
-    let l15 = YEL + "  `--..__)888888P`._.'" + RST
+    // Distro-specific ASCII logo (neofetch-derived), chosen by /etc/os-release.
+    let art = distroArt(distroId(), E)
 
     let usr  = sysuser()
     let host = syshost()
@@ -414,26 +624,11 @@ func run() {
 
     let idx = "0"
     let infolen = linecount(IL)
-    let maxidx = "16"
-    if toInt(infolen) > 16 { maxidx = infolen }
+    let artlen  = linecount(art)
+    let maxidx  = infolen
+    if toInt(artlen) > toInt(maxidx) { maxidx = artlen }   // tall logos (e.g. parrot, fedora) aren't clipped
     while toInt(idx) < toInt(maxidx) {
-        let logo = ""
-        if idx == "0"  { logo = l0  }
-        if idx == "1"  { logo = l1  }
-        if idx == "2"  { logo = l2  }
-        if idx == "3"  { logo = l3  }
-        if idx == "4"  { logo = l4  }
-        if idx == "5"  { logo = l5  }
-        if idx == "6"  { logo = l6  }
-        if idx == "7"  { logo = l7  }
-        if idx == "8"  { logo = l8  }
-        if idx == "9"  { logo = l9  }
-        if idx == "10" { logo = l10 }
-        if idx == "11" { logo = l11 }
-        if idx == "12" { logo = l12 }
-        if idx == "13" { logo = l13 }
-        if idx == "14" { logo = l14 }
-        if idx == "15" { logo = l15 }
+        let logo = getLine(art, toInt(idx))   // "" past end -> padded to a blank logo column
         kp(padansi(logo, toInt(LW)) + "  " + infoline(IL, idx))
         idx = toInt(idx) + 1 + ""
     }
