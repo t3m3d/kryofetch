@@ -1,0 +1,8 @@
+# Force LF on shell scripts and source — Windows tooling otherwise
+# inserts CRLF and `#!/usr/bin/env bash` fails on Linux with the
+# infamous `env: 'bash\r': No such file or directory`.
+*.sh        text eol=lf
+*.k         text eol=lf
+*.ks        text eol=lf
+PKGBUILD    text eol=lf
+.gitignore  text eol=lf
