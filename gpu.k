@@ -11,6 +11,83 @@ func _gpu_isPrintable(s) {
     emit "1"
 }
 
+// Trim the vendor/sub-brand fluff and keep just the model identifier.
+//   "NVIDIA GeForce RTX 5070"             -> "RTX 5070"
+//   "AMD Radeon RX 7900 XTX"              -> "RX 7900 XTX"
+//   "Intel(R) Iris(R) Xe Graphics"        -> "Iris Xe Graphics"
+// Strips one occurrence per noise word, case-insensitive, requires a word
+// boundary so e.g. "GeForceFX" wouldn't be touched if it ever appears.
+func _gpu_stripWord(s, word) {
+    let wl = len(word)
+    let sl = len(s)
+    let lo = toLower(s)
+    let wlow = toLower(word)
+    let i = "0"
+    while toInt(i) <= toInt(sl) - toInt(wl) {
+        if substring(lo, toInt(i), toInt(i) + toInt(wl)) == wlow {
+            let endC = "32"
+            if toInt(i) + toInt(wl) < toInt(sl) {
+                endC = charCode(substring(s, toInt(i) + toInt(wl), toInt(i) + toInt(wl) + 1)) + ""
+            }
+            let startC = "32"
+            if toInt(i) > 0 {
+                startC = charCode(substring(s, toInt(i) - 1, toInt(i))) + ""
+            }
+            // Word boundary on both sides: non-alphanumeric or string edge.
+            let isAlnumStart = "0"
+            if toInt(startC) >= 48 { if toInt(startC) <= 57 { isAlnumStart = "1" } }
+            if toInt(startC) >= 65 { if toInt(startC) <= 90 { isAlnumStart = "1" } }
+            if toInt(startC) >= 97 { if toInt(startC) <= 122 { isAlnumStart = "1" } }
+            let isAlnumEnd = "0"
+            if toInt(endC) >= 48 { if toInt(endC) <= 57 { isAlnumEnd = "1" } }
+            if toInt(endC) >= 65 { if toInt(endC) <= 90 { isAlnumEnd = "1" } }
+            if toInt(endC) >= 97 { if toInt(endC) <= 122 { isAlnumEnd = "1" } }
+            if isAlnumStart == "0" {
+                if isAlnumEnd == "0" {
+                    let before = substring(s, "0", toInt(i))
+                    let after  = substring(s, toInt(i) + toInt(wl), toInt(sl))
+                    emit before + after
+                }
+            }
+        }
+        i = toInt(i) + 1 + ""
+    }
+    emit s
+}
+
+func _gpu_cleanName(name) {
+    let s = name
+    s = _gpu_stripWord(s, "NVIDIA")
+    s = _gpu_stripWord(s, "GeForce")
+    s = _gpu_stripWord(s, "AMD")
+    s = _gpu_stripWord(s, "Radeon")     // most AMD users still recognise "RX 7900 XTX"; keep "Radeon" only if it'd leave the line empty (handled below)
+    s = _gpu_stripWord(s, "Intel(R)")
+    s = _gpu_stripWord(s, "Intel")
+    s = _gpu_stripWord(s, "(R)")
+    s = _gpu_stripWord(s, "(TM)")
+    s = _gpu_stripWord(s, "Corporation")
+    // Collapse internal double-spaces created by the strips.
+    let out = ""
+    let i = "0"
+    let prevSpace = "1"
+    while toInt(i) < len(s) {
+        let c = substring(s, toInt(i), toInt(i) + 1)
+        if c == " " {
+            if prevSpace == "0" { out = out + " " }
+            prevSpace = "1"
+        } else {
+            out = out + c
+            prevSpace = "0"
+        }
+        i = toInt(i) + 1 + ""
+    }
+    let cleaned = trim(out)
+    // Fallback: if we stripped everything (eg name was literally "NVIDIA"),
+    // keep the original so the line isn't blank.
+    if cleaned == "" { emit name }
+    emit cleaned
+}
+
 func _gpu_isVirtual(name) {
     let low = toLower(name)
     if contains(low, "microsoft basic display") { emit "1" }
@@ -55,8 +132,9 @@ func gpunames() {
         if gpuName != "" {
             if _gpu_isPrintable(gpuName) == "1" {
                 if _gpu_isVirtual(gpuName) == "0" {
+                    let cleaned = _gpu_cleanName(gpuName)
                     if result != "" { result = result + "\n" }
-                    result = result + gpuName
+                    result = result + cleaned
                 }
             }
         }
