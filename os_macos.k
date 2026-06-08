@@ -30,8 +30,10 @@ func kfresolution() {
 
 func kfterminal() {
     let tp = environ("TERM_PROGRAM")
-    if tp != "" { emit tp }
-    emit ""
+    if tp == "" { emit "" }
+    let ver = environ("TERM_PROGRAM_VERSION")
+    if ver != "" { emit tp + " " + ver }
+    emit tp
 }
 
 func kftheme() {
