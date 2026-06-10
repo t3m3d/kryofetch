@@ -167,7 +167,6 @@ func run() {
     if btimestr != "" { batval = batval + " (" + btimestr + ")" }
     batval = batval + " [" + bstat + "]"
     let batlbl = "Battery"
-    if bchip != "" { batlbl = "Battery (" + bchip + ")" }
 
     // Build packed info list — only non-empty entries are added
     let IL = ""
