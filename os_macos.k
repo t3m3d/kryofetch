@@ -1,9 +1,7 @@
 import "utils_macos.k"
 
 func osver() {
-    let v     = exec("sw_vers -productVersion 2>/dev/null")
-    let build = exec("sw_vers -buildVersion 2>/dev/null")
-    if v == "" { emit "macOS" }
+    let v     = trim(exec("sw_vers -productVersion 2>/dev/null"))    let build = trim(exec("sw_vers -buildVersion 2>/dev/null"))    if v == "" { emit "macOS" }
     let major = firstpart(v, ".")
     let name  = ""
     if major == "26" { name = "Tahoe" }
@@ -17,14 +15,12 @@ func osver() {
 }
 
 func uptime() {
-    let out = exec("uptime | sed 's/.*up //' | sed 's/, *[0-9]* *user.*//'")
-    if out == "" { emit "unknown" }
+    let out = trim(exec("uptime | sed 's/.*up //' | sed 's/, *[0-9]* *user.*//'"))    if out == "" { emit "unknown" }
     emit trim(out)
 }
 
 func kfresolution() {
-    let res = exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'Resolution:' | head -1 | sed 's/.*Resolution: //' | sed 's/ @ .*//'")
-    if res == "" { emit "unknown" }
+    let res = trim(exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'Resolution:' | head -1 | sed 's/.*Resolution: //' | sed 's/ @ .*//'"))    if res == "" { emit "unknown" }
     emit trim(res)
 }
 
@@ -37,19 +33,16 @@ func kfterminal() {
 }
 
 func kftheme() {
-    let style = exec("defaults read -g AppleInterfaceStyle 2>/dev/null")
-    if style == "Dark" { emit "Dark" }
+    let style = trim(exec("defaults read -g AppleInterfaceStyle 2>/dev/null"))    if style == "Dark" { emit "Dark" }
     emit "Light"
 }
 
 func kfbattraw() {
-    let raw = exec("ioreg -r -n AppleSmartBattery 2>/dev/null | awk '/\"DeviceName\"/{gsub(/.*= \"/,\"\");gsub(/\".*/,\"\");chip=$0} /\"CurrentCapacity\" =/{pct=$NF} /\"TimeRemaining\" =/{mins=$NF} /\"IsCharging\" =/{chrg=$NF} /\"FullyCharged\" =/{full=$NF} END{print chip;print pct;print mins;print chrg;print full}'")
-    emit raw
+    let raw = trim(exec("ioreg -r -n AppleSmartBattery 2>/dev/null | awk '/\"DeviceName\"/{gsub(/.*= \"/,\"\");gsub(/\".*/,\"\");chip=$0} /\"CurrentCapacity\" =/{pct=$NF} /\"TimeRemaining\" =/{mins=$NF} /\"IsCharging\" =/{chrg=$NF} /\"FullyCharged\" =/{full=$NF} END{print chip;print pct;print mins;print chrg;print full}'"))    emit raw
 }
 
 func kfkernel() {
-    let k = exec("uname -sr 2>/dev/null")
-    if k == "" { emit "unknown" }
+    let k = trim(exec("uname -sr 2>/dev/null"))    if k == "" { emit "unknown" }
     emit trim(k)
 }
 
@@ -106,8 +99,7 @@ func sysmodel() {
     if mid == "Mac16,14"        { emit "Mac Studio (M4 Max, 2025)" }
     if mid == "Mac16,16"        { emit "Mac Studio (M4 Ultra, 2025)" }
     // fallback to machine name
-    let name = exec("system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/{print $2}'")
-    if name != "" { emit trim(name) }
+    let name = trim(exec("system_profiler SPHardwareDataType 2>/dev/null | awk -F': ' '/Model Name/{print $2}'"))    if name != "" { emit trim(name) }
     emit "unknown"
 }
 
@@ -121,8 +113,7 @@ func kftermfont() {
 }
 
 func kfdisplayinfo() {
-    let raw = exec("system_profiler SPDisplaysDataType -json 2>/dev/null | python3 -c \"import sys,json;d=json.load(sys.stdin);[print(a.get('_name','')+'|'+a.get('_spdisplays_pixels','').replace(' x ','x')+'|'+(a.get('_spdisplays_resolution','').split('@')[1].strip().rstrip('Hz').split('.')[0]+'Hz' if '@' in a.get('_spdisplays_resolution','') else '')+'|'+('Built-in' if 'internal' in a.get('spdisplays_connection_type','') else 'External')+'|'+('2x' if 'Retina' in a.get('spdisplays_pixelresolution','') else '1x')) for arr in d.get('SPDisplaysDataType',[]) for a in arr.get('spdisplays_ndrvs',[])]\" 2>/dev/null | head -1")
-    if raw == "" { emit "" }
+    let raw = trim(exec("system_profiler SPDisplaysDataType -json 2>/dev/null | python3 -c \"import sys,json;d=json.load(sys.stdin);[print(a.get('_name','')+'|'+a.get('_spdisplays_pixels','').replace(' x ','x')+'|'+(a.get('_spdisplays_resolution','').split('@')[1].strip().rstrip('Hz').split('.')[0]+'Hz' if '@' in a.get('_spdisplays_resolution','') else '')+'|'+('Built-in' if 'internal' in a.get('spdisplays_connection_type','') else 'External')+'|'+('2x' if 'Retina' in a.get('spdisplays_pixelresolution','') else '1x')) for arr in d.get('SPDisplaysDataType',[]) for a in arr.get('spdisplays_ndrvs',[])]\" 2>/dev/null | head -1"))    if raw == "" { emit "" }
     emit trim(raw)
 }
 
@@ -149,33 +140,28 @@ func kfaccent() {
 }
 
 func kfthemename() {
-    let v = exec("sw_vers -productVersion 2>/dev/null")
-    let major = firstpart(v, ".")
+    let v = trim(exec("sw_vers -productVersion 2>/dev/null"))    let major = firstpart(v, ".")
     if toInt(major) >= 26 { emit "Liquid Glass" }
     emit "Aqua"
 }
 
 func kflocalip() {
-    let ip = exec("ifconfig en0 2>/dev/null | awk 'BEGIN{b[\"0\"]=0;b[\"1\"]=1;b[\"2\"]=1;b[\"3\"]=2;b[\"4\"]=1;b[\"5\"]=2;b[\"6\"]=2;b[\"7\"]=3;b[\"8\"]=1;b[\"9\"]=2;b[\"a\"]=2;b[\"b\"]=3;b[\"c\"]=2;b[\"d\"]=3;b[\"e\"]=3;b[\"f\"]=4} /inet /{ip=$2;hex=$4;sub(/0x/,\"\",hex);bits=0;for(i=1;i<=8;i++)bits+=b[tolower(substr(hex,i,1))];print ip\"/\"bits}'")
-    if ip == "" { emit "" }
+    let ip = trim(exec("ifconfig en0 2>/dev/null | awk 'BEGIN{b[\"0\"]=0;b[\"1\"]=1;b[\"2\"]=1;b[\"3\"]=2;b[\"4\"]=1;b[\"5\"]=2;b[\"6\"]=2;b[\"7\"]=3;b[\"8\"]=1;b[\"9\"]=2;b[\"a\"]=2;b[\"b\"]=3;b[\"c\"]=2;b[\"d\"]=3;b[\"e\"]=3;b[\"f\"]=4} /inet /{ip=$2;hex=$4;sub(/0x/,\"\",hex);bits=0;for(i=1;i<=8;i++)bits+=b[tolower(substr(hex,i,1))];print ip\"/\"bits}'"))    if ip == "" { emit "" }
     emit trim(ip)
 }
 
 func sysuser() {
     let u = environ("USER")
     if u != "" { emit u }
-    emit exec("whoami")
-}
+    emit trim(exec("whoami"))}
 
 func syshost() {
-    let h = exec("hostname -s 2>/dev/null")
-    if h == "" { emit "localhost" }
+    let h = trim(exec("hostname -s 2>/dev/null"))    if h == "" { emit "localhost" }
     emit h
 }
 
 func sysarch() {
-    let a = exec("uname -m")
-    if a == "arm64"  { emit "arm64" }
+    let a = trim(exec("uname -m"))    if a == "arm64"  { emit "arm64" }
     if a == "x86_64" { emit "x86_64" }
     if a == "" { emit "unknown" }
     emit a

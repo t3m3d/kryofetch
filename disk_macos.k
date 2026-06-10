@@ -2,8 +2,7 @@ import "utils_macos.k"
 
 func driveinfo() {
     // Data volume = real user usage; externals must be >1 GB to skip virtual FSes
-    let raw = exec("df -Pm 2>/dev/null | awk 'NR>1 && /^\\/dev\\// && ($6==\"/System/Volumes/Data\" || ($6~/^\\/Volumes\\// && $2+0>1000)) {print $2, $3, ($6==\"/System/Volumes/Data\" ? \"/\" : $6)}' | head -3")
-    if raw == "" { emit "" }
+    let raw = trim(exec("df -Pm 2>/dev/null | awk 'NR>1 && /^\\/dev\\// && ($6==\"/System/Volumes/Data\" || ($6~/^\\/Volumes\\// && $2+0>1000)) {print $2, $3, ($6==\"/System/Volumes/Data\" ? \"/\" : $6)}' | head -3"))    if raw == "" { emit "" }
 
     let result = ""
     let i = "0"

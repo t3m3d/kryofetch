@@ -1,15 +1,13 @@
 import "utils_macos.k"
 
 func gpunames() {
-    let raw = exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'Chipset Model:' | sed 's/.*Chipset Model: //'")
-    if raw == "" { emit "Unknown GPU" }
+    let raw = trim(exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'Chipset Model:' | sed 's/.*Chipset Model: //'"))    if raw == "" { emit "Unknown GPU" }
     emit raw
 }
 
 func gpuvram() {
     // Discrete/eGPU Macs list VRAM (Total). Apple Silicon uses unified memory (no entry).
-    let raw = exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'VRAM (Total):' | sed 's/.*VRAM (Total): //'")
-    if raw == "" { emit "" }
+    let raw = trim(exec("system_profiler SPDisplaysDataType 2>/dev/null | grep 'VRAM (Total):' | sed 's/.*VRAM (Total): //'"))    if raw == "" { emit "" }
 
     let result = ""
     let i = "0"

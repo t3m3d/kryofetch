@@ -16,9 +16,7 @@ func kfinit() {
 }
 
 func kfconsize() {
-    let cols = exec("tput cols 2>/dev/null")
-    let rows = exec("tput lines 2>/dev/null")
-    if cols == "" { emit "0,0" }
+    let cols = trim(exec("tput cols 2>/dev/null"))    let rows = trim(exec("tput lines 2>/dev/null"))    if cols == "" { emit "0,0" }
     emit trim(cols) + "," + trim(rows)
 }
 
