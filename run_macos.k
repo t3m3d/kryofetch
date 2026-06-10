@@ -199,8 +199,7 @@ func run() {
     if discl != "" { diline = diline + " @ " + discl }
     if disize != "" { diline = diline + " in " + disize + "\"" }
     if dihz != "" { diline = diline + ", " + dihz }
-    if dict != "" { diline = diline + " [" + dict + "]" }
-    if dinm != "" { IL = IL + GRN + "Display (" + dinm + "):" + RST + diline + "\n" }
+    if dinm != "" { IL = IL + GRN + "Display:" + RST + diline + "\n" }
     IL = IL + GRN + "WM:    " + RST + wm + "\n"
     IL = IL + GRN + "WMTheme:" + RST + wmth + "\n"
     IL = IL + GRN + "Theme: " + RST + thm + "\n"
