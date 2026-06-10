@@ -3,7 +3,7 @@ import "utils_macos.k"
 func raminfo() {
     let totalBytes = exec("sysctl -n hw.memsize 2>/dev/null")
     if totalBytes == "" { emit "0,0" }
-    let totalMB = div64(totalBytes, "1048576")
+    let totalMB = "" + (toInt(totalBytes) / 1048576)   // div64 is a C-path-only builtin (udf native)
 
     // pageKB = pagesize / 1024 (16 on Apple Silicon, 4 on Intel)
     let psStr  = exec("sysctl -n hw.pagesize 2>/dev/null")
