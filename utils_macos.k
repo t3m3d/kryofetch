@@ -154,8 +154,8 @@ func idxfrom(s, sub, start) {
 }
 
 func kfpkgs() {
-    let brew  = exec("brew list --formula 2>/dev/null | wc -l | tr -d ' '")
-    let ports = exec("port installed 2>/dev/null | grep -c active")
+    let brew  = trim(exec("brew list --formula 2>/dev/null | wc -l | tr -d ' '"))
+    let ports = trim(exec("port installed 2>/dev/null | grep -c active"))
     let result = ""
     if toInt(brew) > 0 { result = brew + " (brew)" }
     if toInt(ports) > 0 {

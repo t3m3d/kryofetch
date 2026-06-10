@@ -19,7 +19,7 @@ func kfconsize() {
     let cols = exec("tput cols 2>/dev/null")
     let rows = exec("tput lines 2>/dev/null")
     if cols == "" { emit "0,0" }
-    emit cols + "," + rows
+    emit trim(cols) + "," + trim(rows)
 }
 
 func kfshell() {
