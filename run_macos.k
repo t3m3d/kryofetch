@@ -303,7 +303,9 @@ func run() {
     }
 
     kp("")
-    kp(CYN + "  KryoFetch" + RST + " by KryptonBytes")
+    let titleOpt = kfconfigget("title", "")
+    if titleOpt == "" { kp(CYN + "  KryoFetch" + RST + " by KryptonBytes") }
+    else { kp(CYN + "  " + titleOpt + RST) }
     kp("")
     let palOpt = kfconfigget("palette", "blocks")
     if palOpt == "apple" { applepalette() }
