@@ -210,6 +210,10 @@ func run() {
     if vcOpt == "cyan"    { VAL = RST + E + "[36m" }
     if vcOpt == "white"   { VAL = RST + E + "[37m" }
     if toInt(vcOpt) > 0   { VAL = RST + E + "[38;5;" + vcOpt + "m" }
+    // usage bars (RAM/Disk) — config `bars = on|off`. Default on.
+    let showbars = kfconfigget("bars", "on")
+    let rampre = rb + "  "
+    if showbars == "off" { rampre = "" }
     let REG = ""
     REG = REG + SEP + "user" + US + GRN + "User:  " + VAL + usr + "@" + host + "\n"
     REG = REG + SEP + "os" + US + GRN + "OS:    " + VAL + os + " " + arch + "\n"
@@ -219,7 +223,7 @@ func run() {
     let gpuline = GRN + "GPU:   " + VAL + fmtgpu(g1, vr1) + "\n"
     if g2 != "" { gpuline = gpuline + GRN + "GPU2:  " + VAL + fmtgpu(g2, vr2) + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
-    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + VAL + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + VAL + rampre + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
     REG = REG + SEP + "swap" + US + GRN + "Swap:  " + VAL + swp + "\n"
     let diskline = GRN + "Disk:  " + VAL + d1 + "\n"
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
