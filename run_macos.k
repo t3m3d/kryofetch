@@ -291,12 +291,20 @@ func run() {
     let kernstr = kern
     if kfmt == "release" { kernstr = afterpart(kern, " ") }
     if kfmt == "name"    { kernstr = firstpart(kern, " ") }
+    // os display — config `os_format = full|noarch|short`. Default full.
+    let ofmt = kfconfigget("os_format", "full")
+    let osnobuild = os
+    let obp = indexOf(os, " (")
+    if toInt(obp) > 0 { osnobuild = substring(os, 0, toInt(obp)) }
+    let osstr = os + " " + arch
+    if ofmt == "noarch" { osstr = os }
+    if ofmt == "short"  { osstr = osnobuild }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
     let REG = ""
     REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + usr + "@" + host + "\n"
-    REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + os + " " + arch + "\n"
+    REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + osstr + "\n"
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kernstr + "\n"
     REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
