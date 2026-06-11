@@ -273,7 +273,9 @@ func run() {
     kp("")
     kp(CYN + "  KryoFetch" + RST + " by KryptonBytes")
     kp("")
-    colorpalette()
+    let palOpt = kfconfigget("palette", "blocks")
+    if palOpt == "apple" { applepalette() }
+    else { if palOpt != "none" { colorpalette() } }
     kp("")
     emit
 }

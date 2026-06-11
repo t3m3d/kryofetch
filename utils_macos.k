@@ -118,6 +118,27 @@ func colorpalette() {
     kp("  " + r2 + RST)
 }
 
+// palette as a row of little Apple logos (), one per ANSI color
+func applepalette() {
+    let E   = fromCharCode(27)
+    let RST = E + "[0m"
+    // U+F8FF (Apple logo) as raw UTF-8 bytes — fromCharCode on a single >127
+    // codepoint mojibakes, so emit the 3 bytes EF A3 BF directly.
+    let AP  = fromCharCode(239) + fromCharCode(163) + fromCharCode(191)
+    let r1  = ""
+    let r2  = ""
+    let i   = "0"
+    while toInt(i) < 8 {
+        let c1 = toInt(i) + 30 + ""
+        let c2 = toInt(i) + 90 + ""
+        r1 = r1 + E + "[" + c1 + ";1m" + AP + " "
+        r2 = r2 + E + "[" + c2 + "m" + AP + " "
+        i = toInt(i) + 1 + ""
+    }
+    kp("  " + r1 + RST)
+    kp("  " + r2 + RST)
+}
+
 // Like nthline but preserves leading whitespace (needed for continuation lines)
 func infoline(s, lineIdx) {
     let target = toInt(lineIdx)
