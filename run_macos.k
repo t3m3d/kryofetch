@@ -247,6 +247,11 @@ func run() {
     if mfOpt == "mb"       { ramstr = umb + " MB / " + tmb + " MB  " + rpct + "%" }
     if mfOpt == "percent"  { ramstr = rpct + "%" }
     if mfOpt == "fraction" { ramstr = ugb + " GB / " + tgb + " GB" }
+    // cpu display — config `cpu_format = full|brand|cores`. Default full.
+    let cpfOpt = kfconfigget("cpu_format", "full")
+    let cpustr = cpu + " (" + cn + "c / " + tn + "t)"
+    if cpfOpt == "brand" { cpustr = cpu }
+    if cpfOpt == "cores" { cpustr = cpu + " (" + cn + " cores)" }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -255,7 +260,7 @@ func run() {
     REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + os + " " + arch + "\n"
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + mdl + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kern + "\n"
-    REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
+    REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
     let gpuline = GRN + "GPU" + CO + "   " + VAL + fmtgpu(g1, vr1) + "\n"
     if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + fmtgpu(g2, vr2) + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
