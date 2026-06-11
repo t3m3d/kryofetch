@@ -214,42 +214,45 @@ func run() {
     let showbars = kfconfigget("bars", "on")
     let rampre = rb + "  "
     if showbars == "off" { rampre = "" }
+    // label/value separator — config `separator = ...` (default ":"). 1-char
+    // keeps the value alignment; longer/empty shifts it slightly.
+    let CO = kfconfigget("separator", ":")
     let REG = ""
-    REG = REG + SEP + "user" + US + GRN + "User:  " + VAL + usr + "@" + host + "\n"
-    REG = REG + SEP + "os" + US + GRN + "OS:    " + VAL + os + " " + arch + "\n"
-    REG = REG + SEP + "host" + US + GRN + "Host:  " + VAL + mdl + "\n"
-    REG = REG + SEP + "kernel" + US + GRN + "Kernel:" + VAL + kern + "\n"
-    REG = REG + SEP + "cpu" + US + GRN + "CPU:   " + VAL + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
-    let gpuline = GRN + "GPU:   " + VAL + fmtgpu(g1, vr1) + "\n"
-    if g2 != "" { gpuline = gpuline + GRN + "GPU2:  " + VAL + fmtgpu(g2, vr2) + "\n" }
+    REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + usr + "@" + host + "\n"
+    REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + os + " " + arch + "\n"
+    REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + mdl + "\n"
+    REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kern + "\n"
+    REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
+    let gpuline = GRN + "GPU" + CO + "   " + VAL + fmtgpu(g1, vr1) + "\n"
+    if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + fmtgpu(g2, vr2) + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
-    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + VAL + rampre + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
-    REG = REG + SEP + "swap" + US + GRN + "Swap:  " + VAL + swp + "\n"
-    let diskline = GRN + "Disk:  " + VAL + d1 + "\n"
+    REG = REG + SEP + "ram" + US + GRN + "RAM" + CO + "   " + VAL + rampre + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    REG = REG + SEP + "swap" + US + GRN + "Swap" + CO + "  " + VAL + swp + "\n"
+    let diskline = GRN + "Disk" + CO + "  " + VAL + d1 + "\n"
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
     if d3 != "" { diskline = diskline + "       " + d3 + "\n" }
     REG = REG + SEP + "disk" + US + diskline
-    REG = REG + SEP + "shell" + US + GRN + "Shell: " + VAL + sh + "\n"
+    REG = REG + SEP + "shell" + US + GRN + "Shell" + CO + " " + VAL + sh + "\n"
     let termline = ""
-    if termv != "" { termline = GRN + "Term:  " + VAL + termv + "\n" }
+    if termv != "" { termline = GRN + "Term" + CO + "  " + VAL + termv + "\n" }
     REG = REG + SEP + "term" + US + termline
     let tfline = ""
-    if tfnt != "" { tfline = GRN + "TermFont:" + VAL + tfnt + "\n" }
+    if tfnt != "" { tfline = GRN + "TermFont" + CO + "" + VAL + tfnt + "\n" }
     REG = REG + SEP + "termfont" + US + tfline
-    REG = REG + SEP + "res" + US + GRN + "Res:   " + VAL + res + "\n"
+    REG = REG + SEP + "res" + US + GRN + "Res" + CO + "   " + VAL + res + "\n"
     let dline = ""
-    if dinm != "" { dline = GRN + "Display:" + VAL + diline + "\n" }
+    if dinm != "" { dline = GRN + "Display" + CO + "" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
-    REG = REG + SEP + "wm" + US + GRN + "WM:    " + VAL + wm + "\n"
-    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme:" + VAL + wmth + "\n"
-    REG = REG + SEP + "theme" + US + GRN + "Theme: " + VAL + thm + "\n"
-    REG = REG + SEP + "uptime" + US + GRN + "Uptime:" + VAL + up + "\n"
-    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs:  " + VAL + kfpkgs() + "\n"
+    REG = REG + SEP + "wm" + US + GRN + "WM" + CO + "    " + VAL + wm + "\n"
+    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme" + CO + "" + VAL + wmth + "\n"
+    REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
+    REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
+    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs" + CO + "  " + VAL + kfpkgs() + "\n"
     let ipline = ""
-    if lip != "" { ipline = GRN + "IP(en0):" + VAL + lip + "\n" }
+    if lip != "" { ipline = GRN + "IP(en0)" + CO + "" + VAL + lip + "\n" }
     REG = REG + SEP + "ip" + US + ipline
     let batline = ""
-    if bchip != "" { batline = GRN + batlbl + ":" + VAL + batval + "\n" }
+    if bchip != "" { batline = GRN + batlbl + CO + VAL + batval + "\n" }
     REG = REG + SEP + "battery" + US + batline
 
     // assemble the info list in the user's configured field order
