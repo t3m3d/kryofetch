@@ -203,9 +203,14 @@ func run() {
     if toInt(bmins) > 0 {
         if toInt(bmins) < 65535 { btimestr = bh + " hours, " + brm + " mins remaining" }
     }
+    // battery display — config `battery_format = full|status|percent`. Default full.
+    let bfmt = kfconfigget("battery_format", "full")
     let batval = bpct + "%"
-    if btimestr != "" { batval = batval + " (" + btimestr + ")" }
-    batval = batval + " [" + bstat + "]"
+    if bfmt == "full" {
+        if btimestr != "" { batval = batval + " (" + btimestr + ")" }
+        batval = batval + " [" + bstat + "]"
+    }
+    if bfmt == "status" { batval = batval + " [" + bstat + "]" }
     let batlbl = "Battery"
 
     // term + display values (used by the registry below)
