@@ -241,6 +241,12 @@ func run() {
     let showbars = kfconfigget("bars", "on")
     let rampre = rb + "  "
     if showbars == "off" { rampre = "" }
+    // memory display — config `memory_format = gb|mb|percent|fraction`. Default gb.
+    let mfOpt = kfconfigget("memory_format", "gb")
+    let ramstr = ugb + " GB / " + tgb + " GB  " + rpct + "%"
+    if mfOpt == "mb"       { ramstr = umb + " MB / " + tmb + " MB  " + rpct + "%" }
+    if mfOpt == "percent"  { ramstr = rpct + "%" }
+    if mfOpt == "fraction" { ramstr = ugb + " GB / " + tgb + " GB" }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -253,7 +259,7 @@ func run() {
     let gpuline = GRN + "GPU" + CO + "   " + VAL + fmtgpu(g1, vr1) + "\n"
     if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + fmtgpu(g2, vr2) + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
-    REG = REG + SEP + "ram" + US + GRN + "RAM" + CO + "   " + VAL + rampre + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    REG = REG + SEP + "ram" + US + GRN + "RAM" + CO + "   " + VAL + rampre + ramstr + "\n"
     REG = REG + SEP + "swap" + US + GRN + "Swap" + CO + "  " + VAL + swp + "\n"
     let diskline = GRN + "Disk" + CO + "  " + VAL + d1 + "\n"
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
