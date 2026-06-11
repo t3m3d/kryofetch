@@ -299,6 +299,21 @@ func run() {
     let osstr = os + " " + arch
     if ofmt == "noarch" { osstr = os }
     if ofmt == "short"  { osstr = osnobuild }
+    // WM theme display — config `theme_format = full|accent|mode`. Default full.
+    // (the WMTheme field, e.g. "Graphite (Light)")
+    let thfmt = kfconfigget("theme_format", "full")
+    let wmthstr = wmth
+    if thfmt == "accent" {
+        let ap = indexOf(wmth, " (")
+        if toInt(ap) > 0 { wmthstr = substring(wmth, 0, toInt(ap)) }
+    }
+    if thfmt == "mode" {
+        let mp = indexOf(wmth, "(")
+        if toInt(mp) >= 0 {
+            let mq = indexOf(wmth, ")")
+            if toInt(mq) > toInt(mp) { wmthstr = substring(wmth, toInt(mp) + 1, toInt(mq)) }
+        }
+    }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -329,7 +344,7 @@ func run() {
     if dinm != "" { dline = GRN + "Display" + CO + "" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
     REG = REG + SEP + "wm" + US + GRN + "WM" + CO + "    " + VAL + wm + "\n"
-    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme" + CO + "" + VAL + wmth + "\n"
+    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme" + CO + "" + VAL + wmthstr + "\n"
     REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
     REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
     REG = REG + SEP + "pkgs" + US + GRN + "Pkgs" + CO + "  " + VAL + kfpkgs() + "\n"
