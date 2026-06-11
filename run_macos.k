@@ -4,6 +4,7 @@ import "os_macos.k"
 import "mem_macos.k"
 import "disk_macos.k"
 import "gpu_macos.k"
+import "config_macos.k"
 
 func kfcls() {
     let E = fromCharCode(27)
@@ -168,42 +169,69 @@ func run() {
     batval = batval + " [" + bstat + "]"
     let batlbl = "Battery"
 
-    // Build packed info list — only non-empty entries are added
-    let IL = ""
-    IL = IL + GRN + "User:  " + RST + usr + "@" + host + "\n"
-    IL = IL + GRN + "OS:    " + RST + os + " " + arch + "\n"
-    IL = IL + GRN + "Host:  " + RST + mdl + "\n"
-    IL = IL + GRN + "Kernel:" + RST + kern + "\n"
-    IL = IL + GRN + "CPU:   " + RST + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
-    IL = IL + GRN + "GPU:   " + RST + fmtgpu(g1, vr1) + "\n"
-    if g2 != "" { IL = IL + GRN + "GPU2:  " + RST + fmtgpu(g2, vr2) + "\n" }
-    IL = IL + GRN + "RAM:   " + RST + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
-    IL = IL + GRN + "Swap:  " + RST + swp + "\n"
-    IL = IL + GRN + "Disk:  " + RST + d1 + "\n"
-    if d2 != "" { IL = IL + "       " + d2 + "\n" }
-    if d3 != "" { IL = IL + "       " + d3 + "\n" }
-    IL = IL + GRN + "Shell: " + RST + sh + "\n"
+    // term + display values (used by the registry below)
     let termv = ""
     if tnm != "" { termv = tnm }
     if cols != "0" {
         if termv != "" { termv = termv + " " + cols + "x" + rows }
         if termv == "" { termv = cols + "x" + rows }
     }
-    if termv != "" { IL = IL + GRN + "Term:  " + RST + termv + "\n" }
-    if tfnt != "" { IL = IL + GRN + "TermFont:" + RST + tfnt + "\n" }
-    IL = IL + GRN + "Res:   " + RST + res + "\n"
     let diline = dipx
     if discl != "" { diline = diline + " @ " + discl }
     if disize != "" { diline = diline + " in " + disize + "\"" }
     if dihz != "" { diline = diline + ", " + dihz }
-    if dinm != "" { IL = IL + GRN + "Display:" + RST + diline + "\n" }
-    IL = IL + GRN + "WM:    " + RST + wm + "\n"
-    IL = IL + GRN + "WMTheme:" + RST + wmth + "\n"
-    IL = IL + GRN + "Theme: " + RST + thm + "\n"
-    IL = IL + GRN + "Uptime:" + RST + up + "\n"
-    IL = IL + GRN + "Pkgs:  " + RST + kfpkgs() + "\n"
-    if lip != "" { IL = IL + GRN + "IP(en0):" + RST + lip + "\n" }
-    if bchip != "" { IL = IL + GRN + batlbl + ":" + RST + batval + "\n" }
+
+    // keyed field registry — each entry: SEP(30) key US(31) value (may be
+    // multi-line). Empty value = field not applicable -> skipped even if listed.
+    let SEP = fromCharCode(30)
+    let US  = fromCharCode(31)
+    let REG = ""
+    REG = REG + SEP + "user" + US + GRN + "User:  " + RST + usr + "@" + host + "\n"
+    REG = REG + SEP + "os" + US + GRN + "OS:    " + RST + os + " " + arch + "\n"
+    REG = REG + SEP + "host" + US + GRN + "Host:  " + RST + mdl + "\n"
+    REG = REG + SEP + "kernel" + US + GRN + "Kernel:" + RST + kern + "\n"
+    REG = REG + SEP + "cpu" + US + GRN + "CPU:   " + RST + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
+    let gpuline = GRN + "GPU:   " + RST + fmtgpu(g1, vr1) + "\n"
+    if g2 != "" { gpuline = gpuline + GRN + "GPU2:  " + RST + fmtgpu(g2, vr2) + "\n" }
+    REG = REG + SEP + "gpu" + US + gpuline
+    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + RST + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    REG = REG + SEP + "swap" + US + GRN + "Swap:  " + RST + swp + "\n"
+    let diskline = GRN + "Disk:  " + RST + d1 + "\n"
+    if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
+    if d3 != "" { diskline = diskline + "       " + d3 + "\n" }
+    REG = REG + SEP + "disk" + US + diskline
+    REG = REG + SEP + "shell" + US + GRN + "Shell: " + RST + sh + "\n"
+    let termline = ""
+    if termv != "" { termline = GRN + "Term:  " + RST + termv + "\n" }
+    REG = REG + SEP + "term" + US + termline
+    let tfline = ""
+    if tfnt != "" { tfline = GRN + "TermFont:" + RST + tfnt + "\n" }
+    REG = REG + SEP + "termfont" + US + tfline
+    REG = REG + SEP + "res" + US + GRN + "Res:   " + RST + res + "\n"
+    let dline = ""
+    if dinm != "" { dline = GRN + "Display:" + RST + diline + "\n" }
+    REG = REG + SEP + "display" + US + dline
+    REG = REG + SEP + "wm" + US + GRN + "WM:    " + RST + wm + "\n"
+    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme:" + RST + wmth + "\n"
+    REG = REG + SEP + "theme" + US + GRN + "Theme: " + RST + thm + "\n"
+    REG = REG + SEP + "uptime" + US + GRN + "Uptime:" + RST + up + "\n"
+    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs:  " + RST + kfpkgs() + "\n"
+    let ipline = ""
+    if lip != "" { ipline = GRN + "IP(en0):" + RST + lip + "\n" }
+    REG = REG + SEP + "ip" + US + ipline
+    let batline = ""
+    if bchip != "" { batline = GRN + batlbl + ":" + RST + batval + "\n" }
+    REG = REG + SEP + "battery" + US + batline
+
+    // assemble the info list in the user's configured field order
+    let fields = readFields()
+    let IL = ""
+    let fi = "0"
+    let fcount = linecount(fields)
+    while toInt(fi) < toInt(fcount) {
+        IL = IL + regGet(REG, nthline(fields, fi))
+        fi = toInt(fi) + 1 + ""
+    }
 
     let idx = "0"
     let infolen = linecount(IL)
