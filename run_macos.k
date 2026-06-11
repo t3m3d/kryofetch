@@ -286,6 +286,11 @@ func run() {
         resstr = replace(res, " Retina", "")
         resstr = replace(resstr, " x ", "x")
     }
+    // kernel display — config `kernel_format = full|release|name`. Default full.
+    let kfmt = kfconfigget("kernel_format", "full")
+    let kernstr = kern
+    if kfmt == "release" { kernstr = afterpart(kern, " ") }
+    if kfmt == "name"    { kernstr = firstpart(kern, " ") }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -293,7 +298,7 @@ func run() {
     REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + usr + "@" + host + "\n"
     REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + os + " " + arch + "\n"
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
-    REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kern + "\n"
+    REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kernstr + "\n"
     REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
     let gpuline = GRN + "GPU" + CO + "   " + VAL + gpustr1 + "\n"
     if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + gpustr2 + "\n" }
