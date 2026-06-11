@@ -197,42 +197,55 @@ func run() {
     // multi-line). Empty value = field not applicable -> skipped even if listed.
     let SEP = fromCharCode(30)
     let US  = fromCharCode(31)
+    // value text color — config `value_color = <name>|0-255`. Default = terminal
+    // default fg. VAL resets the label's bold, then applies the value color.
+    let vcOpt = kfconfigget("value_color", "default")
+    let VAL = RST
+    if vcOpt == "black"   { VAL = RST + E + "[30m" }
+    if vcOpt == "red"     { VAL = RST + E + "[31m" }
+    if vcOpt == "green"   { VAL = RST + E + "[32m" }
+    if vcOpt == "yellow"  { VAL = RST + E + "[33m" }
+    if vcOpt == "blue"    { VAL = RST + E + "[34m" }
+    if vcOpt == "magenta" { VAL = RST + E + "[35m" }
+    if vcOpt == "cyan"    { VAL = RST + E + "[36m" }
+    if vcOpt == "white"   { VAL = RST + E + "[37m" }
+    if toInt(vcOpt) > 0   { VAL = RST + E + "[38;5;" + vcOpt + "m" }
     let REG = ""
-    REG = REG + SEP + "user" + US + GRN + "User:  " + RST + usr + "@" + host + "\n"
-    REG = REG + SEP + "os" + US + GRN + "OS:    " + RST + os + " " + arch + "\n"
-    REG = REG + SEP + "host" + US + GRN + "Host:  " + RST + mdl + "\n"
-    REG = REG + SEP + "kernel" + US + GRN + "Kernel:" + RST + kern + "\n"
-    REG = REG + SEP + "cpu" + US + GRN + "CPU:   " + RST + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
-    let gpuline = GRN + "GPU:   " + RST + fmtgpu(g1, vr1) + "\n"
-    if g2 != "" { gpuline = gpuline + GRN + "GPU2:  " + RST + fmtgpu(g2, vr2) + "\n" }
+    REG = REG + SEP + "user" + US + GRN + "User:  " + VAL + usr + "@" + host + "\n"
+    REG = REG + SEP + "os" + US + GRN + "OS:    " + VAL + os + " " + arch + "\n"
+    REG = REG + SEP + "host" + US + GRN + "Host:  " + VAL + mdl + "\n"
+    REG = REG + SEP + "kernel" + US + GRN + "Kernel:" + VAL + kern + "\n"
+    REG = REG + SEP + "cpu" + US + GRN + "CPU:   " + VAL + cpu + " (" + cn + "c / " + tn + "t)" + "\n"
+    let gpuline = GRN + "GPU:   " + VAL + fmtgpu(g1, vr1) + "\n"
+    if g2 != "" { gpuline = gpuline + GRN + "GPU2:  " + VAL + fmtgpu(g2, vr2) + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
-    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + RST + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
-    REG = REG + SEP + "swap" + US + GRN + "Swap:  " + RST + swp + "\n"
-    let diskline = GRN + "Disk:  " + RST + d1 + "\n"
+    REG = REG + SEP + "ram" + US + GRN + "RAM:   " + VAL + rb + "  " + ugb + " GB / " + tgb + " GB  " + rpct + "%" + "\n"
+    REG = REG + SEP + "swap" + US + GRN + "Swap:  " + VAL + swp + "\n"
+    let diskline = GRN + "Disk:  " + VAL + d1 + "\n"
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
     if d3 != "" { diskline = diskline + "       " + d3 + "\n" }
     REG = REG + SEP + "disk" + US + diskline
-    REG = REG + SEP + "shell" + US + GRN + "Shell: " + RST + sh + "\n"
+    REG = REG + SEP + "shell" + US + GRN + "Shell: " + VAL + sh + "\n"
     let termline = ""
-    if termv != "" { termline = GRN + "Term:  " + RST + termv + "\n" }
+    if termv != "" { termline = GRN + "Term:  " + VAL + termv + "\n" }
     REG = REG + SEP + "term" + US + termline
     let tfline = ""
-    if tfnt != "" { tfline = GRN + "TermFont:" + RST + tfnt + "\n" }
+    if tfnt != "" { tfline = GRN + "TermFont:" + VAL + tfnt + "\n" }
     REG = REG + SEP + "termfont" + US + tfline
-    REG = REG + SEP + "res" + US + GRN + "Res:   " + RST + res + "\n"
+    REG = REG + SEP + "res" + US + GRN + "Res:   " + VAL + res + "\n"
     let dline = ""
-    if dinm != "" { dline = GRN + "Display:" + RST + diline + "\n" }
+    if dinm != "" { dline = GRN + "Display:" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
-    REG = REG + SEP + "wm" + US + GRN + "WM:    " + RST + wm + "\n"
-    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme:" + RST + wmth + "\n"
-    REG = REG + SEP + "theme" + US + GRN + "Theme: " + RST + thm + "\n"
-    REG = REG + SEP + "uptime" + US + GRN + "Uptime:" + RST + up + "\n"
-    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs:  " + RST + kfpkgs() + "\n"
+    REG = REG + SEP + "wm" + US + GRN + "WM:    " + VAL + wm + "\n"
+    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme:" + VAL + wmth + "\n"
+    REG = REG + SEP + "theme" + US + GRN + "Theme: " + VAL + thm + "\n"
+    REG = REG + SEP + "uptime" + US + GRN + "Uptime:" + VAL + up + "\n"
+    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs:  " + VAL + kfpkgs() + "\n"
     let ipline = ""
-    if lip != "" { ipline = GRN + "IP(en0):" + RST + lip + "\n" }
+    if lip != "" { ipline = GRN + "IP(en0):" + VAL + lip + "\n" }
     REG = REG + SEP + "ip" + US + ipline
     let batline = ""
-    if bchip != "" { batline = GRN + batlbl + ":" + RST + batval + "\n" }
+    if bchip != "" { batline = GRN + batlbl + ":" + VAL + batval + "\n" }
     REG = REG + SEP + "battery" + US + batline
 
     // assemble the info list in the user's configured field order
