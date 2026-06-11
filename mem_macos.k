@@ -16,6 +16,17 @@ func raminfo() {
 }
 
 func swapinfo() {
-    let out = trim(exec("sysctl vm.swapusage 2>/dev/null | awk '{if($7+0==0) print \"Unused\"; else print $7 \" used / \" $4 \" total\"}'"))    if out == "" { emit "Unused" }
-    emit trim(out)
+    let ut = trim(exec("sysctl vm.swapusage 2>/dev/null | awk '{z=($7+0==0)?1:0; print $7 \"|\" $4 \"|\" z}'"))
+    if ut == "" { emit "Unused" }
+    let used  = firstpart(ut, "|")
+    let rest  = afterpart(ut, "|")
+    let total = firstpart(rest, "|")
+    let zero  = afterpart(rest, "|")
+    if zero == "1" { emit "Unused" }
+    // config `swap_format = full|used|fraction|percent`. Default full.
+    let fmt = kfconfigget("swap_format", "full")
+    if fmt == "used"     { emit used + " used" }
+    if fmt == "fraction" { emit used + " / " + total }
+    if fmt == "percent"  { emit trim(exec("sysctl vm.swapusage 2>/dev/null | awk '{u=$7;t=$4;gsub(/M/,\"\",u);gsub(/M/,\"\",t);if(t>0)printf \"%.0f%%\",u*100/t; else printf \"0%%\"}'")) }
+    emit used + " used / " + total + " total"
 }
