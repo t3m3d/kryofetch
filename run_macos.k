@@ -252,6 +252,12 @@ func run() {
     let cpustr = cpu + " (" + cn + "c / " + tn + "t)"
     if cpfOpt == "brand" { cpustr = cpu }
     if cpfOpt == "cores" { cpustr = cpu + " (" + cn + " cores)" }
+    // gpu display — config `gpu_format = full|brand`. Default full (name + VRAM).
+    let gpfOpt = kfconfigget("gpu_format", "full")
+    let gpustr1 = fmtgpu(g1, vr1)
+    let gpustr2 = fmtgpu(g2, vr2)
+    if gpfOpt == "brand" { gpustr1 = g1  gpustr2 = g2 }
+    if gpfOpt == "name"  { gpustr1 = g1  gpustr2 = g2 }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -261,8 +267,8 @@ func run() {
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + mdl + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kern + "\n"
     REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
-    let gpuline = GRN + "GPU" + CO + "   " + VAL + fmtgpu(g1, vr1) + "\n"
-    if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + fmtgpu(g2, vr2) + "\n" }
+    let gpuline = GRN + "GPU" + CO + "   " + VAL + gpustr1 + "\n"
+    if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + gpustr2 + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
     REG = REG + SEP + "ram" + US + GRN + "RAM" + CO + "   " + VAL + rampre + ramstr + "\n"
     REG = REG + SEP + "swap" + US + GRN + "Swap" + CO + "  " + VAL + swp + "\n"
