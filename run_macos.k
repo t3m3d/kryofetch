@@ -213,12 +213,20 @@ func run() {
     if bfmt == "status" { batval = batval + " [" + bstat + "]" }
     let batlbl = "Battery"
 
-    // term + display values (used by the registry below)
+    // term + display values (used by the registry below).
+    // config `term_format = full|name|size`. Default full (name + size).
+    let tfmt = kfconfigget("term_format", "full")
+    let tsize = ""
+    if cols != "0" { tsize = cols + "x" + rows }
     let termv = ""
-    if tnm != "" { termv = tnm }
-    if cols != "0" {
-        if termv != "" { termv = termv + " " + cols + "x" + rows }
-        if termv == "" { termv = cols + "x" + rows }
+    if tfmt == "name" { termv = tnm }
+    if tfmt == "size" { termv = tsize }
+    if tfmt == "full" {
+        termv = tnm
+        if tsize != "" {
+            if termv != "" { termv = termv + " " + tsize }
+            if termv == "" { termv = tsize }
+        }
     }
     let diline = dipx
     if discl != "" { diline = diline + " @ " + discl }
