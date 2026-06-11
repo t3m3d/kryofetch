@@ -233,30 +233,40 @@ func run() {
         fi = toInt(fi) + 1 + ""
     }
 
+    // logo: default apple art, packed \n-joined. Override via `logo =` config:
+    // 'none'/'off' hides it; a /path reads ASCII art from a file.
+    let LOGO = l0 + "\n" + l1 + "\n" + l2 + "\n" + l3 + "\n" + l4 + "\n" + l5 + "\n" + l6 + "\n" + l7 + "\n" + l8 + "\n" + l9 + "\n" + l10 + "\n" + l11 + "\n" + l12 + "\n" + l13 + "\n" + l14 + "\n" + l15
+    let logoW = toInt(LW)
+    let logoOpt = kfconfigget("logo", "apple")
+    if logoOpt == "none" { LOGO = ""  logoW = 0 }
+    if logoOpt == "off"  { LOGO = ""  logoW = 0 }
+    if substring(logoOpt, 0, 1) == "/" {
+        let custom = exec("cat \"" + logoOpt + "\" 2>/dev/null")
+        if trim(custom) != "" {
+            LOGO = custom
+            logoW = 0
+            let li = "0"
+            let lc = linecount(LOGO)
+            while toInt(li) < toInt(lc) {
+                let w = toInt(vislen(infoline(LOGO, li)))
+                if w > logoW { logoW = w }
+                li = toInt(li) + 1 + ""
+            }
+            logoW = logoW + 2
+        }
+    }
+
     let idx = "0"
     let infolen = linecount(IL)
-    let maxidx = "16"
-    if toInt(infolen) > 16 { maxidx = infolen }
+    let logolen = "0"
+    if LOGO != "" { logolen = linecount(LOGO) }
+    let maxidx = infolen
+    if toInt(logolen) > toInt(infolen) { maxidx = logolen }
     while toInt(idx) < toInt(maxidx) {
         let logo = ""
-        if idx == "0"  { logo = l0  }
-        if idx == "1"  { logo = l1  }
-        if idx == "2"  { logo = l2  }
-        if idx == "3"  { logo = l3  }
-        if idx == "4"  { logo = l4  }
-        if idx == "5"  { logo = l5  }
-        if idx == "6"  { logo = l6  }
-        if idx == "7"  { logo = l7  }
-        if idx == "8"  { logo = l8  }
-        if idx == "9"  { logo = l9  }
-        if idx == "10" { logo = l10 }
-        if idx == "11" { logo = l11 }
-        if idx == "12" { logo = l12 }
-        if idx == "13" { logo = l13 }
-        if idx == "14" { logo = l14 }
-        if idx == "15" { logo = l15 }
-
-        kp(padansi(logo, toInt(LW)) + "  " + infoline(IL, idx))
+        if toInt(idx) < toInt(logolen) { logo = infoline(LOGO, idx) }
+        if logoW > 0 { kp(padansi(logo, logoW) + "  " + infoline(IL, idx)) }
+        else { kp(infoline(IL, idx)) }
         idx = toInt(idx) + 1 + ""
     }
 

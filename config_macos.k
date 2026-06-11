@@ -17,6 +17,10 @@ func writeDefaultConfig() {
     c = c + "# available fields:\n"
     c = c + "#   user os host kernel cpu gpu ram swap disk shell term termfont\n"
     c = c + "#   res display wm wmtheme theme uptime pkgs ip battery\n"
+    c = c + "#\n"
+    c = c + "# logo: 'apple' (default), 'none' (hide it), or a path to an ASCII art\n"
+    c = c + "# file. Uncomment + edit to change:\n"
+    c = c + "# logo = apple\n"
     c = c + "\n"
     c = c + "user\nos\nhost\nkernel\ncpu\ngpu\nram\nswap\ndisk\nshell\nterm\ntermfont\n"
     c = c + "res\ndisplay\nwm\nwmtheme\ntheme\nuptime\npkgs\nip\nbattery\n"
@@ -48,13 +52,45 @@ func readFields() {
         let t = trim(line)
         if t != "" {
             if substring(t, 0, 1) != "#" {
-                if out != "" { out = out + "\n" }
-                out = out + toLower(t)
+                // lines with '=' are settings (e.g. logo = apple), not fields
+                if indexOf(t, "=") < 0 {
+                    if out != "" { out = out + "\n" }
+                    out = out + toLower(t)
+                }
             }
         }
     }
     if out == "" { emit defaultFieldList() }
     emit out
+}
+
+// Read a `key = value` setting from the config. Returns dflt if not set.
+func kfconfigget(key, dflt) {
+    let txt = exec("cat \"" + kfconfigpath() + "\" 2>/dev/null")
+    let start = "0"
+    let done = "0"
+    while done == "0" {
+        let rest = substring(txt, toInt(start), len(txt))
+        let nlPos = indexOf(rest, "\n")
+        let line = ""
+        if nlPos < 0 { line = rest  done = "1" }
+        else {
+            line = substring(rest, 0, toInt(nlPos))
+            start = toInt(start) + toInt(nlPos) + 1 + ""
+        }
+        let t = trim(line)
+        if t != "" {
+            if substring(t, 0, 1) != "#" {
+                let eq = indexOf(t, "=")
+                if eq >= 0 {
+                    if toLower(trim(substring(t, 0, toInt(eq)))) == key {
+                        emit trim(substring(t, toInt(eq) + 1, len(t)))
+                    }
+                }
+            }
+        }
+    }
+    emit dflt
 }
 
 // Look up a field's rendered line(s) in the keyed registry REG. Entries are
