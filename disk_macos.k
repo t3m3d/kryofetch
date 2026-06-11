@@ -1,8 +1,16 @@
 import "utils_macos.k"
 
 func driveinfo() {
-    // Data volume = real user usage; externals must be >1 GB to skip virtual FSes
-    let raw = trim(exec("df -Pm 2>/dev/null | awk 'NR>1 && /^\\/dev\\// && ($6==\"/System/Volumes/Data\" || ($6~/^\\/Volumes\\// && $2+0>1000)) {print $2, $3, ($6==\"/System/Volumes/Data\" ? \"/\" : $6)}' | head -3"))    if raw == "" { emit "" }
+    // Default: Data volume (shown as "/") + externals >1 GB (skips virtual FSes).
+    // `disk_mounts = / /Volumes/Foo` overrides with an explicit mount list.
+    let mounts = kfconfigget("disk_mounts", "")
+    let raw = ""
+    if trim(mounts) == "" {
+        raw = trim(exec("df -Pm 2>/dev/null | awk 'NR>1 && /^\\/dev\\// && ($6==\"/System/Volumes/Data\" || ($6~/^\\/Volumes\\// && $2+0>1000)) {print $2, $3, ($6==\"/System/Volumes/Data\" ? \"/\" : $6)}' | head -3"))
+    } else {
+        raw = trim(exec("df -Pm " + mounts + " 2>/dev/null | awk 'NR>1 {print $2, $3, $6}' | head -3"))
+    }
+    if raw == "" { emit "" }
 
     let showbars = kfconfigget("bars", "on")
     let result = ""

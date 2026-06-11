@@ -5,7 +5,7 @@
 # keeps every call intra-module (same fix kcode uses).
 set -e
 cd "$(dirname "$0")"
-VERSION="1.2.11"
+VERSION="1.2.12"
 MERGED="$(mktemp /tmp/kryofetch-merged.XXXX.k)"
 {
   grep -v '^import ' utils_macos.k
