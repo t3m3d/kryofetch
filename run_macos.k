@@ -48,7 +48,19 @@ func run() {
     kfinit()
 
     let E     = fromCharCode(27)
+    // info label color — config `label_color = green|red|yellow|blue|magenta|
+    // cyan|white` (bold ANSI) or a 0-255 number (256-color). Default green.
+    let lcOpt = kfconfigget("label_color", "green")
     let GRN   = E + "[32;1m"
+    if lcOpt == "black"   { GRN = E + "[30;1m" }
+    if lcOpt == "red"     { GRN = E + "[31;1m" }
+    if lcOpt == "green"   { GRN = E + "[32;1m" }
+    if lcOpt == "yellow"  { GRN = E + "[33;1m" }
+    if lcOpt == "blue"    { GRN = E + "[34;1m" }
+    if lcOpt == "magenta" { GRN = E + "[35;1m" }
+    if lcOpt == "cyan"    { GRN = E + "[36;1m" }
+    if lcOpt == "white"   { GRN = E + "[37;1m" }
+    if toInt(lcOpt) > 0   { GRN = E + "[38;5;" + lcOpt + "m" }
     let CYN   = E + "[36;1m"
     let RST   = E + "[0m"
     let BLU   = E + "[34m"
