@@ -299,20 +299,36 @@ func run() {
     let logoOpt = kfconfigget("logo", "apple")
     if logoOpt == "none" { LOGO = ""  logoW = 0 }
     if logoOpt == "off"  { LOGO = ""  logoW = 0 }
+    // named built-in OS logos + custom file -> customart (width recomputed below)
+    let WHT = E + "[37;1m"
+    let customart = ""
+    if lgcOpt == "rainbow" { } else { WHT = GR2 }
+    if logoOpt == "tux" {
+        customart = WHT + "    .--." + RST + "\n" + WHT + "   |o_o |" + RST + "\n" + WHT + "   |:_/ |" + RST + "\n" + WHT + "  //   \\ \\" + RST + "\n" + WHT + " (|     | )" + RST + "\n" + WHT + "/'\\_   _/`\\" + RST + "\n" + WHT + "\\___)=(___/" + RST
+    }
+    if logoOpt == "linux" {
+        customart = WHT + "    .--." + RST + "\n" + WHT + "   |o_o |" + RST + "\n" + WHT + "   |:_/ |" + RST + "\n" + WHT + "  //   \\ \\" + RST + "\n" + WHT + " (|     | )" + RST + "\n" + WHT + "/'\\_   _/`\\" + RST + "\n" + WHT + "\\___)=(___/" + RST
+    }
+    if logoOpt == "windows" {
+        let WB = E + "[34;1m"
+        if lgcOpt != "rainbow" { WB = WHT }
+        customart = WB + " ______  ______" + RST + "\n" + WB + "|      ||      |" + RST + "\n" + WB + "|______||______|" + RST + "\n" + WB + " ______  ______" + RST + "\n" + WB + "|      ||      |" + RST + "\n" + WB + "|______||______|" + RST
+    }
     if substring(logoOpt, 0, 1) == "/" {
         let custom = exec("cat \"" + logoOpt + "\" 2>/dev/null")
-        if trim(custom) != "" {
-            LOGO = custom
-            logoW = 0
-            let li = "0"
-            let lc = linecount(LOGO)
-            while toInt(li) < toInt(lc) {
-                let w = toInt(vislen(infoline(LOGO, li)))
-                if w > logoW { logoW = w }
-                li = toInt(li) + 1 + ""
-            }
-            logoW = logoW + 2
+        if trim(custom) != "" { customart = custom }
+    }
+    if customart != "" {
+        LOGO = customart
+        logoW = 0
+        let li = "0"
+        let lc = linecount(LOGO)
+        while toInt(li) < toInt(lc) {
+            let w = toInt(vislen(infoline(LOGO, li)))
+            if w > logoW { logoW = w }
+            li = toInt(li) + 1 + ""
         }
+        logoW = logoW + 2
     }
 
     let idx = "0"
