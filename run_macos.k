@@ -61,7 +61,18 @@ func run() {
     if lcOpt == "cyan"    { GRN = E + "[36;1m" }
     if lcOpt == "white"   { GRN = E + "[37;1m" }
     if toInt(lcOpt) > 0   { GRN = E + "[38;5;" + lcOpt + "m" }
+    // title color — config `title_color = <name>|0-255`. Default cyan.
+    let tcOpt = kfconfigget("title_color", "cyan")
     let CYN   = E + "[36;1m"
+    if tcOpt == "black"   { CYN = E + "[30;1m" }
+    if tcOpt == "red"     { CYN = E + "[31;1m" }
+    if tcOpt == "green"   { CYN = E + "[32;1m" }
+    if tcOpt == "yellow"  { CYN = E + "[33;1m" }
+    if tcOpt == "blue"    { CYN = E + "[34;1m" }
+    if tcOpt == "magenta" { CYN = E + "[35;1m" }
+    if tcOpt == "cyan"    { CYN = E + "[36;1m" }
+    if tcOpt == "white"   { CYN = E + "[37;1m" }
+    if toInt(tcOpt) > 0   { CYN = E + "[38;5;" + tcOpt + "m" }
     let RST   = E + "[0m"
     let BLU   = E + "[34m"
     let CY    = E + "[36m"
