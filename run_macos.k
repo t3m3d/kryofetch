@@ -271,6 +271,13 @@ func run() {
         if toInt(hp) > 0 { hoststr = substring(mdl, 0, toInt(hp)) }
     }
     if hfOpt == "id" { hoststr = trim(exec("sysctl -n hw.model 2>/dev/null")) }
+    // resolution display — config `resolution_format = full|simple`. Default full.
+    let rfOpt = kfconfigget("resolution_format", "full")
+    let resstr = res
+    if rfOpt == "simple" {
+        resstr = replace(res, " Retina", "")
+        resstr = replace(resstr, " x ", "x")
+    }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
@@ -296,7 +303,7 @@ func run() {
     let tfline = ""
     if tfnt != "" { tfline = GRN + "TermFont" + CO + "" + VAL + tfnt + "\n" }
     REG = REG + SEP + "termfont" + US + tfline
-    REG = REG + SEP + "res" + US + GRN + "Res" + CO + "   " + VAL + res + "\n"
+    REG = REG + SEP + "res" + US + GRN + "Res" + CO + "   " + VAL + resstr + "\n"
     let dline = ""
     if dinm != "" { dline = GRN + "Display" + CO + "" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
