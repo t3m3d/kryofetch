@@ -183,14 +183,44 @@ func idxfrom(s, sub, start) {
     emit "-1"
 }
 
+// count installed packages for one manager keyword
+func pkgcount(m) {
+    if m == "brew"  { emit trim(exec("brew list --formula 2>/dev/null | wc -l | tr -d ' '")) }
+    if m == "cask"  { emit trim(exec("brew list --cask 2>/dev/null | wc -l | tr -d ' '")) }
+    if m == "port"  { emit trim(exec("port installed 2>/dev/null | grep -c active")) }
+    if m == "ports" { emit trim(exec("port installed 2>/dev/null | grep -c active")) }
+    if m == "npm"   { emit trim(exec("npm ls -g --depth=0 2>/dev/null | grep -c '@'")) }
+    if m == "pip"   { emit trim(exec("pip list 2>/dev/null | tail -n +3 | wc -l | tr -d ' '")) }
+    if m == "pip3"  { emit trim(exec("pip3 list 2>/dev/null | tail -n +3 | wc -l | tr -d ' '")) }
+    if m == "cargo" { emit trim(exec("ls $HOME/.cargo/bin 2>/dev/null | wc -l | tr -d ' '")) }
+    if m == "gem"   { emit trim(exec("gem list 2>/dev/null | wc -l | tr -d ' '")) }
+    emit "0"
+}
+
 func kfpkgs() {
-    let brew  = trim(exec("brew list --formula 2>/dev/null | wc -l | tr -d ' '"))
-    let ports = trim(exec("port installed 2>/dev/null | grep -c active"))
+    // config `pkg_managers = brew ports ...` selects which to count (default
+    // brew + ports). Supported: brew cask port npm pip pip3 cargo gem.
+    let mgrs = kfconfigget("pkg_managers", "brew ports")
     let result = ""
-    if toInt(brew) > 0 { result = brew + " (brew)" }
-    if toInt(ports) > 0 {
-        if result != "" { result = result + ", " }
-        result = result + ports + " (ports)"
+    let start = "0"
+    let done = "0"
+    while done == "0" {
+        let rest = substring(mgrs, toInt(start), len(mgrs))
+        let sp = indexOf(rest, " ")
+        let tok = ""
+        if sp < 0 { tok = rest  done = "1" }
+        else {
+            tok = substring(rest, 0, toInt(sp))
+            start = toInt(start) + toInt(sp) + 1 + ""
+        }
+        let t = trim(tok)
+        if t != "" {
+            let c = pkgcount(t)
+            if toInt(c) > 0 {
+                if result != "" { result = result + ", " }
+                result = result + c + " (" + t + ")"
+            }
+        }
     }
     if result == "" { emit "none" }
     emit result
