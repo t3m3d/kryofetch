@@ -103,7 +103,11 @@ func rambar(usedMB, totalMB) {
 func colorpalette() {
     let E   = fromCharCode(27)
     let RST = E + "[0m"
-    let blk = "   "
+    let pw  = toInt(kfconfigget("palette_width", "3"))
+    if pw < 1 { pw = 1 }
+    let blk = ""
+    let bi  = "0"
+    while toInt(bi) < pw { blk = blk + " "  bi = toInt(bi) + 1 + "" }
     let r1  = ""
     let r2  = ""
     let i   = "0"
@@ -125,14 +129,19 @@ func applepalette() {
     // U+F8FF (Apple logo) as raw UTF-8 bytes — fromCharCode on a single >127
     // codepoint mojibakes, so emit the 3 bytes EF A3 BF directly.
     let AP  = fromCharCode(239) + fromCharCode(163) + fromCharCode(191)
+    let pw  = toInt(kfconfigget("palette_width", "3"))
+    if pw < 1 { pw = 1 }
+    let gap = ""
+    let gi  = "0"
+    while toInt(gi) < pw { gap = gap + " "  gi = toInt(gi) + 1 + "" }
     let r1  = ""
     let r2  = ""
     let i   = "0"
     while toInt(i) < 8 {
         let c1 = toInt(i) + 30 + ""
         let c2 = toInt(i) + 90 + ""
-        r1 = r1 + E + "[" + c1 + ";1m" + AP + " "
-        r2 = r2 + E + "[" + c2 + "m" + AP + " "
+        r1 = r1 + E + "[" + c1 + ";1m" + AP + gap
+        r2 = r2 + E + "[" + c2 + "m" + AP + gap
         i = toInt(i) + 1 + ""
     }
     kp("  " + r1 + RST)
