@@ -14,9 +14,43 @@ func osver() {
     emit "macOS " + name + " " + v + " (" + build + ")"
 }
 
+func _plur(n, w) {
+    if toInt(n) == 1 { emit n + " " + w }
+    emit n + " " + w + "s"
+}
+
 func uptime() {
-    let out = trim(exec("uptime | sed 's/.*up //' | sed 's/, *[0-9]* *user.*//'"))    if out == "" { emit "unknown" }
-    emit trim(out)
+    let boot = trim(exec("sysctl -n kern.boottime 2>/dev/null | grep -oE 'sec = [0-9]+' | head -1 | grep -oE '[0-9]+'"))
+    if boot == "" { emit "unknown" }
+    let secs = toInt(trim(exec("date +%s"))) - toInt(boot)
+    if secs < 0 { secs = 0 }
+    let days = secs / 86400 + ""
+    let rem  = secs - toInt(days) * 86400
+    let hrs  = rem / 3600 + ""
+    let mins = (rem - toInt(hrs) * 3600) / 60 + ""
+    let fmt = kfconfigget("uptime_format", "pretty")
+    if fmt == "tiny" { fmt = "short" }
+    if fmt == "seconds" { emit secs + "s" }
+    if fmt == "short" {
+        let o = ""
+        if toInt(days) > 0 { o = days + "d" }
+        if toInt(hrs) > 0  { if o != "" { o = o + " " }  o = o + hrs + "h" }
+        if o != "" { o = o + " " }
+        emit o + mins + "m"
+    }
+    if fmt == "pretty" {
+        let hh = hrs
+        let mm = mins
+        if toInt(hrs) < 10  { hh = "0" + hrs }
+        if toInt(mins) < 10 { mm = "0" + mins }
+        if toInt(days) > 0 { emit _plur(days, "day") + ", " + hh + ":" + mm }
+        emit hh + ":" + mm
+    }
+    let o = ""
+    if toInt(days) > 0 { o = _plur(days, "day") }
+    if toInt(hrs) > 0  { if o != "" { o = o + ", " }  o = o + _plur(hrs, "hour") }
+    if o != "" { o = o + ", " }
+    emit o + _plur(mins, "min")
 }
 
 func kfresolution() {
