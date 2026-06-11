@@ -83,6 +83,22 @@ func run() {
     let ORG = E + "[33;1m"
     let RED = E + "[31m"
     let PUR = E + "[35m"
+    // logo color — config `logo_color = rainbow` (default multicolor) or a
+    // single name/0-255 to paint the whole logo one color.
+    let lgcOpt = kfconfigget("logo_color", "rainbow")
+    if lgcOpt != "rainbow" {
+        let LC = ""
+        if lgcOpt == "black"   { LC = E + "[30m" }
+        if lgcOpt == "red"     { LC = E + "[31m" }
+        if lgcOpt == "green"   { LC = E + "[32m" }
+        if lgcOpt == "yellow"  { LC = E + "[33m" }
+        if lgcOpt == "blue"    { LC = E + "[34m" }
+        if lgcOpt == "magenta" { LC = E + "[35m" }
+        if lgcOpt == "cyan"    { LC = E + "[36m" }
+        if lgcOpt == "white"   { LC = E + "[37m" }
+        if toInt(lgcOpt) > 0   { LC = E + "[38;5;" + lgcOpt + "m" }
+        if LC != "" { GR2 = LC  YEL = LC  ORG = LC  RED = LC  PUR = LC  BLU = LC }
+    }
 
     let l0  = GR2 + "                    'c." + RST
     let l1  = GR2 + "                 ,xNMM." + RST
