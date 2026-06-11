@@ -258,13 +258,21 @@ func run() {
     let gpustr2 = fmtgpu(g2, vr2)
     if gpfOpt == "brand" { gpustr1 = g1  gpustr2 = g2 }
     if gpfOpt == "name"  { gpustr1 = g1  gpustr2 = g2 }
+    // host display — config `host_format = full|short|id`. Default full.
+    let hfOpt = kfconfigget("host_format", "full")
+    let hoststr = mdl
+    if hfOpt == "short" {
+        let hp = indexOf(mdl, " (")
+        if toInt(hp) > 0 { hoststr = substring(mdl, 0, toInt(hp)) }
+    }
+    if hfOpt == "id" { hoststr = trim(exec("sysctl -n hw.model 2>/dev/null")) }
     // label/value separator — config `separator = ...` (default ":"). 1-char
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
     let REG = ""
     REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + usr + "@" + host + "\n"
     REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + os + " " + arch + "\n"
-    REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + mdl + "\n"
+    REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kern + "\n"
     REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
     let gpuline = GRN + "GPU" + CO + "   " + VAL + gpustr1 + "\n"
