@@ -299,6 +299,18 @@ func run() {
     let osstr = os + " " + arch
     if ofmt == "noarch" { osstr = os }
     if ofmt == "short"  { osstr = osnobuild }
+    // wm display — config `wm_format = full|name`. Default full (name + version).
+    let wmfmt = kfconfigget("wm_format", "full")
+    let wmstr = wm
+    if wmfmt == "name" {
+        let wlast = "-1"
+        let wi = "0"
+        while toInt(wi) < len(wm) {
+            if substring(wm, toInt(wi), toInt(wi) + 1) == " " { wlast = wi }
+            wi = toInt(wi) + 1 + ""
+        }
+        if toInt(wlast) > 0 { wmstr = substring(wm, 0, toInt(wlast)) }
+    }
     // WM theme display — config `theme_format = full|accent|mode`. Default full.
     // (the WMTheme field, e.g. "Graphite (Light)")
     let thfmt = kfconfigget("theme_format", "full")
@@ -343,7 +355,7 @@ func run() {
     let dline = ""
     if dinm != "" { dline = GRN + "Display" + CO + "" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
-    REG = REG + SEP + "wm" + US + GRN + "WM" + CO + "    " + VAL + wm + "\n"
+    REG = REG + SEP + "wm" + US + GRN + "WM" + CO + "    " + VAL + wmstr + "\n"
     REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme" + CO + "" + VAL + wmthstr + "\n"
     REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
     REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
