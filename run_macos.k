@@ -423,6 +423,26 @@ func run() {
         IL = IL + regGet(REG, nthline(fields, fi))
         fi = toInt(fi) + 1 + ""
     }
+    // custom command fields — `custom = Label | shell command` (repeatable).
+    // Runs each command, appends "Label<sep> output" after the regular fields.
+    let customs = kfconfiggetall("custom")
+    if customs != "" {
+        let ci = "0"
+        let cc = linecount(customs)
+        while toInt(ci) < toInt(cc) {
+            let cl = nthline(customs, ci)
+            let bar = indexOf(cl, "|")
+            if toInt(bar) > 0 {
+                let clabel = trim(substring(cl, 0, toInt(bar)))
+                let ccmd   = trim(substring(cl, toInt(bar) + 1, len(cl)))
+                if ccmd != "" {
+                    let cout = trim(exec(ccmd + " 2>/dev/null"))
+                    IL = IL + GRN + clabel + CO + " " + VAL + cout + "\n"
+                }
+            }
+            ci = toInt(ci) + 1 + ""
+        }
+    }
 
     // logo: default apple art, packed \n-joined. Override via `logo =` config:
     // 'none'/'off' hides it; a /path reads ASCII art from a file.

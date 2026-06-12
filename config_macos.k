@@ -144,6 +144,11 @@ func writeDefaultConfig() {
     c = c + "# KryptonBytes'). Set your own text. Uncomment + edit:\n"
     c = c + "# title = KryoFetch by KryptonBytes\n"
     c = c + "#\n"
+    c = c + "# custom fields: 'custom = Label | shell command' runs the command and\n"
+    c = c + "# shows its output as an extra field (repeatable, appended at the end).\n"
+    c = c + "# custom = Weather | curl -s 'wttr.in/?format=3'\n"
+    c = c + "# custom = Public IP | curl -s https://api.ipify.org\n"
+    c = c + "#\n"
     c = c + "# title_color: color of the title line. A name or 0-255 number;\n"
     c = c + "# default cyan. Uncomment + edit:\n"
     c = c + "# title_color = cyan\n"
@@ -217,6 +222,37 @@ func kfconfigget(key, dflt) {
         }
     }
     emit dflt
+}
+
+// Collect ALL values for a repeatable setting (e.g. `custom = ...`), \n-joined.
+func kfconfiggetall(key) {
+    let txt = exec("cat \"" + kfconfigpath() + "\" 2>/dev/null")
+    let out = ""
+    let start = "0"
+    let done = "0"
+    while done == "0" {
+        let rest = substring(txt, toInt(start), len(txt))
+        let nlPos = indexOf(rest, "\n")
+        let line = ""
+        if nlPos < 0 { line = rest  done = "1" }
+        else {
+            line = substring(rest, 0, toInt(nlPos))
+            start = toInt(start) + toInt(nlPos) + 1 + ""
+        }
+        let t = trim(line)
+        if t != "" {
+            if substring(t, 0, 1) != "#" {
+                let eq = indexOf(t, "=")
+                if eq >= 0 {
+                    if toLower(trim(substring(t, 0, toInt(eq)))) == key {
+                        if out != "" { out = out + "\n" }
+                        out = out + trim(substring(t, toInt(eq) + 1, len(t)))
+                    }
+                }
+            }
+        }
+    }
+    emit out
 }
 
 // Look up a field's rendered line(s) in the keyed registry REG. Entries are
