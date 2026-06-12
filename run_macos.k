@@ -290,6 +290,11 @@ func run() {
         resstr = replace(res, " Retina", "")
         resstr = replace(resstr, " x ", "x")
     }
+    // user display — config `user_format = full|user|host`. Default full (user@host).
+    let ufmt = kfconfigget("user_format", "full")
+    let userstr = usr + "@" + host
+    if ufmt == "user" { userstr = usr }
+    if ufmt == "host" { userstr = host }
     // shell display — config `shell_format = full|name`. Default full (with version).
     let sfmt = kfconfigget("shell_format", "full")
     let shstr = sh
@@ -338,7 +343,7 @@ func run() {
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
     let REG = ""
-    REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + usr + "@" + host + "\n"
+    REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + userstr + "\n"
     REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + osstr + "\n"
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kernstr + "\n"
