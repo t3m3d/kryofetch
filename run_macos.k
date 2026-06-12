@@ -228,10 +228,14 @@ func run() {
             if termv == "" { termv = tsize }
         }
     }
+    // display field — config `display_format = full|resolution|nohz`. Default full.
+    let dfmt = kfconfigget("display_format", "full")
     let diline = dipx
-    if discl != "" { diline = diline + " @ " + discl }
-    if disize != "" { diline = diline + " in " + disize + "\"" }
-    if dihz != "" { diline = diline + ", " + dihz }
+    if dfmt != "resolution" {
+        if discl != "" { diline = diline + " @ " + discl }
+        if disize != "" { diline = diline + " in " + disize + "\"" }
+        if dfmt != "nohz" { if dihz != "" { diline = diline + ", " + dihz } }
+    }
 
     // keyed field registry — each entry: SEP(30) key US(31) value (may be
     // multi-line). Empty value = field not applicable -> skipped even if listed.
