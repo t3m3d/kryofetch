@@ -535,10 +535,16 @@ func run() {
     if LOGO != "" { logolen = linecount(LOGO) }
     let maxidx = infolen
     if toInt(logolen) > toInt(infolen) { maxidx = logolen }
+    // gap between logo and info — config `logo_gap` (default 2 spaces)
+    let gapn = toInt(kfconfigget("logo_gap", "2"))
+    if gapn < 0 { gapn = 0 }
+    let lgap = ""
+    let gi = "0"
+    while toInt(gi) < gapn { lgap = lgap + " "  gi = toInt(gi) + 1 + "" }
     while toInt(idx) < toInt(maxidx) {
         let logo = ""
         if toInt(idx) < toInt(logolen) { logo = infoline(LOGO, idx) }
-        if logoW > 0 { kp(padansi(logo, logoW) + "  " + infoline(IL, idx)) }
+        if logoW > 0 { kp(padansi(logo, logoW) + lgap + infoline(IL, idx)) }
         else { kp(infoline(IL, idx)) }
         idx = toInt(idx) + 1 + ""
     }
@@ -547,6 +553,15 @@ func run() {
     let titleOpt = kfconfigget("title", "")
     if titleOpt == "" { kp(CYN + "  KryoFetch" + RST + " by KryptonBytes") }
     else { kp(CYN + "  " + titleOpt + RST) }
+    // title underline — config `title_rule = on` draws a --- rule under the title
+    if kfconfigget("title_rule", "off") == "on" {
+        let ttext = "KryoFetch by KryptonBytes"
+        if titleOpt != "" { ttext = titleOpt }
+        let rule = "  "
+        let ri = "0"
+        while toInt(ri) < len(ttext) { rule = rule + "-"  ri = toInt(ri) + 1 + "" }
+        kp(CYN + rule + RST)
+    }
     kp("")
     let palOpt = kfconfigget("palette", "blocks")
     if nocolor == "0" {
