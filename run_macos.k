@@ -290,6 +290,19 @@ func run() {
         resstr = replace(res, " Retina", "")
         resstr = replace(resstr, " x ", "x")
     }
+    // termfont display — config `termfont_format = full|name`. Default full.
+    // (TermFont is iTerm-only; empty on terminals that don't report a font.)
+    let tffmt = kfconfigget("termfont_format", "full")
+    let termfontstr = tfnt
+    if tffmt == "name" {
+        let tflast = "-1"
+        let tfi = "0"
+        while toInt(tfi) < len(tfnt) {
+            if substring(tfnt, toInt(tfi), toInt(tfi) + 1) == " " { tflast = tfi }
+            tfi = toInt(tfi) + 1 + ""
+        }
+        if toInt(tflast) > 0 { termfontstr = substring(tfnt, 0, toInt(tflast)) }
+    }
     // user display — config `user_format = full|user|host`. Default full (user@host).
     let ufmt = kfconfigget("user_format", "full")
     let userstr = usr + "@" + host
@@ -362,7 +375,7 @@ func run() {
     if termv != "" { termline = GRN + "Term" + CO + "  " + VAL + termv + "\n" }
     REG = REG + SEP + "term" + US + termline
     let tfline = ""
-    if tfnt != "" { tfline = GRN + "TermFont" + CO + "" + VAL + tfnt + "\n" }
+    if tfnt != "" { tfline = GRN + "TermFont" + CO + "" + VAL + termfontstr + "\n" }
     REG = REG + SEP + "termfont" + US + tfline
     REG = REG + SEP + "res" + US + GRN + "Res" + CO + "   " + VAL + resstr + "\n"
     let dline = ""
