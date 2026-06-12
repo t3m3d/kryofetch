@@ -368,8 +368,19 @@ func run() {
     REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
     REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
     REG = REG + SEP + "pkgs" + US + GRN + "Pkgs" + CO + "  " + VAL + kfpkgs() + "\n"
+    // ip display — config `ip_format = full|address|mask|public`. Default full.
+    // mask hides it (privacy); public fetches the external/WAN IP over HTTPS.
+    let ipopt = kfconfigget("ip_format", "full")
+    let ipstr = lip
+    let iplbl = "IP(en0)"
+    if ipopt == "address" { ipstr = firstpart(lip, "/") }
+    if ipopt == "mask"    { ipstr = "***.***.***.***" }
+    if ipopt == "public" {
+        let pub = trim(exec("curl -s --max-time 3 https://api.ipify.org 2>/dev/null"))
+        if pub != "" { ipstr = pub  iplbl = "IP(pub)" }
+    }
     let ipline = ""
-    if lip != "" { ipline = GRN + "IP(en0)" + CO + "" + VAL + lip + "\n" }
+    if lip != "" { ipline = GRN + iplbl + CO + "" + VAL + ipstr + "\n" }
     REG = REG + SEP + "ip" + US + ipline
     let batline = ""
     if bchip != "" { batline = GRN + batlbl + CO + VAL + batval + "\n" }
