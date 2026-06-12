@@ -13,6 +13,8 @@ func driveinfo() {
     if raw == "" { emit "" }
 
     let showbars = kfconfigget("bars", "on")
+    // config `disk_format = full|fraction|percent`. Default full.
+    let dfmt = kfconfigget("disk_format", "full")
     let result = ""
     let i = "0"
     while toInt(i) < 3 {
@@ -26,8 +28,11 @@ func driveinfo() {
                 let totalGB = toInt(totalMB) / 1024
                 let usedGB  = toInt(usedMB)  / 1024
                 let pct     = toInt(usedMB) * 100 / toInt(totalMB) + ""
-                let entry   = rambar(usedMB, totalMB) + "  " + mount + " " + usedGB + "GB/" + totalGB + "GB " + pct + "%"
-                if showbars == "off" { entry = mount + " " + usedGB + "GB/" + totalGB + "GB " + pct + "%" }
+                let valpart = usedGB + "GB/" + totalGB + "GB " + pct + "%"
+                if dfmt == "fraction" { valpart = usedGB + "GB/" + totalGB + "GB" }
+                if dfmt == "percent"  { valpart = pct + "%" }
+                let entry   = rambar(usedMB, totalMB) + "  " + mount + " " + valpart
+                if showbars == "off" { entry = mount + " " + valpart }
                 if result != "" { result = result + "\n" }
                 result = result + entry
             }
