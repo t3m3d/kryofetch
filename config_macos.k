@@ -17,7 +17,7 @@ func writeDefaultConfig() {
     c = c + "# available fields:\n"
     c = c + "#   user os arch host kernel cpu gpu ram swap disk shell term termfont\n"
     c = c + "#   res display wm wmtheme theme uptime pkgs ip battery\n"
-    c = c + "# ('arch' is off by default — add it to the list above to show it)\n"
+    c = c + "# extra (off by default — add to show): arch datetime locale\n"
     c = c + "#\n"
     c = c + "# logo: 'apple' (default), a built-in OS logo ('tux'/'linux', 'windows'),\n"
     c = c + "# 'none' (hide it), or a path to your own ASCII art file. Uncomment + edit:\n"

@@ -442,6 +442,11 @@ func run() {
     REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
     REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
     REG = REG + SEP + "pkgs" + US + GRN + "Pkgs" + CO + "  " + VAL + kfpkgs() + "\n"
+    // optional extra fields (off by default; add to the field list to show)
+    REG = REG + SEP + "datetime" + US + GRN + "Date" + CO + "  " + VAL + trim(exec("date '+%Y-%m-%d %H:%M' 2>/dev/null")) + "\n"
+    let loc = environ("LANG")
+    if loc == "" { loc = trim(exec("defaults read -g AppleLocale 2>/dev/null")) }
+    REG = REG + SEP + "locale" + US + GRN + "Locale" + CO + "" + VAL + loc + "\n"
     // ip display — config `ip_format = full|address|mask|public`. Default full.
     // mask hides it (privacy); public fetches the external/WAN IP over HTTPS.
     let ipopt = kfconfigget("ip_format", "full")
