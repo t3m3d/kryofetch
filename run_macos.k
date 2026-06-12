@@ -80,7 +80,11 @@ func run() {
         kp("}")
         emit ""
     }
-    kfcls()
+    // color/mono mode (also skips the screen-clear so piping stays clean)
+    let nocolor = "0"
+    if kfconfigget("color", "on") == "off" { nocolor = "1" }
+    if kfconfigget("mono", "off")  == "on" { nocolor = "1" }
+    if nocolor == "0" { kfcls() }
     kfinit()
 
     let E     = fromCharCode(27)
@@ -134,6 +138,11 @@ func run() {
         if lgcOpt == "white"   { LC = E + "[37m" }
         if toInt(lgcOpt) > 0   { LC = E + "[38;5;" + lgcOpt + "m" }
         if LC != "" { GR2 = LC  YEL = LC  ORG = LC  RED = LC  PUR = LC  BLU = LC }
+    }
+    // color/mono mode (nocolor computed at top): blank every color var.
+    if nocolor == "1" {
+        GRN = ""  CYN = ""  RST = ""  BLU = ""  CY = ""
+        GR2 = ""  YEL = ""  ORG = ""  RED = ""  PUR = ""
     }
 
     let l0  = GR2 + "                    'c." + RST
@@ -290,6 +299,7 @@ func run() {
     if vcOpt == "cyan"    { VAL = RST + E + "[36m" }
     if vcOpt == "white"   { VAL = RST + E + "[37m" }
     if toInt(vcOpt) > 0   { VAL = RST + E + "[38;5;" + vcOpt + "m" }
+    if nocolor == "1" { VAL = "" }
     // usage bars (RAM/Disk) — config `bars = on|off`. Default on.
     let showbars = kfconfigget("bars", "on")
     let rampre = rb + "  "
@@ -539,8 +549,10 @@ func run() {
     else { kp(CYN + "  " + titleOpt + RST) }
     kp("")
     let palOpt = kfconfigget("palette", "blocks")
-    if palOpt == "apple" { applepalette() }
-    else { if palOpt != "none" { colorpalette() } }
+    if nocolor == "0" {
+        if palOpt == "apple" { applepalette() }
+        else { if palOpt != "none" { colorpalette() } }
+    }
     kp("")
     emit
 }
