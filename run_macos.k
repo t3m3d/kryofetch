@@ -43,6 +43,18 @@ func kfshell() {
     emit "unknown"
 }
 
+func kflabel(key, dflt) {
+    let rn = kfconfigget("rename", "")
+    if rn == "" { emit dflt }
+    let needle = key + ":"
+    let pos = indexOf(rn, needle)
+    if pos < 0 { emit dflt }
+    let aft = substring(rn, toInt(pos) + len(needle), len(rn))
+    let sp = indexOf(aft, " ")
+    if sp < 0 { emit aft }
+    emit substring(aft, 0, toInt(sp))
+}
+
 func run() {
     // `output = kson` (or json) in the config -> structured output (KryptScript
     // Object Notation: strings quoted, numbers bare). Inlined here (a separate
@@ -411,42 +423,42 @@ func run() {
     // keeps the value alignment; longer/empty shifts it slightly.
     let CO = kfconfigget("separator", ":")
     let REG = ""
-    REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + userstr + "\n"
-    REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + osstr + "\n"
-    REG = REG + SEP + "arch" + US + GRN + "Arch" + CO + "  " + VAL + archstr + "\n"
-    REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
-    REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kernstr + "\n"
-    REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
+    REG = REG + SEP + "user" + US + GRN + kflabel("user", "User") + CO + "  " + VAL + userstr + "\n"
+    REG = REG + SEP + "os" + US + GRN + kflabel("os", "OS") + CO + "    " + VAL + osstr + "\n"
+    REG = REG + SEP + "arch" + US + GRN + kflabel("arch", "Arch") + CO + "  " + VAL + archstr + "\n"
+    REG = REG + SEP + "host" + US + GRN + kflabel("host", "Host") + CO + "  " + VAL + hoststr + "\n"
+    REG = REG + SEP + "kernel" + US + GRN + kflabel("kernel", "Kernel") + CO + "" + VAL + kernstr + "\n"
+    REG = REG + SEP + "cpu" + US + GRN + kflabel("cpu", "CPU") + CO + "   " + VAL + cpustr + "\n"
     let gpuline = GRN + "GPU" + CO + "   " + VAL + gpustr1 + "\n"
     if g2 != "" { gpuline = gpuline + GRN + "GPU2" + CO + "  " + VAL + gpustr2 + "\n" }
     REG = REG + SEP + "gpu" + US + gpuline
-    REG = REG + SEP + "ram" + US + GRN + "RAM" + CO + "   " + VAL + rampre + ramstr + "\n"
-    REG = REG + SEP + "swap" + US + GRN + "Swap" + CO + "  " + VAL + swp + "\n"
+    REG = REG + SEP + "ram" + US + GRN + kflabel("ram", "RAM") + CO + "   " + VAL + rampre + ramstr + "\n"
+    REG = REG + SEP + "swap" + US + GRN + kflabel("swap", "Swap") + CO + "  " + VAL + swp + "\n"
     let diskline = GRN + "Disk" + CO + "  " + VAL + d1 + "\n"
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
     if d3 != "" { diskline = diskline + "       " + d3 + "\n" }
     REG = REG + SEP + "disk" + US + diskline
-    REG = REG + SEP + "shell" + US + GRN + "Shell" + CO + " " + VAL + shstr + "\n"
+    REG = REG + SEP + "shell" + US + GRN + kflabel("shell", "Shell") + CO + " " + VAL + shstr + "\n"
     let termline = ""
     if termv != "" { termline = GRN + "Term" + CO + "  " + VAL + termv + "\n" }
     REG = REG + SEP + "term" + US + termline
     let tfline = ""
     if tfnt != "" { tfline = GRN + "TermFont" + CO + "" + VAL + termfontstr + "\n" }
     REG = REG + SEP + "termfont" + US + tfline
-    REG = REG + SEP + "res" + US + GRN + "Res" + CO + "   " + VAL + resstr + "\n"
+    REG = REG + SEP + "res" + US + GRN + kflabel("res", "Res") + CO + "   " + VAL + resstr + "\n"
     let dline = ""
     if dinm != "" { dline = GRN + "Display" + CO + "" + VAL + diline + "\n" }
     REG = REG + SEP + "display" + US + dline
-    REG = REG + SEP + "wm" + US + GRN + "WM" + CO + "    " + VAL + wmstr + "\n"
-    REG = REG + SEP + "wmtheme" + US + GRN + "WMTheme" + CO + "" + VAL + wmthstr + "\n"
-    REG = REG + SEP + "theme" + US + GRN + "Theme" + CO + " " + VAL + thm + "\n"
-    REG = REG + SEP + "uptime" + US + GRN + "Uptime" + CO + "" + VAL + up + "\n"
-    REG = REG + SEP + "pkgs" + US + GRN + "Pkgs" + CO + "  " + VAL + kfpkgs() + "\n"
+    REG = REG + SEP + "wm" + US + GRN + kflabel("wm", "WM") + CO + "    " + VAL + wmstr + "\n"
+    REG = REG + SEP + "wmtheme" + US + GRN + kflabel("wmtheme", "WMTheme") + CO + "" + VAL + wmthstr + "\n"
+    REG = REG + SEP + "theme" + US + GRN + kflabel("theme", "Theme") + CO + " " + VAL + thm + "\n"
+    REG = REG + SEP + "uptime" + US + GRN + kflabel("uptime", "Uptime") + CO + "" + VAL + up + "\n"
+    REG = REG + SEP + "pkgs" + US + GRN + kflabel("pkgs", "Pkgs") + CO + "  " + VAL + kfpkgs() + "\n"
     // optional extra fields (off by default; add to the field list to show)
-    REG = REG + SEP + "datetime" + US + GRN + "Date" + CO + "  " + VAL + trim(exec("date '+%Y-%m-%d %H:%M' 2>/dev/null")) + "\n"
+    REG = REG + SEP + "datetime" + US + GRN + kflabel("datetime", "Date") + CO + "  " + VAL + trim(exec("date '+%Y-%m-%d %H:%M' 2>/dev/null")) + "\n"
     let loc = environ("LANG")
     if loc == "" { loc = trim(exec("defaults read -g AppleLocale 2>/dev/null")) }
-    REG = REG + SEP + "locale" + US + GRN + "Locale" + CO + "" + VAL + loc + "\n"
+    REG = REG + SEP + "locale" + US + GRN + kflabel("locale", "Locale") + CO + "" + VAL + loc + "\n"
     // ip display — config `ip_format = full|address|mask|public`. Default full.
     // mask hides it (privacy); public fetches the external/WAN IP over HTTPS.
     let ipopt = kfconfigget("ip_format", "full")
