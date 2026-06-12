@@ -290,6 +290,10 @@ func run() {
         resstr = replace(res, " Retina", "")
         resstr = replace(resstr, " x ", "x")
     }
+    // shell display — config `shell_format = full|name`. Default full (with version).
+    let sfmt = kfconfigget("shell_format", "full")
+    let shstr = sh
+    if sfmt == "name" { shstr = firstpart(sh, " ") }
     // kernel display — config `kernel_format = full|release|name`. Default full.
     let kfmt = kfconfigget("kernel_format", "full")
     let kernstr = kern
@@ -348,7 +352,7 @@ func run() {
     if d2 != "" { diskline = diskline + "       " + d2 + "\n" }
     if d3 != "" { diskline = diskline + "       " + d3 + "\n" }
     REG = REG + SEP + "disk" + US + diskline
-    REG = REG + SEP + "shell" + US + GRN + "Shell" + CO + " " + VAL + sh + "\n"
+    REG = REG + SEP + "shell" + US + GRN + "Shell" + CO + " " + VAL + shstr + "\n"
     let termline = ""
     if termv != "" { termline = GRN + "Term" + CO + "  " + VAL + termv + "\n" }
     REG = REG + SEP + "term" + US + termline
