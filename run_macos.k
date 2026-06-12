@@ -325,6 +325,15 @@ func run() {
     let osstr = os + " " + arch
     if ofmt == "noarch" { osstr = os }
     if ofmt == "short"  { osstr = osnobuild }
+    // arch display — optional standalone field; config `arch_format = full|pretty|
+    // bits`. Default full. (Not in the default field list; add `arch` to show it.)
+    let afmt = kfconfigget("arch_format", "full")
+    let archstr = arch
+    if afmt == "pretty" {
+        if arch == "arm64"  { archstr = "Apple Silicon" }
+        if arch == "x86_64" { archstr = "Intel" }
+    }
+    if afmt == "bits" { archstr = "64-bit" }
     // wm display — config `wm_format = full|name`. Default full (name + version).
     let wmfmt = kfconfigget("wm_format", "full")
     let wmstr = wm
@@ -358,6 +367,7 @@ func run() {
     let REG = ""
     REG = REG + SEP + "user" + US + GRN + "User" + CO + "  " + VAL + userstr + "\n"
     REG = REG + SEP + "os" + US + GRN + "OS" + CO + "    " + VAL + osstr + "\n"
+    REG = REG + SEP + "arch" + US + GRN + "Arch" + CO + "  " + VAL + archstr + "\n"
     REG = REG + SEP + "host" + US + GRN + "Host" + CO + "  " + VAL + hoststr + "\n"
     REG = REG + SEP + "kernel" + US + GRN + "Kernel" + CO + "" + VAL + kernstr + "\n"
     REG = REG + SEP + "cpu" + US + GRN + "CPU" + CO + "   " + VAL + cpustr + "\n"
