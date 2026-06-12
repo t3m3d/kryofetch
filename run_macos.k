@@ -44,6 +44,42 @@ func kfshell() {
 }
 
 func run() {
+    // `output = kson` (or json) in the config -> structured output (KryptScript
+    // Object Notation: strings quoted, numbers bare). Inlined here (a separate
+    // func called from just-run SIGILLs in this large merged native binary).
+    if kfconfigget("output", "normal") != "normal" {
+        let mi  = raminfo()
+        let tmb = firstpart(mi, ",")
+        let umb = toInt(tmb) - toInt(afterpart(mi, ","))
+        let ci  = cpucores()
+        let bat = kfbattraw()
+        kp("{")
+        kp("  user = \"" + sysuser() + "@" + syshost() + "\"")
+        kp("  os = \"" + osver() + "\"")
+        kp("  arch = \"" + sysarch() + "\"")
+        kp("  kernel = \"" + kfkernel() + "\"")
+        kp("  model = \"" + sysmodel() + "\"")
+        kp("  cpu = \"" + cpubrand() + "\"")
+        kp("  cores = " + firstpart(ci, ","))
+        kp("  threads = " + afterpart(ci, ","))
+        kp("  gpu = \"" + nthline(gpunames(), "0") + "\"")
+        kp("  ram_used_mb = " + umb + "")
+        kp("  ram_total_mb = " + tmb)
+        kp("  ram_percent = " + (umb * 100 / toInt(tmb)) + "")
+        kp("  swap = \"" + swapinfo() + "\"")
+        kp("  uptime = \"" + uptime() + "\"")
+        kp("  shell = \"" + kfshell() + "\"")
+        kp("  terminal = \"" + kfterminal() + "\"")
+        kp("  resolution = \"" + kfresolution() + "\"")
+        kp("  wm = \"" + kfwmver() + "\"")
+        kp("  wm_theme = \"" + kfaccent() + "\"")
+        kp("  theme = \"" + kfthemename() + "\"")
+        kp("  packages = \"" + kfpkgs() + "\"")
+        kp("  ip = \"" + kflocalip() + "\"")
+        kp("  battery_percent = " + nthline(bat, "1"))
+        kp("}")
+        emit ""
+    }
     kfcls()
     kfinit()
 
