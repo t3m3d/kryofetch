@@ -86,18 +86,34 @@ func nthline(s, lineIdx) {
 }
 
 func rambar(usedMB, totalMB) {
+    // config: bar_length (default 20), bar_full / bar_empty chars, bar_color
+    // (= "usage" colors green/yellow/red by %).
+    let blen = toInt(kfconfigget("bar_length", "20"))
+    if blen < 1 { blen = 20 }
+    let fch = kfconfigget("bar_full", "")
+    let ech = kfconfigget("bar_empty", "")
+    if fch == "" { fch = "▒" }
+    if ech == "" { ech = "█" }
     let used  = toInt(usedMB)
     let total = toInt(totalMB)
-    if total == 0 { emit "[                    ]" }
-    let pct    = used * 100 / total
-    let filled = pct * 20 / 100
-    let empty  = 20 - filled
-    let bar    = "["
+    let pct = 0
+    if total > 0 { pct = used * 100 / total }
+    let filled = pct * blen / 100
+    let empty  = blen - filled
+    let bar = "["
     let i = 0
-    while i < filled { bar = bar + "▒"  i += 1 }
+    while i < filled { bar = bar + fch  i += 1 }
     i = 0
-    while i < empty  { bar = bar + "█"  i += 1 }
-    emit bar + "]"
+    while i < empty  { bar = bar + ech  i += 1 }
+    bar = bar + "]"
+    if kfconfigget("bar_color", "") == "usage" {
+        let E = fromCharCode(27)
+        let col = E + "[32m"
+        if pct >= 60 { col = E + "[33m" }
+        if pct >= 85 { col = E + "[31m" }
+        emit col + bar + E + "[0m"
+    }
+    emit bar
 }
 
 func colorpalette() {
