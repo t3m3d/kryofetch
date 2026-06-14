@@ -3,3 +3,4 @@ build.bat
 .output/
 releasenotes/
 installer/
+release/*.tar.gz
