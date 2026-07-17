@@ -13,12 +13,10 @@ MacOS Tahoe
 INSTALL
 ---
 
-## macOS
-
-### Install with Homebrew (recommended)
+## Homebrew (macOS + Linux) — recommended
 
 ```bash
-brew tap t3m3d/kryofetch
+brew tap t3m3d/krypton
 brew install kryofetch
 ```
 
@@ -27,6 +25,22 @@ Then just run:
 ```bash
 kryofetch
 ```
+
+Homebrew picks the right native build: macOS (Apple Silicon, arm64) or Linux
+(x86_64). It's a prebuilt static binary — no Krypton compiler needed to install.
+
+### No Homebrew? Direct binary (Linux x86_64)
+
+```bash
+curl -fL -o /tmp/kf.tgz https://github.com/t3m3d/kryofetch/releases/download/v1.3.7/kryofetch-1.3.7-linux-x86_64.tar.gz
+tar xzf /tmp/kf.tgz -C /tmp
+sudo install /tmp/kryofetch /usr/local/bin/kryofetch
+```
+
+(If `curl`/`brew` fail with a TLS "certificate not yet valid" error, your system
+clock is wrong — `sudo timedatectl set-ntp true`, then retry.)
+
+## macOS
 
 ### Build from source
 
