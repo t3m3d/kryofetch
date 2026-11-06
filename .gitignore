@@ -4,3 +4,4 @@ build.bat
 releasenotes/
 installer/
 release/*.tar.gz
+.DS_Store
