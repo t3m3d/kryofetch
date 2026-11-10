@@ -134,8 +134,8 @@ func colorpalette() {
         r2 = r2 + E + "[" + c2 + "m" + blk
         i = toInt(i) + 1 + ""
     }
-    kp("  " + r1 + RST)
-    kp("  " + r2 + RST)
+    print("  " + r1 + RST)
+    print("  " + r2 + RST)
 }
 
 // palette as a row of little Apple logos (), one per ANSI color
@@ -160,8 +160,8 @@ func applepalette() {
         r2 = r2 + E + "[" + c2 + "m" + AP + gap
         i = toInt(i) + 1 + ""
     }
-    kp("  " + r1 + RST)
-    kp("  " + r2 + RST)
+    print("  " + r1 + RST)
+    print("  " + r2 + RST)
 }
 
 // Like nthline but preserves leading whitespace (needed for continuation lines)

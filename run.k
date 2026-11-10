@@ -3,7 +3,7 @@ import "head:fileio"
 
 func kfcls() {
     let E = fromCharCode(27)
-    kp(E + "[2J" + E + "[H")
+    print(E + "[2J" + E + "[H")
     emit ""
 }
 
@@ -292,15 +292,15 @@ func run() {
             if v != "" { info = "       " + v }
         }
 
-        kp(padansi(logo, toInt(LW)) + "  " + info)
+        print(padansi(logo, toInt(LW)) + "  " + info)
         idx = toInt(idx) + 1 + ""
     }
 
-    kp("")
-    kp(CYN + "  KryoFetch" + RST + " by KryptonBytes")
-    kp("")
+    print("")
+    print(CYN + "  KryoFetch" + RST + " by KryptonBytes")
+    print("")
     colorpalette()
-    kp("")
+    print("")
     emit
 }
 

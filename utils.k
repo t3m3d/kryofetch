@@ -116,8 +116,8 @@ func colorpalette() {
         r2 = r2 + E + "[" + c2 + "m" + blk
         i = toInt(i) + 1 + ""
     }
-    kp("  " + r1 + RST)
-    kp("  " + r2 + RST)
+    print("  " + r1 + RST)
+    print("  " + r2 + RST)
 }
 
 func idxfrom(s, sub, start) {

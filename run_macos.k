@@ -8,7 +8,7 @@ import "config_macos.k"
 
 func kfcls() {
     let E = fromCharCode(27)
-    kp(E + "[2J" + E + "[H")
+    print(E + "[2J" + E + "[H")
     emit ""
 }
 
@@ -65,31 +65,31 @@ func ksonOut() {
     let umb = toInt(tmb) - toInt(afterpart(mi, ","))
     let ci  = cpucores()
     let bat = kfbattraw()
-    kp("{")
-    kp("  user = \"" + sysuser() + "@" + syshost() + "\"")
-    kp("  os = \"" + osver() + "\"")
-    kp("  arch = \"" + sysarch() + "\"")
-    kp("  kernel = \"" + kfkernel() + "\"")
-    kp("  model = \"" + sysmodel() + "\"")
-    kp("  cpu = \"" + cpubrand() + "\"")
-    kp("  cores = " + firstpart(ci, ","))
-    kp("  threads = " + afterpart(ci, ","))
-    kp("  gpu = \"" + nthline(gpunames(), "0") + "\"")
-    kp("  ram_used_mb = " + umb + "")
-    kp("  ram_total_mb = " + tmb)
-    kp("  ram_percent = " + (umb * 100 / toInt(tmb)) + "")
-    kp("  swap = \"" + swapinfo() + "\"")
-    kp("  uptime = \"" + uptime() + "\"")
-    kp("  shell = \"" + kfshell() + "\"")
-    kp("  terminal = \"" + kfterminal() + "\"")
-    kp("  resolution = \"" + kfresolution() + "\"")
-    kp("  wm = \"" + kfwmver() + "\"")
-    kp("  wm_theme = \"" + kfaccent() + "\"")
-    kp("  theme = \"" + kfthemename() + "\"")
-    kp("  packages = \"" + kfpkgs() + "\"")
-    kp("  ip = \"" + kflocalip() + "\"")
-    kp("  battery_percent = " + nthline(bat, "1"))
-    kp("}")
+    print("{")
+    print("  user = \"" + sysuser() + "@" + syshost() + "\"")
+    print("  os = \"" + osver() + "\"")
+    print("  arch = \"" + sysarch() + "\"")
+    print("  kernel = \"" + kfkernel() + "\"")
+    print("  model = \"" + sysmodel() + "\"")
+    print("  cpu = \"" + cpubrand() + "\"")
+    print("  cores = " + firstpart(ci, ","))
+    print("  threads = " + afterpart(ci, ","))
+    print("  gpu = \"" + nthline(gpunames(), "0") + "\"")
+    print("  ram_used_mb = " + umb + "")
+    print("  ram_total_mb = " + tmb)
+    print("  ram_percent = " + (umb * 100 / toInt(tmb)) + "")
+    print("  swap = \"" + swapinfo() + "\"")
+    print("  uptime = \"" + uptime() + "\"")
+    print("  shell = \"" + kfshell() + "\"")
+    print("  terminal = \"" + kfterminal() + "\"")
+    print("  resolution = \"" + kfresolution() + "\"")
+    print("  wm = \"" + kfwmver() + "\"")
+    print("  wm_theme = \"" + kfaccent() + "\"")
+    print("  theme = \"" + kfthemename() + "\"")
+    print("  packages = \"" + kfpkgs() + "\"")
+    print("  ip = \"" + kflocalip() + "\"")
+    print("  battery_percent = " + nthline(bat, "1"))
+    print("}")
 }
 
 func run() {
@@ -566,15 +566,15 @@ func run() {
     while toInt(idx) < toInt(maxidx) {
         let logo = ""
         if toInt(idx) < toInt(logolen) { logo = infoline(LOGO, idx) }
-        if logoW > 0 { kp(padansi(logo, logoW) + lgap + infoline(IL, idx)) }
-        else { kp(infoline(IL, idx)) }
+        if logoW > 0 { print(padansi(logo, logoW) + lgap + infoline(IL, idx)) }
+        else { print(infoline(IL, idx)) }
         idx = toInt(idx) + 1 + ""
     }
 
-    kp("")
+    print("")
     let titleOpt = kfconfigget("title", "")
-    if titleOpt == "" { kp(CYN + "  KryoFetch" + RST + " by KryptonBytes") }
-    else { kp(CYN + "  " + titleOpt + RST) }
+    if titleOpt == "" { print(CYN + "  KryoFetch" + RST + " by KryptonBytes") }
+    else { print(CYN + "  " + titleOpt + RST) }
     // title underline — config `title_rule = on` draws a --- rule under the title
     if kfconfigget("title_rule", "off") == "on" {
         let ttext = "KryoFetch by KryptonBytes"
@@ -582,15 +582,15 @@ func run() {
         let rule = "  "
         let ri = "0"
         while toInt(ri) < len(ttext) { rule = rule + "-"  ri = toInt(ri) + 1 + "" }
-        kp(CYN + rule + RST)
+        print(CYN + rule + RST)
     }
-    kp("")
+    print("")
     let palOpt = kfconfigget("palette", "blocks")
     if nocolor == "0" {
         if palOpt == "apple" { applepalette() }
         else { if palOpt != "none" { colorpalette() } }
     }
-    kp("")
+    print("")
     emit
 }
 

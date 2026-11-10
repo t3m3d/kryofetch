@@ -125,8 +125,8 @@ func colorpalette() {
         r2 = r2 + E + "[" + c2 + "m" + blk
         i = toInt(i) + 1 + ""
     }
-    kp("  " + r1 + RST)
-    kp("  " + r2 + RST)
+    print("  " + r1 + RST)
+    print("  " + r2 + RST)
 }
 
 // ── /proc + /etc parsing helpers ─────────────────────────────────────────
@@ -338,7 +338,7 @@ func kfde() {
 
 func kfcls() {
     let E = fromCharCode(27)
-    kp(E + "[2J" + E + "[H")
+    print(E + "[2J" + E + "[H")
     emit ""
 }
 
@@ -5274,15 +5274,15 @@ func run() {
     if toInt(artlen) > toInt(maxidx) { maxidx = artlen }   // tall logos (e.g. parrot, fedora) aren't clipped
     while toInt(idx) < toInt(maxidx) {
         let logo = getLine(art, toInt(idx))   // "" past end -> padded to a blank logo column
-        kp(padansi(logo, toInt(LW)) + "  " + infoline(IL, idx))
+        print(padansi(logo, toInt(LW)) + "  " + infoline(IL, idx))
         idx = toInt(idx) + 1 + ""
     }
 
-    kp("")
-    kp(CYN + "  KryoFetch" + RST + " by KryptonBytes")
-    kp("")
+    print("")
+    print(CYN + "  KryoFetch" + RST + " by KryptonBytes")
+    print("")
     colorpalette()
-    kp("")
+    print("")
     emit
 }
 
